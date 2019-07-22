@@ -1,0 +1,19 @@
+# Config reference:
+# https://circleci.com/docs/2.0/config-intro/#section=configuration
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: python:3.6
+
+    steps:
+      - checkout
+
+      - run:
+          name: install tox
+          command: pip install tox
+
+      - run:
+          name: tox -r to install and run tests and flake
+          command: tox -r
