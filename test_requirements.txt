@@ -1,0 +1,9 @@
+black
+flake8
+mypy<1
+pytest
+pytest-black
+pytest-mock
+pytest-watch
+pytest-mypy
+pytest-flake8
