@@ -6,11 +6,9 @@ Cosmobot deep learning models and helper code
 
 ### Branching vs submodules
 
-There will be one model checked in to master (ideally our current best).
+There will be one submodule for every major type of model, with the best version of each checked into master.
 
-If you are tweaking the master model, do so in a branch.
-
-If you are trying out a model that is significantly different from the one in master, create a new sub-module for it.
+If you are making tweaks to a model, do so in a branch. If the tweaks turn out to be an improvement on that model, land them.
 
 ### Documenting changes
 
