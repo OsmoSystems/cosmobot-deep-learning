@@ -4,11 +4,11 @@ Cosmobot deep learning models and helper code
 
 ## Iterating on models
 
-### Branching vs submodules
+### When to branch
 
-There will be one submodule for every major type of model, with the best version of each checked into master.
+This repo will contain one directory for each major type of model, with the best version of each checked into master.
 
-If you are making tweaks to a model, do so in a branch. If the tweaks turn out to be an improvement on that model, land them.
+If you are making tweaks to a model, do so in a branch. If the tweaks turn out to be an improvement on that model, land them. If you are creating an new type of model (rather than iterating on an existing model), create a new directory for it.
 
 ### Documenting changes
 
