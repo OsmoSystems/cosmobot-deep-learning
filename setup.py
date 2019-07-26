@@ -9,5 +9,11 @@ setup(
     description="Cosmobot deep learning models",
     url="https://www.github.com/osmosystems/cosmobot-deep-learning.git",
     packages=find_packages(),
+    # fmt: off
+    install_requires=[
+        "pandas",
+        "scipy",
+    ],
+    # fmt: on
     include_package_data=True,
 )
