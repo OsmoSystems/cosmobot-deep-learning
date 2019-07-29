@@ -11,8 +11,11 @@ setup(
     packages=find_packages(),
     # fmt: off
     install_requires=[
+        "opencv-python",
         "pandas",
+        "picamraw",
         "scipy",
+        "tqdm",
     ],
     # fmt: on
     include_package_data=True,
