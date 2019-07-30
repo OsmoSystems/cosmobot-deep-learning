@@ -23,7 +23,7 @@ TODO: [https://app.asana.com/0/819671808102776/1130875537031890/f]()
 
 ## Datasets
 The dataset csvs are generated independently and copied into this repo. For more context and a changelog, see:
-[ML Dataset README](https://docs.google.com/document/d/1izgRFPtPTrP61cXMleMgrbL8aZ8zbC19zs2ssv6duZM/edit#heading=h.nzhdwhupw5wv)
+[ML Dataset README](https://docs.google.com/document/d/1izgRFPtPTrP61cXMleMgrbL8aZ8zbC19zs2ssv6duZM/edit#heading=h.n3b0owytqckh)
 
 ## Terminology
 Some standard terminology around our raw image data and how we process it
