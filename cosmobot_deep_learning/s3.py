@@ -42,7 +42,6 @@ def _download_s3_files(
         check_call([command], shell=True)
 
 
-# TODO: Delete original function from cosmobot-process-experiment
 def naive_sync_from_s3(
     experiment_directory: str, file_names: pd.Series, output_directory_path: str
 ) -> pd.Series:

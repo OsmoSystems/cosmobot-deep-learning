@@ -1,5 +1,3 @@
-# TODO: this was copied from cosmobot-process-experiment. Delete it from there.
-
 import os
 
 import pandas as pd

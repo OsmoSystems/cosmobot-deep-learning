@@ -65,7 +65,6 @@ class TestDownloadS3Files:
         mock_check_call.assert_called_with([second_expected_command], shell=True)
 
 
-# TODO: delete from cosmobot-process-experiment
 class TestNaiveSyncFromS3:
     def test_returns_filepaths_series(self, mock_download_s3_files):
         actual_local_filepaths = module.naive_sync_from_s3(
