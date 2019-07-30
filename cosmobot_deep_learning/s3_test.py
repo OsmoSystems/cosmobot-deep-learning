@@ -1,8 +1,22 @@
 import os
 
 import pandas as pd
+import pytest
 
 from . import s3 as module
+
+
+@pytest.fixture
+def mock_download_s3_files(mocker):
+    return mocker.patch.object(module, "_download_s3_files")
+
+
+@pytest.fixture
+def mock_check_call(mocker):
+    mock_check_call = mocker.patch.object(module, "check_call")
+    mock_check_call.return_value = None
+
+    return mock_check_call
 
 
 # COPY-PASTA: This was copied from cosmobot-process-experiment
