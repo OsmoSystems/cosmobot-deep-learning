@@ -77,12 +77,3 @@ def open_crop_and_scale_image(raw_image_path: str, output_size: int):
     """
     rgb_image = open_as_rgb(raw_image_path)
     return crop_and_scale_image(rgb_image, output_size)
-
-
-def series_of_images_to_ndarray(series):
-    """ Convert a series of images (an array of ndarrays) into one ndarray.
-
-    When you get series.values(), you get an array of arrays, rather than one ndarray :\
-    This is silly, but I couldn't find a better way.
-    """
-    return np.array([image for image in series])
