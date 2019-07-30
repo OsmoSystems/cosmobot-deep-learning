@@ -9,7 +9,7 @@ RAW_BIT_DEPTH = 2 ** 10  # used for normalizing DN to DNR
 
 
 # COPY-PASTA: This has been copied (and renamed) from cosmobot-process-experiment
-def open_as_rgb(raw_image_path):
+def open_as_rgb(raw_image_path: str):
     """ Extracts the raw bayer data from a JPEG+RAW file and converts it to an
         `RGB Image` (see definition in README).
 
@@ -29,7 +29,7 @@ def open_as_rgb(raw_image_path):
     return rgb_image
 
 
-def crop_square(rgb_image):
+def crop_square(rgb_image: np.ndarray):
     """ Crop an RGB image to a square, preserving as much of the center of the image as possible.
 
     Args:
@@ -49,7 +49,7 @@ def crop_square(rgb_image):
     ]
 
 
-def crop_and_scale_image(rgb_image, output_size):
+def crop_and_scale_image(rgb_image: np.ndarray, output_size: int):
     """ Call crop_square on an RGB image and resize it to the specified dimension. Returns a PIL image
 
     Args:
@@ -64,7 +64,7 @@ def crop_and_scale_image(rgb_image, output_size):
     return np.array(cv2_image)
 
 
-def open_crop_and_scale_image(raw_image_path, output_size):
+def open_crop_and_scale_image(raw_image_path: str, output_size: int):
     """ Opens a JPEG+RAW file as an `RGB Image`, then crops to a square and resizes
         to the desired ouput_size.
 
