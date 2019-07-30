@@ -32,16 +32,15 @@ def open_as_rgb(raw_image_path):
 def crop_square(rgb_image):
     """ Crop an RGB image to a square, preserving as much of the center of the image as possible.
 
-        Args:
-            rgb_image: An `RGB Image`
+    Args:
+        rgb_image: An `RGB Image`
 
-        Returns:
-            An `RGB Image`, cropped to a square around the center
+    Returns:
+        An `RGB Image`, cropped to a square around the center
     """
     height, width, depth = rgb_image.shape
     new_side_length = min(height, width)
 
-    # The // operator performs integer division, rounding down
     start_col = (width - new_side_length) // 2
     start_row = (height - new_side_length) // 2
 
@@ -51,19 +50,39 @@ def crop_square(rgb_image):
 
 
 def crop_and_scale_image(rgb_image, output_size):
-    """Call crop_square on an RGB image and resize it to the specified dimension. Returns a PIL image"""
+    """ Call crop_square on an RGB image and resize it to the specified dimension. Returns a PIL image
+
+    Args:
+        rgb_image: An `RGB Image`
+        output_size: The number
+
+    Returns:
+        An `RGB Image`, cropped to a square around the center
+    """
     square_image = crop_square(rgb_image)
-    return cv2.resize(square_image, (output_size, output_size))
+    cv2_image = cv2.resize(square_image, (output_size, output_size))
+    return np.array(cv2_image)
 
 
-def open_crop_and_scale_image(filepath, output_size):
-    """Open an RGB image, crop and resize to the specified dimension. Returns a numpy array"""
-    rgb_image = open_as_rgb(filepath)
-    prepared_image = crop_and_scale_image(rgb_image, output_size)
-    return np.array(prepared_image)
+def open_crop_and_scale_image(raw_image_path, output_size):
+    """ Opens a JPEG+RAW file as an `RGB Image`, then crops to a square and resizes
+        to the desired ouput_size.
+
+    Args:
+        raw_image_path: The full path to a JPEG+RAW file
+        output_size: The desired width and height (in pixels) of the square output image
+
+    Returns:
+        An `RGB Image`, cropped and scaled
+    """
+    rgb_image = open_as_rgb(raw_image_path)
+    return crop_and_scale_image(rgb_image, output_size)
 
 
 def series_of_images_to_ndarray(series):
-    # This is silly, but I couldn't find a better way. When you get series.values(), you get an array of arrays, rather than one ndarray :\
-    # There's probably a better way.
-    return np.array([x for x in series])
+    """ Convert a series of images (an array of ndarrays) into one ndarray.
+
+    When you get series.values(), you get an array of arrays, rather than one ndarray :\
+    This is silly, but I couldn't find a better way.
+    """
+    return np.array([image for image in series])
