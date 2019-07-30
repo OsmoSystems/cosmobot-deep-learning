@@ -12,7 +12,9 @@ setup(
     # fmt: off
     install_requires=[
         "opencv-python",
-        "pandas",
+        # Pandas 0.25 breaks tqdm (for now)
+        # We can unpin when https://github.com/tqdm/tqdm/issues/780 is fixed
+        "pandas <=0.24.2",
         "picamraw",
         "scipy",
         "tqdm",
