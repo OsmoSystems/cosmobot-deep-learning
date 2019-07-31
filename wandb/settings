@@ -1,0 +1,4 @@
+[default]
+entity: osmo
+project: benchtop-do
+base_url: https://api.wandb.ai
