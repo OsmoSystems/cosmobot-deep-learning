@@ -1,13 +1,13 @@
 import argparse
 
-from typing import List, Dict
+from typing import List
 
 
 DEFAULT_EPOCHS = 10000
 DEFAULT_BATCH_SIZE = 125
 
 
-def parse_args(args: List[str]) -> Dict:
+def parse_args(args: List[str]) -> argparse.Namespace:
     arg_parser = argparse.ArgumentParser()
 
     arg_parser.add_argument(
@@ -33,4 +33,4 @@ def parse_args(args: List[str]) -> Dict:
     )
 
     arg_namespace = arg_parser.parse_args(args)
-    return vars(arg_namespace)
+    return arg_namespace

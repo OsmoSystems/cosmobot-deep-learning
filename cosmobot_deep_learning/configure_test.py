@@ -11,7 +11,7 @@ class TestParseArgs:
 
         expected_args_out = {"gpu": -1, "batch_size": 10, "epochs": 1000}
 
-        assert module.parse_args(args_in) == expected_args_out
+        assert vars(module.parse_args(args_in)) == expected_args_out
 
     def test_missing_required_args_throws(self):
         args_in: List = []

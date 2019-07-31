@@ -190,8 +190,8 @@ if __name__ == "__main__":
 
     args = parse_args(sys.argv[1:])
 
-    if args["gpu"] != -1:
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(args["gpu"])
+    if args.gpu != -1:
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
     wandb.init()
     # Add cli args to w&b config
