@@ -7,14 +7,20 @@ DEFAULT_EPOCHS = 10000
 DEFAULT_BATCH_SIZE = 125
 
 
-def parse_args(args: List[str]) -> argparse.Namespace:
-    arg_parser = argparse.ArgumentParser()
+def parse_model_run_args(args: List[str]) -> argparse.Namespace:
+    arg_parser = argparse.ArgumentParser(
+        description="", formatter_class=argparse.RawTextHelpFormatter
+    )
 
     arg_parser.add_argument(
         "--gpu",
         required=True,
         type=int,
-        help="Value to be passed to CUDA_VISIBLE_DEVICES environment variable",
+        help=(
+            "Select GPU for training by CUDA Device ID number (e.g. 0 - 3).\n"
+            "Run `nvidia-smi` to see available devices and IDs.\n"
+            "Use -1 to disable GPU taining."
+        ),
         dest="gpu",
     )
 

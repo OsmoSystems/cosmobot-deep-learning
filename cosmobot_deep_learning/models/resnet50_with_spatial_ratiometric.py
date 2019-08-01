@@ -12,12 +12,12 @@ import wandb
 from wandb.keras import WandbCallback
 
 from cosmobot_deep_learning.load_dataset import load_multi_experiment_dataset_csv
-from cosmobot_deep_learning.configure import parse_args
+from cosmobot_deep_learning.configure import parse_model_run_args
 from cosmobot_deep_learning.preprocess_image import open_crop_and_scale_image
 
 PACKAGE_NAME = "cosmobot_deep_learning"
 
-_TARGET_IMAGE_DIMENSIONS = 128
+_DEFAULT_INPUT_IMAGE_DIMENSIONS = 128
 DO_SCALE_FACTOR = 160
 BAROMETER_SCALE_FACTOR = 800
 
@@ -28,7 +28,8 @@ def extract_input_params(df):
         Args:
             df: A DataFrame representing a standard cosmobot dataset (from /datasets)
         Returns:
-            Numpy array of input values for the given dataset
+            Numpy array of temperature and spatial ratiometric values.
+            Ratiometric value is Wet DO Patch / Dry Reference Patch.
     """
     normalized_dataset = pd.DataFrame(
         {
@@ -36,8 +37,6 @@ def extract_input_params(df):
             # fmt: off
             "temperature_set_point":
                 df["temperature_set_point"],
-            "normalized_barometric_pressure":
-                df["YSI Barometer (mmHg)"] / BAROMETER_SCALE_FACTOR,
             "spatial_ratiometric":
                 df["OO DO patch Wet r_msorm"] / df["Type 1 Chemistry Hand Applied Dry r_msorm"],
             # fmt: on
@@ -47,7 +46,7 @@ def extract_input_params(df):
     return normalized_dataset.values
 
 
-def prepare_input_images(image_filepaths):
+def prepare_input_images(image_filepaths, image_dimenstions):
     """ Preprocess the input images and prepare them for direct use in training a model
 
         Args:
@@ -57,27 +56,25 @@ def prepare_input_images(image_filepaths):
     """
     return np.array(
         [
-            open_crop_and_scale_image(
-                image_filepath, output_size=_TARGET_IMAGE_DIMENSIONS
-            )
+            open_crop_and_scale_image(image_filepath, output_size=image_dimenstions)
             for image_filepath in tqdm(image_filepaths)
         ]
     )
 
 
-def extract_target_values(df):
-    """ Get the target or label data values
+def extract_label_values(df):
+    """ Get the label (y) data values for a given dataset (x)
 
         Args:
             df: A DataFrame representing a standard cosmobot dataset (from /datasets)
         Returns:
-            Numpy array of target values for the given dataset
+            Numpy array of disolved oxygen label values, normalized by a constant scale factor
     """
     scaled_targets = df["YSI Dissolved Oxygen (mmHg)"] / DO_SCALE_FACTOR
     return scaled_targets.values
 
 
-def prepare_dataset(image_data):
+def prepare_dataset(image_data, input_image_dimensions):
     """ Transform a dataset CSV into the appropriate inputs for training the model in this module.
 
         Args:
@@ -89,12 +86,16 @@ def prepare_dataset(image_data):
     test_samples = image_data[image_data["test"]]
 
     x_train_sr = extract_input_params(train_samples)
-    x_train_images = prepare_input_images(train_samples["local_filepath"].values)
-    y_train_do = extract_target_values(train_samples)
+    x_train_images = prepare_input_images(
+        train_samples["local_filepath"].values, input_image_dimensions
+    )
+    y_train_do = extract_label_values(train_samples)
 
     x_test_sr = extract_input_params(test_samples)
-    x_test_images = prepare_input_images(test_samples["local_filepath"].values)
-    y_test_do = extract_target_values(test_samples)
+    x_test_images = prepare_input_images(
+        test_samples["local_filepath"].values, input_image_dimensions
+    )
+    y_test_do = extract_label_values(test_samples)
 
     return (
         [x_train_sr, x_train_images],
@@ -104,9 +105,9 @@ def prepare_dataset(image_data):
     )
 
 
-def create_model():
+def create_model(input_numerical_data_dimensions, input_image_dimensions):
     input_layer = keras.layers.Input(
-        shape=(_TARGET_IMAGE_DIMENSIONS, _TARGET_IMAGE_DIMENSIONS, 3)
+        shape=(input_image_dimensions, input_image_dimensions, 3)
     )
 
     resnet = keras_resnet.models.ResNet50(input_layer, include_top=False)
@@ -127,7 +128,9 @@ def create_model():
 
     sv_model = keras.models.Sequential(
         [
-            keras.layers.Dense(11, activation=tf.nn.relu, input_shape=[3]),
+            keras.layers.Dense(
+                11, activation=tf.nn.relu, input_shape=[input_numerical_data_dimensions]
+            ),
             keras.layers.Dense(32),
             keras.layers.advanced_activations.LeakyReLU(),
             keras.layers.Dense(1, name="sv_DO"),
@@ -156,7 +159,12 @@ def create_model():
     return combined_residual_model
 
 
-def run(epochs, batch_size, dataset_name):
+def run(
+    epochs,
+    batch_size,
+    dataset_name,
+    input_image_dimensions=_DEFAULT_INPUT_IMAGE_DIMENSIONS,
+):
     """ Load the given dataset and use it to train the model in this module.
 
         Args:
@@ -167,11 +175,18 @@ def run(epochs, batch_size, dataset_name):
     resource_path = "/".join(["datasets", dataset_name])
     dataset_filepath = pkg_resources.resource_filename(PACKAGE_NAME, resource_path)
 
-    image_data = load_multi_experiment_dataset_csv(dataset_filepath)
+    raw_dataset = load_multi_experiment_dataset_csv(dataset_filepath)
 
-    x_train, y_train, x_test, y_test = prepare_dataset(image_data)
+    x_train, y_train, x_test, y_test = prepare_dataset(
+        raw_dataset, input_image_dimensions
+    )
 
-    model = create_model()
+    x_train_sr_shape = x_train[0].shape
+
+    model = create_model(
+        input_numerical_data_dimensions=x_train_sr_shape[1],
+        input_image_dimensions=input_image_dimensions,
+    )
 
     history = model.fit(
         x_train,
@@ -188,10 +203,9 @@ def run(epochs, batch_size, dataset_name):
 
 if __name__ == "__main__":
 
-    args = parse_args(sys.argv[1:])
+    args = parse_model_run_args(sys.argv[1:])
 
-    if args.gpu != -1:
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
     wandb.init()
     # Add cli args to w&b config
