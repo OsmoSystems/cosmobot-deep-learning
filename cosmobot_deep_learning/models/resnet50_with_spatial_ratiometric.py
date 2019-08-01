@@ -70,8 +70,8 @@ def extract_label_values(df):
         Returns:
             Numpy array of disolved oxygen label values, normalized by a constant scale factor
     """
-    scaled_targets = df["YSI Dissolved Oxygen (mmHg)"] / DO_SCALE_FACTOR
-    return scaled_targets.values
+    scaled_labels = df["YSI Dissolved Oxygen (mmHg)"] / DO_SCALE_FACTOR
+    return scaled_labels.values
 
 
 def prepare_dataset(image_data, input_image_dimensions):
