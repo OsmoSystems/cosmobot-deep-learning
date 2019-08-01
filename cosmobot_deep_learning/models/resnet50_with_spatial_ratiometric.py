@@ -153,7 +153,7 @@ def create_model(input_numerical_data_dimensions, input_image_dimensions):
     combined_residual_model.compile(
         optimizer=keras.optimizers.Adadelta(),
         loss="mean_squared_error",
-        metrics=["mean_absolute_error"],
+        metrics=["mean_squared_error", "mean_absolute_error"],
     )
 
     return combined_residual_model
