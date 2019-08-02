@@ -1,23 +1,25 @@
 import os
-import pkg_resources
 import sys
 
 import keras
 import keras_resnet.models
-import numpy as np
 import pandas as pd
 import tensorflow as tf
-from tqdm.auto import tqdm
 import wandb
 from wandb.keras import WandbCallback
 
-from cosmobot_deep_learning.load_dataset import load_multi_experiment_dataset_csv
-from cosmobot_deep_learning.configure import parse_model_run_args
-from cosmobot_deep_learning.preprocess_image import open_crop_and_scale_image
+from cosmobot_deep_learning.load_dataset import (
+    load_multi_experiment_dataset_csv,
+    get_pkg_dataset_filepath,
+)
+from cosmobot_deep_learning.configure import (
+    parse_model_run_args,
+    get_model_name_from_filepath,
+)
+from cosmobot_deep_learning.preprocess_image import open_and_preprocess_images
 
-PACKAGE_NAME = "cosmobot_deep_learning"
 
-_DEFAULT_INPUT_IMAGE_DIMENSIONS = 128
+_DEFAULT_INPUT_IMAGE_SIZE = 128
 DO_SCALE_FACTOR = 160
 BAROMETER_SCALE_FACTOR = 800
 
@@ -46,22 +48,6 @@ def extract_input_params(df):
     return normalized_dataset.values
 
 
-def prepare_input_images(image_filepaths, image_dimenstions):
-    """ Preprocess the input images and prepare them for direct use in training a model
-
-        Args:
-            image_filepaths: An iterable list of filepaths to images to prepare
-        Returns:
-            A single numpy array of all images resized to the appropriate dimensions and concatenated
-    """
-    return np.array(
-        [
-            open_crop_and_scale_image(image_filepath, output_size=image_dimenstions)
-            for image_filepath in tqdm(image_filepaths)
-        ]
-    )
-
-
 def extract_label_values(df):
     """ Get the label (y) data values for a given dataset (x)
 
@@ -74,26 +60,27 @@ def extract_label_values(df):
     return scaled_labels.values
 
 
-def prepare_dataset(image_data, input_image_dimensions):
+def prepare_dataset(raw_dataset, input_image_dimension):
     """ Transform a dataset CSV into the appropriate inputs for training the model in this module.
 
         Args:
-            image_data: A DataFrame corresponding to a standard cosmobot dataset CSV
+            raw_dataset: A DataFrame corresponding to a standard cosmobot dataset CSV
+            input_image_dimension: The desired side length of the output (square) images
         Returns:
             A 4-tuple containing (x_train, y_train, x_test, y_test) data sets.
     """
-    train_samples = image_data[image_data["training_resampled"]]
-    test_samples = image_data[image_data["test"]]
+    train_samples = raw_dataset[raw_dataset["training_resampled"]]
+    test_samples = raw_dataset[raw_dataset["test"]]
 
     x_train_sr = extract_input_params(train_samples)
-    x_train_images = prepare_input_images(
-        train_samples["local_filepath"].values, input_image_dimensions
+    x_train_images = open_and_preprocess_images(
+        train_samples["local_filepath"].values, input_image_dimension
     )
     y_train_do = extract_label_values(train_samples)
 
     x_test_sr = extract_input_params(test_samples)
-    x_test_images = prepare_input_images(
-        test_samples["local_filepath"].values, input_image_dimensions
+    x_test_images = open_and_preprocess_images(
+        test_samples["local_filepath"].values, input_image_dimension
     )
     y_test_do = extract_label_values(test_samples)
 
@@ -105,10 +92,9 @@ def prepare_dataset(image_data, input_image_dimensions):
     )
 
 
-def create_model(input_numerical_data_dimensions, input_image_dimensions):
-    input_layer = keras.layers.Input(
-        shape=(input_image_dimensions, input_image_dimensions, 3)
-    )
+def create_model(hyperparameters, input_numerical_data_dimensions):
+    image_size = hyperparameters["image_size"]
+    input_layer = keras.layers.Input(shape=(image_size, image_size, 3))
 
     resnet = keras_resnet.models.ResNet50(input_layer, include_top=False)
     intermediate_resnet_model = keras.Model(
@@ -150,49 +136,55 @@ def create_model(input_numerical_data_dimensions, input_image_dimensions):
         outputs=prediction_with_residual,
     )
 
+    # TODO: figure out how to create custom metrics & add ours:
+    # - % of predictions outside 0.5 mg/l error
+    # - Mean Absolute Error
+
     combined_residual_model.compile(
-        optimizer=keras.optimizers.Adadelta(),
-        loss="mean_squared_error",
+        optimizer=hyperparameters["optimizer"],
+        loss=hyperparameters["loss"],
+        # TODO: should this be defined in hyperparameters too?
+        # Since it's just what get reported, it seems like it would be kind of moot to report
+        # that we're going to report them
         metrics=["mean_squared_error", "mean_absolute_error"],
     )
 
     return combined_residual_model
 
 
-def run(
-    epochs,
-    batch_size,
-    dataset_name,
-    input_image_dimensions=_DEFAULT_INPUT_IMAGE_DIMENSIONS,
-):
-    """ Load the given dataset and use it to train the model in this module.
+# TODO: consider switching to having explicit parameters here so that they can have type checking, etc.
+# In that case, I'd probably still pass some params along in a bag of params.
+def run(hyperparameters):
+    """ Use the provided hyperparameters to train the model in this module.
 
         Args:
-            epochs: Number of epochs to train for
-            batch_size: Training input batch size
-            dataset_name: Filename of the dataset resource to load and train with
-    """
-    resource_path = "/".join(["datasets", dataset_name])
-    dataset_filepath = pkg_resources.resource_filename(PACKAGE_NAME, resource_path)
+            hyperparameters: A dictionary of hyperparameter config, including:
+                dataset_name: Filename of the dataset resource to load and train with
+                epochs: Number of epochs to train for
+                batch_size: Training input batch size
+                image_size: The desired side length for resized (square) images
+                optimizer: Which optimizer function to use
+                loss: Which loss function to use
 
-    raw_dataset = load_multi_experiment_dataset_csv(dataset_filepath)
+    """
+    dataset_filepath = get_pkg_dataset_filepath(hyperparameters["dataset_name"])
 
     x_train, y_train, x_test, y_test = prepare_dataset(
-        raw_dataset, input_image_dimensions
+        raw_dataset=load_multi_experiment_dataset_csv(dataset_filepath),
+        input_image_dimension=hyperparameters["image_size"],
     )
 
     x_train_sr_shape = x_train[0].shape
 
     model = create_model(
-        input_numerical_data_dimensions=x_train_sr_shape[1],
-        input_image_dimensions=input_image_dimensions,
+        hyperparameters, input_numerical_data_dimensions=x_train_sr_shape[1]
     )
 
     history = model.fit(
         x_train,
         y_train,
-        epochs=epochs,
-        batch_size=batch_size,
+        epochs=hyperparameters["epochs"],
+        batch_size=hyperparameters["batch_size"],
         verbose=1,
         validation_data=(x_test, y_test),
         callbacks=[WandbCallback()],
@@ -208,11 +200,15 @@ if __name__ == "__main__":
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
     wandb.init()
-    # Add cli args to w&b config
+    wandb.config.update(
+        {
+            "model_name": get_model_name_from_filepath(__file__),
+            "dataset_name": "2019-06-27--08-24-58_osmo_ml_dataset.csv",
+            "image_size": _DEFAULT_INPUT_IMAGE_SIZE,
+            "optimizer": keras.optimizers.Adadelta(),
+            "loss": "mean_squared_error",
+        }
+    )
     wandb.config.update(args)
 
-    run(
-        wandb.config.epochs,
-        wandb.config.batch_size,
-        "2019-06-27--08-24-58_osmo_ml_dataset.csv",
-    )
+    run(hyperparameters=wandb.config)

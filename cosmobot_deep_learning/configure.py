@@ -1,4 +1,5 @@
 import argparse
+import os
 
 from typing import List
 
@@ -40,3 +41,14 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
 
     arg_namespace = arg_parser.parse_args(args)
     return arg_namespace
+
+
+def get_model_name_from_filepath(filepath: str) -> str:
+    """ Given the filepath for the model file, extracts a friendlier model name:
+         - Cuts the filepath down to just the filename
+         - Drops the extension
+         - Replaces "_" with "-"
+    """
+    filename = os.path.basename(filepath)
+    filename_minus_extension, extension = os.path.splitext(filename)
+    return filename_minus_extension.replace("_", "-")

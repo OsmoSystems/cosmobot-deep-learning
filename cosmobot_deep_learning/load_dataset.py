@@ -1,9 +1,22 @@
 import os
+import pkg_resources
 
 import pandas as pd
 from tqdm.auto import tqdm
 
 from .s3 import naive_sync_from_s3
+
+
+PACKAGE_NAME = "cosmobot_deep_learning"
+
+
+def get_pkg_dataset_filepath(dataset_name):
+    """ Returns the filepath to the given dataset inside this package.
+        (Assumes the dataset is correctly checked into this package.)
+    """
+    resource_path = "/".join(["datasets", dataset_name])
+    dataset_filepath = pkg_resources.resource_filename(PACKAGE_NAME, resource_path)
+    return dataset_filepath
 
 
 def _get_files_for_experiment_df(experiment_df, local_image_files_directory):

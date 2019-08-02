@@ -22,3 +22,19 @@ class TestParseArgs:
         args_in = ["--extra"]
         with pytest.raises(SystemExit):
             module.parse_model_run_args(args_in)
+
+
+class TestGetModelNameFromFilepath:
+    @pytest.mark.parametrize(
+        "filepath,expected_name",
+        [
+            ("/path/to/model.py", "model"),
+            ("/path/to/my_model.py", "my-model"),
+            ("model.py", "model"),
+            ("model", "model"),
+            (__file__, "configure-test"),  # meta
+        ],
+    )
+    def test_get_model_name_from_filepath(self, filepath, expected_name):
+        actual = module.get_model_name_from_filepath(filepath)
+        assert actual == expected_name

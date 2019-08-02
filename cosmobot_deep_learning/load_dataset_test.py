@@ -48,3 +48,13 @@ class TestLoadMultiExperimentDatasetCsv:
         pd.testing.assert_frame_equal(
             expected_returned_dataframe, actual_returned_dataframe
         )
+
+
+class TestGetPkgDatasetFilepath:
+    def test_returns_correct_path_within_repo(self):
+        dataset_name = "2019-06-06--15-10-49_osmo_ml_datatset.csv"
+        actual = module.get_pkg_dataset_filepath(dataset_name)
+
+        # The full path depends on the location of the repo in the filesystem, but the path
+        # should always end with the same relative path within this repo
+        assert actual.endswith(f"cosmobot_deep_learning/datasets/{dataset_name}")
