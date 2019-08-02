@@ -199,6 +199,9 @@ if __name__ == "__main__":
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
+    # TODO: set something up here to help us remember to pass the "jupyter" tag when
+    # running from jupyter?
+    # TODO: figure out the project name
     wandb.init()
     wandb.config.update(
         {
@@ -207,6 +210,12 @@ if __name__ == "__main__":
             "image_size": _DEFAULT_INPUT_IMAGE_SIZE,
             "optimizer": keras.optimizers.Adadelta(),
             "loss": "mean_squared_error",
+            # TODO:
+            # - Dataset hash
+            # - Number of samples in training dataset
+            # - Small tweaks to model architecture, e.g.:
+            #   - Number of nodes in each dense layer
+            #   - Number of layers (e.g. if we want to try adding repeating layer blocks)
         }
     )
     wandb.config.update(args)
