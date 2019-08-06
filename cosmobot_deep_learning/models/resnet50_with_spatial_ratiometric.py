@@ -1,4 +1,3 @@
-from functools import partial
 import os
 import sys
 
@@ -52,11 +51,6 @@ _HYPERPARAMETERS = {
     "image_size": 128,
     "optimizer": keras.optimizers.Adadelta(),
     "loss": "mean_squared_error",
-    "metrics": [
-        "mean_squared_error",
-        "mean_absolute_error",
-        fraction_outside_acceptable_error,
-    ],
     # Toss in all the constants / assumptions we're using in this run
     "ACCEPTABLE_ERROR_MG_L": ACCEPTABLE_ERROR_MG_L,
     "ACCEPTABLE_ERROR_MMHG": ACCEPTABLE_ERROR_MMHG,
@@ -180,7 +174,11 @@ def create_model(hyperparameters, input_numerical_data_dimensions):
     combined_residual_model.compile(
         optimizer=hyperparameters["optimizer"],
         loss=hyperparameters["loss"],
-        metrics=hyperparameters["metrics"],
+        metrics=[
+            "mean_squared_error",
+            "mean_absolute_error",
+            fraction_outside_acceptable_error,
+        ],
     )
 
     return combined_residual_model
@@ -214,8 +212,8 @@ def run(
     )
 
     # Report dataset sizes to wandb now that we know them
-    wandb.config.train_sample_count = y_train.shape[0]
-    wandb.config.test_sample_count = y_test.shape[0]
+    wandb.config.train_sample_count = y_train[0].shape[0]
+    wandb.config.test_sample_count = y_test[0].shape[0]
 
     x_train_sr_shape = x_train[0].shape
 
@@ -231,8 +229,8 @@ def run(
     history = model.fit(
         x_train,
         y_train,
-        epochs,
-        batch_size,
+        batch_size=batch_size,
+        epochs=epochs,
         verbose=1,
         validation_data=(x_test, y_test),
         callbacks=[WandbCallback()],
