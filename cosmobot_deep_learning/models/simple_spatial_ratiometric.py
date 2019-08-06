@@ -150,7 +150,6 @@ def run(
             model_name: A string label for the model. Should match this module name
             dataset_filepath: Filepath (within this package) of the dataset resource to load and train with
             additional_hyperparameters: Any other variables that are parameterizable for this model
-                image_size: The desired side length for resized (square) images
                 optimizer: Which optimizer function to use
                 loss: Which loss function to use
 
