@@ -191,7 +191,6 @@ if __name__ == "__main__":
     wandb.init(
         # Add a "jupyter" tag when running from jupyter notebooks
         tags=[],
-        project="prototype",  # TODO: remove
         config=_HYPERPARAMETERS,
     )
 
