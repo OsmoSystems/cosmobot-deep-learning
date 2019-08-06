@@ -1,3 +1,4 @@
+from functools import partial
 import os
 import sys
 
@@ -17,14 +18,29 @@ from cosmobot_deep_learning.configure import (
     parse_model_run_args,
     get_model_name_from_filepath,
 )
-from cosmobot_deep_learning.custom_metrics import fraction_outside_acceptable_error
+from cosmobot_deep_learning.constants import (
+    ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
+    ACCEPTABLE_ERROR_MG_L,
+    ACCEPTABLE_ERROR_MMHG,
+)
+from cosmobot_deep_learning.custom_metrics import (
+    get_fraction_outside_acceptable_error_fn,
+)
 from cosmobot_deep_learning.preprocess_image import open_and_preprocess_images
 
 
-DO_SCALE_FACTOR = 160
-
 _DATASET_FILENAME = "2019-06-27--08-24-58_osmo_ml_dataset.csv"
 _DATASET_FILEPATH = get_pkg_dataset_filepath(_DATASET_FILENAME)
+
+
+# Normalize by the atmospheric partial pressure of oxygen, as that is roughly the max we expect
+LABEL_SCALE_FACTOR_MMHG = ATMOSPHERIC_OXYGEN_PRESSURE_MMHG
+
+# Ensure that our custom metric uses the same normalizing factor we use to scale our labels
+_ACCEPTABLE_ERROR_NORMALIZED = ACCEPTABLE_ERROR_MMHG / LABEL_SCALE_FACTOR_MMHG
+fraction_outside_acceptable_error = get_fraction_outside_acceptable_error_fn(
+    acceptable_error=_ACCEPTABLE_ERROR_NORMALIZED
+)
 
 _HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
@@ -41,10 +57,11 @@ _HYPERPARAMETERS = {
         "mean_absolute_error",
         fraction_outside_acceptable_error,
     ],
-    # TODO (or maybe skip for now?):
-    # - Small tweaks to model architecture, e.g.:
-    #   - Number of nodes in each dense layer
-    #   - Number of layers (e.g. if we want to try adding repeating layer blocks)
+    # Toss in all the constants / assumptions we're using in this run
+    "ACCEPTABLE_ERROR_MG_L": ACCEPTABLE_ERROR_MG_L,
+    "ACCEPTABLE_ERROR_MMHG": ACCEPTABLE_ERROR_MMHG,
+    "LABEL_SCALE_FACTOR_MMHG": LABEL_SCALE_FACTOR_MMHG,
+    "_ACCEPTABLE_ERROR_NORMALIZED": _ACCEPTABLE_ERROR_NORMALIZED,
 }
 
 
@@ -76,9 +93,9 @@ def extract_label_values(df):
         Args:
             df: A DataFrame representing a standard cosmobot dataset (from /datasets)
         Returns:
-            Numpy array of disolved oxygen label values, normalized by a constant scale factor
+            Numpy array of dissolved oxygen label values, normalized by a constant scale factor
     """
-    scaled_labels = df["YSI Dissolved Oxygen (mmHg)"] / DO_SCALE_FACTOR
+    scaled_labels = df["YSI Dissolved Oxygen (mmHg)"] / LABEL_SCALE_FACTOR_MMHG
     return scaled_labels.values
 
 
@@ -160,10 +177,6 @@ def create_model(hyperparameters, input_numerical_data_dimensions):
         outputs=prediction_with_residual,
     )
 
-    # TODO: figure out how to create custom metrics & add ours:
-    # - % of predictions outside 0.5 mg/l error
-    # - Mean Absolute Error
-
     combined_residual_model.compile(
         optimizer=hyperparameters["optimizer"],
         loss=hyperparameters["loss"],
@@ -189,7 +202,7 @@ def run(
             batch_size: Training input batch size
             model_name: A string label for the model. Should match this module name
             dataset_filepath: Filepath (within this package) of the dataset resource to load and train with
-            additional_hyperparameters: Any other variables that are parameterizable for this model:
+            additional_hyperparameters: Any other variables that are parameterizable for this model
                 image_size: The desired side length for resized (square) images
                 optimizer: Which optimizer function to use
                 loss: Which loss function to use
@@ -200,10 +213,9 @@ def run(
         input_image_dimension=additional_hyperparameters["image_size"],
     )
 
-    wandb.config.update(
-        # TODO: check if these are the right dimension
-        {"train_sample_count": y_train.shape[0], "test_sample_count": y_test.shape[0]}
-    )
+    # Report dataset sizes to wandb now that we know them
+    wandb.config.train_sample_count = y_train.shape[0]
+    wandb.config.test_sample_count = y_test.shape[0]
 
     x_train_sr_shape = x_train[0].shape
 
@@ -211,6 +223,7 @@ def run(
         additional_hyperparameters, input_numerical_data_dimensions=x_train_sr_shape[1]
     )
 
+    # TODO: spend 5 minutes trying to find out why this works
     # I honestly have no idea why this makes our custom metric work... but it does.
     # https://stackoverflow.com/questions/45947351/how-to-use-tensorflow-metrics-in-keras
     keras.backend.get_session().run(tf.local_variables_initializer())
