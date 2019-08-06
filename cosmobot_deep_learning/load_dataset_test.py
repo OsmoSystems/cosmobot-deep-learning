@@ -1,4 +1,5 @@
 import os
+import pkg_resources
 
 import pandas as pd
 
@@ -52,9 +53,19 @@ class TestLoadMultiExperimentDatasetCsv:
 
 class TestGetPkgDatasetFilepath:
     def test_returns_correct_path_within_repo(self):
-        dataset_name = "2019-06-06--15-10-49_osmo_ml_datatset.csv"
-        actual = module.get_pkg_dataset_filepath(dataset_name)
+        actual = module.get_pkg_dataset_filepath("test_dataset.csv")
 
-        # The full path depends on the location of the repo in the filesystem, but the path
-        # should always end with the same relative path within this repo
-        assert actual.endswith(f"cosmobot_deep_learning/datasets/{dataset_name}")
+        expected = pkg_resources.resource_filename(
+            "cosmobot_deep_learning", "datasets/test_dataset.csv"
+        )
+
+        assert actual == expected
+
+
+class TestGetDatasetHash:
+    def test_returns_correct_hash(self):
+        dataset_filepath = pkg_resources.resource_filename(
+            "cosmobot_deep_learning", "datasets/test_dataset.csv"
+        )
+        actual = module.get_dataset_hash(dataset_filepath)
+        assert actual == "3af53004962e90b42e2bcfa82f6a345c"

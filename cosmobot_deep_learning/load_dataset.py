@@ -1,3 +1,4 @@
+import hashlib
 import os
 import pkg_resources
 
@@ -8,15 +9,6 @@ from .s3 import naive_sync_from_s3
 
 
 PACKAGE_NAME = "cosmobot_deep_learning"
-
-
-def get_pkg_dataset_filepath(dataset_name):
-    """ Returns the filepath to the given dataset inside this package.
-        (Assumes the dataset is correctly checked into this package.)
-    """
-    resource_path = "/".join(["datasets", dataset_name])
-    dataset_filepath = pkg_resources.resource_filename(PACKAGE_NAME, resource_path)
-    return dataset_filepath
 
 
 def _get_files_for_experiment_df(experiment_df, local_image_files_directory):
@@ -79,3 +71,18 @@ def load_multi_experiment_dataset_csv(dataset_csv_filepath: str) -> pd.DataFrame
 
     full_dataset["local_filepath"] = local_filepaths
     return full_dataset
+
+
+def get_pkg_dataset_filepath(dataset_filename):
+    """ Returns the filepath to the given dataset inside this package.
+        (Assumes the dataset is correctly checked into this package.)
+    """
+    dataset_filepath = pkg_resources.resource_filename(
+        PACKAGE_NAME, f"datasets/{dataset_filename}"
+    )
+    return dataset_filepath
+
+
+def get_dataset_hash(dataset_filepath):
+    with open(dataset_filepath, "rb") as f:
+        return hashlib.md5(f.read()).hexdigest()
