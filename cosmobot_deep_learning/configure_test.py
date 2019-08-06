@@ -7,9 +7,9 @@ from . import configure as module
 
 class TestParseArgs:
     def test_all_args_parsed_appropriately(self):
-        args_in = ["--gpu", "-1", "--batch-size", "10", "--epochs", "1000"]
+        args_in = ["--gpu", "-1"]
 
-        expected_args_out = {"gpu": -1, "batch_size": 10, "epochs": 1000}
+        expected_args_out = {"gpu": -1}
 
         assert vars(module.parse_model_run_args(args_in)) == expected_args_out
 
@@ -29,10 +29,10 @@ class TestGetModelNameFromFilepath:
         "filepath,expected_name",
         [
             ("/path/to/model.py", "model"),
-            ("/path/to/my_model.py", "my-model"),
+            ("/path/to/my_model.py", "my_model"),
             ("model.py", "model"),
             ("model", "model"),
-            (__file__, "configure-test"),  # meta
+            (__file__, "configure_test"),  # meta
         ],
     )
     def test_get_model_name_from_filepath(self, filepath, expected_name):

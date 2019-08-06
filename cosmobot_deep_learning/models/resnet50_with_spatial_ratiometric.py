@@ -11,17 +11,41 @@ from wandb.keras import WandbCallback
 from cosmobot_deep_learning.load_dataset import (
     load_multi_experiment_dataset_csv,
     get_pkg_dataset_filepath,
+    get_dataset_hash,
 )
 from cosmobot_deep_learning.configure import (
     parse_model_run_args,
     get_model_name_from_filepath,
 )
+from cosmobot_deep_learning.custom_metrics import fraction_outside_acceptable_error
 from cosmobot_deep_learning.preprocess_image import open_and_preprocess_images
 
 
-_DEFAULT_INPUT_IMAGE_SIZE = 128
 DO_SCALE_FACTOR = 160
-BAROMETER_SCALE_FACTOR = 800
+
+_DATASET_FILENAME = "2019-06-27--08-24-58_osmo_ml_dataset.csv"
+_DATASET_FILEPATH = get_pkg_dataset_filepath(_DATASET_FILENAME)
+
+_HYPERPARAMETERS = {
+    "model_name": get_model_name_from_filepath(__file__),
+    "dataset_filename": _DATASET_FILENAME,
+    "dataset_filepath": _DATASET_FILEPATH,
+    "dataset_hash": get_dataset_hash(_DATASET_FILEPATH),
+    "epochs": 10000,
+    "batch_size": 125,
+    "image_size": 128,
+    "optimizer": keras.optimizers.Adadelta(),
+    "loss": "mean_squared_error",
+    "metrics": [
+        "mean_squared_error",
+        "mean_absolute_error",
+        fraction_outside_acceptable_error,
+    ],
+    # TODO (or maybe skip for now?):
+    # - Small tweaks to model architecture, e.g.:
+    #   - Number of nodes in each dense layer
+    #   - Number of layers (e.g. if we want to try adding repeating layer blocks)
+}
 
 
 def extract_input_params(df):
@@ -37,10 +61,8 @@ def extract_input_params(df):
         {
             # Keep math on the same line
             # fmt: off
-            "temperature_set_point":
-                df["temperature_set_point"],
-            "spatial_ratiometric":
-                df["OO DO patch Wet r_msorm"] / df["Type 1 Chemistry Hand Applied Dry r_msorm"],
+            "temperature_set_point": df["temperature_set_point"],
+            "spatial_ratiometric": df["OO DO patch Wet r_msorm"] / df["Type 1 Chemistry Hand Applied Dry r_msorm"],
             # fmt: on
         }
     )
@@ -70,6 +92,8 @@ def prepare_dataset(raw_dataset, input_image_dimension):
             A 4-tuple containing (x_train, y_train, x_test, y_test) data sets.
     """
     train_samples = raw_dataset[raw_dataset["training_resampled"]]
+    # TODO: consider changing from "test" to "dev" (or "val"?).
+    # Would require updating dataset csv columne headers too
     test_samples = raw_dataset[raw_dataset["test"]]
 
     x_train_sr = extract_input_params(train_samples)
@@ -143,48 +167,59 @@ def create_model(hyperparameters, input_numerical_data_dimensions):
     combined_residual_model.compile(
         optimizer=hyperparameters["optimizer"],
         loss=hyperparameters["loss"],
-        # TODO: should this be defined in hyperparameters too?
-        # Since it's just what get reported, it seems like it would be kind of moot to report
-        # that we're going to report them
-        metrics=["mean_squared_error", "mean_absolute_error"],
+        metrics=hyperparameters["metrics"],
     )
 
     return combined_residual_model
 
 
-# TODO: consider switching to having explicit parameters here so that they can have type checking, etc.
-# In that case, I'd probably still pass some params along in a bag of params.
-def run(hyperparameters):
+# TODO: I made some of these explicit parameters - the ones I thought would definitely be shared between all models
+# But maybe it would be better to just pass a single `hyperparameters` dict?
+def run(
+    epochs: int,
+    batch_size: int,
+    model_name: str,
+    dataset_filepath: str,
+    **additional_hyperparameters
+):
     """ Use the provided hyperparameters to train the model in this module.
 
         Args:
-            hyperparameters: A dictionary of hyperparameter config, including:
-                dataset_name: Filename of the dataset resource to load and train with
-                epochs: Number of epochs to train for
-                batch_size: Training input batch size
+            epochs: Number of epochs to train for
+            batch_size: Training input batch size
+            model_name: A string label for the model. Should match this module name
+            dataset_filepath: Filepath (within this package) of the dataset resource to load and train with
+            additional_hyperparameters: Any other variables that are parameterizable for this model:
                 image_size: The desired side length for resized (square) images
                 optimizer: Which optimizer function to use
                 loss: Which loss function to use
 
     """
-    dataset_filepath = get_pkg_dataset_filepath(hyperparameters["dataset_name"])
-
     x_train, y_train, x_test, y_test = prepare_dataset(
         raw_dataset=load_multi_experiment_dataset_csv(dataset_filepath),
-        input_image_dimension=hyperparameters["image_size"],
+        input_image_dimension=additional_hyperparameters["image_size"],
+    )
+
+    wandb.config.update(
+        # TODO: check if these are the right dimension
+        {"train_sample_count": y_train.shape[0], "test_sample_count": y_test.shape[0]}
     )
 
     x_train_sr_shape = x_train[0].shape
 
     model = create_model(
-        hyperparameters, input_numerical_data_dimensions=x_train_sr_shape[1]
+        additional_hyperparameters, input_numerical_data_dimensions=x_train_sr_shape[1]
     )
+
+    # I honestly have no idea why this makes our custom metric work... but it does.
+    # https://stackoverflow.com/questions/45947351/how-to-use-tensorflow-metrics-in-keras
+    keras.backend.get_session().run(tf.local_variables_initializer())
 
     history = model.fit(
         x_train,
         y_train,
-        epochs=hyperparameters["epochs"],
-        batch_size=hyperparameters["batch_size"],
+        epochs,
+        batch_size,
         verbose=1,
         validation_data=(x_test, y_test),
         callbacks=[WandbCallback()],
@@ -194,30 +229,16 @@ def run(hyperparameters):
 
 
 if __name__ == "__main__":
-
     args = parse_model_run_args(sys.argv[1:])
 
+    # Note: we may eventually need to change how we set this to be compatible with
+    # hyperparameter sweeps. See https://www.wandb.com/articles/multi-gpu-sweeps
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
-    # TODO: set something up here to help us remember to pass the "jupyter" tag when
-    # running from jupyter?
-    # TODO: figure out the project name
-    wandb.init()
-    wandb.config.update(
-        {
-            "model_name": get_model_name_from_filepath(__file__),
-            "dataset_name": "2019-06-27--08-24-58_osmo_ml_dataset.csv",
-            "image_size": _DEFAULT_INPUT_IMAGE_SIZE,
-            "optimizer": keras.optimizers.Adadelta(),
-            "loss": "mean_squared_error",
-            # TODO:
-            # - Dataset hash
-            # - Number of samples in training dataset
-            # - Small tweaks to model architecture, e.g.:
-            #   - Number of nodes in each dense layer
-            #   - Number of layers (e.g. if we want to try adding repeating layer blocks)
-        }
+    wandb.init(
+        # Add a "jupyter" tag when running from jupyter notebooks
+        tags=[],
+        config=_HYPERPARAMETERS,
     )
-    wandb.config.update(args)
 
-    run(hyperparameters=wandb.config)
+    run(**_HYPERPARAMETERS)
