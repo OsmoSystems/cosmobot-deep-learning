@@ -14,7 +14,7 @@ def get_fraction_outside_acceptable_error_fn(acceptable_error):
             Aided by:
             https://stackoverflow.com/questions/45947351/how-to-use-tensorflow-metrics-in-keras
         """
-        _, fraction_below = tf.compat.v1.metrics.percentage_below(
+        _, fraction_below = tf.metrics.percentage_below(
             tf.abs(y_predicted - y), threshold=acceptable_error
         )
 
