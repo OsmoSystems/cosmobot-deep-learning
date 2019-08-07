@@ -22,6 +22,7 @@ setup(
         "scipy",
         # Newer versions of tensorflow have memory issues on our graphics cards
         # https://github.com/tensorflow/tensorflow/issues/24496#issuecomment-456243093
+        "tensorflow==1.12.0",
         "tensorflow-gpu==1.12.0",
         "tqdm",
         "wandb",
