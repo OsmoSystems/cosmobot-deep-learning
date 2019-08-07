@@ -1,16 +1,13 @@
-"""
-This model is a 2-branch network that combines:
-1. A pre-trained ResNet50 with new dense layers tacked on that trains on full images
-2. A dense network that trains on two numerical inputs:
-    - temperature
-    - spatial ratiometric ("OO DO patch Wet r_msorm" / "Type 1 Chemistry Hand Applied Dry r_msorm")
+""" 
+This model is a dense-layer network that trains only on two numerical inputs:
+ - temperature
+ - spatial ratiometric ("OO DO patch Wet r_msorm" / "Type 1 Chemistry Hand Applied Dry r_msorm")
 """
 
 import os
 import sys
 
 import keras
-import keras_resnet.models
 import pandas as pd
 import tensorflow as tf
 import wandb
@@ -34,8 +31,6 @@ from cosmobot_deep_learning.custom_metrics import (
     get_fraction_outside_acceptable_error_fn,
     magical_incantation_to_make_custom_metric_work,
 )
-from cosmobot_deep_learning.preprocess_image import open_and_preprocess_images
-
 
 _DATASET_FILENAME = "2019-06-27--08-24-58_osmo_ml_dataset.csv"
 _DATASET_FILEPATH = get_pkg_dataset_filepath(_DATASET_FILENAME)
@@ -55,9 +50,8 @@ _HYPERPARAMETERS = {
     "dataset_filename": _DATASET_FILENAME,
     "dataset_filepath": _DATASET_FILEPATH,
     "dataset_hash": get_dataset_hash(_DATASET_FILEPATH),
-    "epochs": 10000,
+    "epochs": 3000,
     "batch_size": 125,
-    "image_size": 128,
     "optimizer": keras.optimizers.Adadelta(),
     "loss": "mean_squared_error",
     # Toss in all the constants / assumptions we're using in this run
@@ -102,68 +96,38 @@ def extract_label_values(df):
     return scaled_labels.values
 
 
-def prepare_dataset(raw_dataset, input_image_dimension):
+def prepare_dataset(raw_dataset):
     """ Transform a dataset CSV into the appropriate inputs for training the model in this module.
 
         Args:
-            raw_dataset: A DataFrame corresponding to a standard cosmobot dataset CSV
-            input_image_dimension: The desired side length of the output (square) images
+            raw_dataset: A DataFrame corresponding to a standard cosmobot dataset csv
         Returns:
             A 4-tuple containing (x_train, y_train, x_test, y_test) data sets.
     """
+
     train_samples = raw_dataset[raw_dataset["training_resampled"]]
     test_samples = raw_dataset[raw_dataset["test"]]
 
     x_train_sr = extract_input_params(train_samples)
-    x_train_images = open_and_preprocess_images(
-        train_samples["local_filepath"].values, input_image_dimension
-    )
     y_train_do = extract_label_values(train_samples)
 
     x_test_sr = extract_input_params(test_samples)
-    x_test_images = open_and_preprocess_images(
-        test_samples["local_filepath"].values, input_image_dimension
-    )
     y_test_do = extract_label_values(test_samples)
 
-    return (
-        [x_train_sr, x_train_images],
-        [y_train_do],
-        [x_test_sr, x_test_images],
-        [y_test_do],
-    )
+    return (x_train_sr, y_train_do, x_test_sr, y_test_do)
 
 
-def create_model(hyperparameters, input_numerical_data_dimension):
+def create_model(hyperparameters, input_numerical_data_dimensions):
     """ Build a model
 
     Args:
         hyperparameters: See definition in `run()`
         input_numerical_data_dimension: The number of numerical inputs to feed to the model
     """
-    image_size = hyperparameters["image_size"]
-    input_layer = keras.layers.Input(shape=(image_size, image_size, 3))
-
-    resnet = keras_resnet.models.ResNet50(input_layer, include_top=False)
-    intermediate_resnet_model = keras.Model(
-        inputs=resnet.input, outputs=resnet.get_layer("res5c_relu").get_output_at(0)
-    )
-
-    residual_model = keras.Sequential(
-        [
-            intermediate_resnet_model,
-            keras.layers.Flatten(),
-            keras.layers.Dense(32),
-            keras.layers.BatchNormalization(),
-            keras.layers.advanced_activations.LeakyReLU(),
-            keras.layers.Dense(1, name="residual"),
-        ]
-    )
-
-    sv_model = keras.models.Sequential(
+    sr_model = keras.models.Sequential(
         [
             keras.layers.Dense(
-                11, activation=tf.nn.relu, input_shape=[input_numerical_data_dimension]
+                11, activation=tf.nn.relu, input_shape=[input_numerical_data_dimensions]
             ),
             keras.layers.Dense(32),
             keras.layers.advanced_activations.LeakyReLU(),
@@ -171,20 +135,7 @@ def create_model(hyperparameters, input_numerical_data_dimension):
         ]
     )
 
-    prediction_with_residual = keras.layers.add(
-        [
-            sv_model.get_layer(name="sv_DO").output,
-            residual_model.get_layer(name="residual").output,
-        ],
-        name="prediction_with_residual",
-    )
-
-    combined_residual_model = keras.models.Model(
-        inputs=[sv_model.get_input_at(0), residual_model.get_input_at(0)],
-        outputs=prediction_with_residual,
-    )
-
-    combined_residual_model.compile(
+    sr_model.compile(
         optimizer=hyperparameters["optimizer"],
         loss=hyperparameters["loss"],
         metrics=[
@@ -194,7 +145,7 @@ def create_model(hyperparameters, input_numerical_data_dimension):
         ],
     )
 
-    return combined_residual_model
+    return sr_model
 
 
 def run(
@@ -212,25 +163,20 @@ def run(
             model_name: A string label for the model. Should match this module name
             dataset_filepath: Filepath (within this package) of the dataset resource to load and train with
             additional_hyperparameters: Any other variables that are parameterizable for this model
-                image_size: The desired side length for resized (square) images
                 optimizer: Which optimizer function to use
                 loss: Which loss function to use
 
     """
     x_train, y_train, x_test, y_test = prepare_dataset(
-        raw_dataset=load_multi_experiment_dataset_csv(dataset_filepath),
-        input_image_dimension=additional_hyperparameters["image_size"],
+        raw_dataset=load_multi_experiment_dataset_csv(dataset_filepath)
     )
 
     # Report dataset sizes to wandb now that we know them
-    wandb.config.train_sample_count = y_train[0].shape[0]
-    wandb.config.test_sample_count = y_test[0].shape[0]
-
-    x_train_sr = x_train[0]
+    wandb.config.train_sample_count = y_train.shape[0]
+    wandb.config.test_sample_count = y_test.shape[0]
 
     model = create_model(
-        hyperparameters=additional_hyperparameters,
-        input_numerical_data_dimension=x_train_sr.shape[1],
+        additional_hyperparameters, input_numerical_data_dimensions=x_train.shape[1]
     )
 
     magical_incantation_to_make_custom_metric_work()

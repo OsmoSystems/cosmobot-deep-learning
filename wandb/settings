@@ -1,4 +1,4 @@
 [default]
 entity: osmo
-project: benchtop-do
+project: cosmobot-do-measurement
 base_url: https://api.wandb.ai

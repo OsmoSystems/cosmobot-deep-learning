@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from tqdm.auto import tqdm
 
 
 from picamraw import PiRawBayer, PiCameraVersion
@@ -77,3 +78,20 @@ def open_crop_and_scale_image(raw_image_path: str, output_size: int):
     """
     rgb_image = open_as_rgb(raw_image_path)
     return crop_and_scale_image(rgb_image, output_size)
+
+
+def open_and_preprocess_images(image_filepaths, image_size):
+    """ Preprocess the input images and prepare them for direct use in training a model
+
+        Args:
+            image_filepaths: An iterable list of filepaths to images to prepare
+            image_size: The desired side length of the output (square) image
+        Returns:
+            A single numpy array of all images resized to the appropriate dimensions and concatenated
+    """
+    return np.array(
+        [
+            open_crop_and_scale_image(image_filepath, output_size=image_size)
+            for image_filepath in tqdm(image_filepaths)
+        ]
+    )

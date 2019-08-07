@@ -1,4 +1,5 @@
 import os
+import pkg_resources
 
 import pandas as pd
 
@@ -48,3 +49,23 @@ class TestLoadMultiExperimentDatasetCsv:
         pd.testing.assert_frame_equal(
             expected_returned_dataframe, actual_returned_dataframe
         )
+
+
+class TestGetPkgDatasetFilepath:
+    def test_returns_correct_path_within_repo(self):
+        actual = module.get_pkg_dataset_filepath("test_dataset.csv")
+
+        expected = pkg_resources.resource_filename(
+            "cosmobot_deep_learning", "datasets/test_dataset.csv"
+        )
+
+        assert actual == expected
+
+
+class TestGetDatasetHash:
+    def test_returns_correct_hash(self):
+        dataset_filepath = pkg_resources.resource_filename(
+            "cosmobot_deep_learning", "datasets/test_dataset.csv"
+        )
+        actual = module.get_dataset_hash(dataset_filepath)
+        assert actual == "3af53004962e90b42e2bcfa82f6a345c"

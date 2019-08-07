@@ -13,3 +13,7 @@ __pycache__/
 
 # Mypy type checking
 .mypy_cache/
+
+# Exclude W&B runs and debug (but keep settings file)
+wandb/run*
+wandb/debug.log
