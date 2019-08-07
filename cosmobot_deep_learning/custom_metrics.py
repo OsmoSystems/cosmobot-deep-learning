@@ -1,3 +1,4 @@
+import keras
 import tensorflow as tf
 
 
@@ -21,3 +22,11 @@ def get_fraction_outside_acceptable_error_fn(acceptable_error):
         return 1 - fraction_below
 
     return fraction_outside_acceptable_error
+
+
+def magical_incantation_to_make_custom_metric_work():
+    """ This magical incantation must be called before model.fit() to make our custom metric work
+        I honestly have no idea why this makes our custom metric work... but it does.
+        https://stackoverflow.com/questions/45947351/how-to-use-tensorflow-metrics-in-keras
+    """
+    keras.backend.get_session().run(tf.local_variables_initializer())

@@ -166,7 +166,7 @@ def run(
         additional_hyperparameters, input_numerical_data_dimensions=x_train.shape[1]
     )
 
-    keras.backend.get_session().run(tf.local_variables_initializer())
+    magical_incantation_to_make_custom_metric_work()
 
     history = model.fit(
         x_train,

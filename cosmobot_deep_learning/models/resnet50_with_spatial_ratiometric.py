@@ -221,10 +221,7 @@ def run(
         additional_hyperparameters, input_numerical_data_dimensions=x_train_sr_shape[1]
     )
 
-    # TODO: spend 5 minutes trying to find out why this works
-    # I honestly have no idea why this makes our custom metric work... but it does.
-    # https://stackoverflow.com/questions/45947351/how-to-use-tensorflow-metrics-in-keras
-    keras.backend.get_session().run(tf.local_variables_initializer())
+    magical_incantation_to_make_custom_metric_work()
 
     history = model.fit(
         x_train,
