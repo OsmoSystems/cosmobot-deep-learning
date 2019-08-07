@@ -1,3 +1,9 @@
+""" 
+This model is a dense-layer network that trains only on two numerical inputs:
+ - temperature
+ - spatial ratiometric ("OO DO patch Wet r_msorm" / "Type 1 Chemistry Hand Applied Dry r_msorm")
+"""
+
 import os
 import sys
 
@@ -23,6 +29,7 @@ from cosmobot_deep_learning.constants import (
 )
 from cosmobot_deep_learning.custom_metrics import (
     get_fraction_outside_acceptable_error_fn,
+    magical_incantation_to_make_custom_metric_work,
 )
 
 _DATASET_FILENAME = "2019-06-27--08-24-58_osmo_ml_dataset.csv"
@@ -111,6 +118,12 @@ def prepare_dataset(raw_dataset):
 
 
 def create_model(hyperparameters, input_numerical_data_dimensions):
+    """ Build a model
+
+    Args:
+        hyperparameters: See definition in `run()`
+        input_numerical_data_dimension: The number of numerical inputs to feed to the model
+    """
     sr_model = keras.models.Sequential(
         [
             keras.layers.Dense(

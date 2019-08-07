@@ -1,3 +1,11 @@
+"""
+This model is a 2-branch network that combines:
+1. A pre-trained ResNet50 with new dense layers tacked on that trains on full images
+2. A dense network that trains on two numerical inputs:
+    - temperature
+    - spatial ratiometric ("OO DO patch Wet r_msorm" / "Type 1 Chemistry Hand Applied Dry r_msorm")
+"""
+
 import os
 import sys
 
@@ -24,6 +32,7 @@ from cosmobot_deep_learning.constants import (
 )
 from cosmobot_deep_learning.custom_metrics import (
     get_fraction_outside_acceptable_error_fn,
+    magical_incantation_to_make_custom_metric_work,
 )
 from cosmobot_deep_learning.preprocess_image import open_and_preprocess_images
 
@@ -103,8 +112,6 @@ def prepare_dataset(raw_dataset, input_image_dimension):
             A 4-tuple containing (x_train, y_train, x_test, y_test) data sets.
     """
     train_samples = raw_dataset[raw_dataset["training_resampled"]]
-    # TODO: consider changing from "test" to "dev" (or "val"?).
-    # Would require updating dataset csv columne headers too
     test_samples = raw_dataset[raw_dataset["test"]]
 
     x_train_sr = extract_input_params(train_samples)
@@ -127,7 +134,13 @@ def prepare_dataset(raw_dataset, input_image_dimension):
     )
 
 
-def create_model(hyperparameters, input_numerical_data_dimensions):
+def create_model(hyperparameters, input_numerical_data_dimension):
+    """ Build a model
+
+    Args:
+        hyperparameters: See definition in `run()`
+        input_numerical_data_dimension: The number of numerical inputs to feed to the model
+    """
     image_size = hyperparameters["image_size"]
     input_layer = keras.layers.Input(shape=(image_size, image_size, 3))
 
@@ -150,7 +163,7 @@ def create_model(hyperparameters, input_numerical_data_dimensions):
     sv_model = keras.models.Sequential(
         [
             keras.layers.Dense(
-                11, activation=tf.nn.relu, input_shape=[input_numerical_data_dimensions]
+                11, activation=tf.nn.relu, input_shape=[input_numerical_data_dimension]
             ),
             keras.layers.Dense(32),
             keras.layers.advanced_activations.LeakyReLU(),
@@ -184,8 +197,6 @@ def create_model(hyperparameters, input_numerical_data_dimensions):
     return combined_residual_model
 
 
-# TODO: I made some of these explicit parameters - the ones I thought would definitely be shared between all models
-# But maybe it would be better to just pass a single `hyperparameters` dict?
 def run(
     epochs: int,
     batch_size: int,
@@ -215,10 +226,11 @@ def run(
     wandb.config.train_sample_count = y_train[0].shape[0]
     wandb.config.test_sample_count = y_test[0].shape[0]
 
-    x_train_sr_shape = x_train[0].shape
+    x_train_sr = x_train[0]
 
     model = create_model(
-        additional_hyperparameters, input_numerical_data_dimensions=x_train_sr_shape[1]
+        hyperparameters=additional_hyperparameters,
+        input_numerical_data_dimension=x_train_sr.shape[1],
     )
 
     magical_incantation_to_make_custom_metric_work()
