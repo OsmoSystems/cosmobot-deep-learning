@@ -57,38 +57,25 @@ class TestLoadMultiExperimentDatasetCsv:
 
         pd.testing.assert_frame_equal(expected_df, actual_df)
 
-    def test_downloads_large_dataset_files_to_correct_local_paths(
+    # This is a regression test for a strange issue where progress_apply sometimes
+    # returns a series of the wrong shape, e.g. (1, 10) instead of (10,).
+    # I seem to get a consistent repro when there is only one experiment
+    def test_loads_single_experiment_dataset_files(
         self, tmp_path, mocker, mock_download_s3_files
     ):
-        # This is a regression test for a strange issue where progress_apply sometimes
-        # returns a series of a different shape, e.g. (1, 10) instead of (10,).
-        # I seem to get a consistent repro when there is only one experiment
+
         test_df = pd.DataFrame(
             [
-                {
-                    "experiment": "experiment_1",
-                    "image": "image_1.jpeg",
-                    "other": "other",
-                },
-                {
-                    "experiment": "experiment_1",
-                    "image": "image_2.jpeg",
-                    "other": "other",
-                },
+                {"experiment": "experiment_1", "image": "image_1.jpeg"},
+                {"experiment": "experiment_1", "image": "image_2.jpeg"},
             ]
         )
         csv_filepath = os.path.join(tmp_path, "big_special_dataset.csv")
         test_df.to_csv(csv_filepath, index=False)
 
-        expected_df = test_df.copy()
-        expected_df["local_filepath"] = [
-            os.path.join(module.LOCAL_DATA_DIRECTORY, "experiment_1", "image_1.jpeg"),
-            os.path.join(module.LOCAL_DATA_DIRECTORY, "experiment_1", "image_2.jpeg"),
-        ]
-
-        actual_df = module.load_multi_experiment_dataset_csv(csv_filepath)
-
-        pd.testing.assert_frame_equal(expected_df, actual_df)
+        # Test is just that this doesn't blow up
+        # Error looks like: "ValueError: Wrong number of items passed 2, placement implies 1"
+        module.load_multi_experiment_dataset_csv(csv_filepath)
 
 
 class TestGetPkgDatasetFilepath:
