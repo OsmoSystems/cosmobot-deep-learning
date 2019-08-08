@@ -15,12 +15,6 @@ class ComparableSeries(pd.Series):
         return (super(ComparableSeries, self).values == other.values).all()
 
 
-def _mock_naive_sync_from_s3(
-    experiment_directory: str, file_names: pd.Series, output_directory_path: str
-):
-    return file_names.apply()
-
-
 @pytest.fixture
 def mock_download_s3_files(mocker):
     return mocker.patch.object(s3_module, "_download_s3_files")
