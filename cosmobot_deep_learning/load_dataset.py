@@ -16,13 +16,15 @@ def _get_files_for_experiment_df(experiment_df):
     # All rows in the group are the same experiment, so just grab the first one
     experiment_directory = experiment_df["experiment"].values[0]
 
+    image_filenames = experiment_df["image"]
+
     local_image_files_directory = os.path.join(
         LOCAL_DATA_DIRECTORY, experiment_directory
     )
 
     return naive_sync_from_s3(
         experiment_directory=experiment_directory,
-        file_names=experiment_df["image"],
+        file_names=image_filenames,
         output_directory_path=local_image_files_directory,
     )
 
@@ -67,7 +69,10 @@ def load_multi_experiment_dataset_csv(dataset_csv_filepath: str) -> pd.DataFrame
 
     print("Done syncing images. thanks for waiting.")
 
-    full_dataset["local_filepath"] = local_filepaths
+    # Transpose because progress_apply on the groupby object return series of the wrong shape
+    # when there's only one experiment, e.g. (1, 10) instead of (10,). Where there are
+    # multiple experiments, it returns the correct shape, and transpose doesn't affect it
+    full_dataset["local_filepath"] = local_filepaths.T
     return full_dataset
 
 
