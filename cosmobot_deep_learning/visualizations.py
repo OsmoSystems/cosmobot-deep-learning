@@ -15,7 +15,7 @@ def _get_training_loss_over_epochs_figure(training_history):
     loss_values = history_dict["loss"]
     val_loss_values = history_dict["val_loss"]
     epochs = list(range(1, len(loss_values) + 1))
-    rollling_median_n_epochs = 200
+    rolling_median_n_epochs = 200
 
     return go.Figure(
         [
@@ -24,16 +24,14 @@ def _get_training_loss_over_epochs_figure(training_history):
             {
                 "x": epochs,
                 "y": list(
-                    pd.Series(val_loss_values)
-                    .rolling(rollling_median_n_epochs)
-                    .median()
+                    pd.Series(val_loss_values).rolling(rolling_median_n_epochs).median()
                 ),
                 "name": "Dev loss trailing median",
             },
             {
                 "x": epochs,
                 "y": list(
-                    pd.Series(loss_values).rolling(rollling_median_n_epochs).median()
+                    pd.Series(loss_values).rolling(rolling_median_n_epochs).median()
                 ),
                 "name": "Training loss trailing median",
             },
@@ -110,7 +108,7 @@ def log_training_loss_over_epochs(history):
     """
     Logs a visualization of "Training loss over epochs" to W&B
 
-    Arguments:
+    Args:
         history: History object from model.fit()
     """
     _log_figure_to_wandb(
@@ -127,7 +125,7 @@ def log_do_prediction_error(
     """
     Logs a visualization of "DO prediction error" to W&B
 
-    Arguments:
+    Args:
         train_labels: pandas array of the labels (YSI DO mmHg) for training data
         train_predictions: pandas array of predictions on training data
         dev_labels: pandas array of the labels (YSI DO mmHg) for dev data
@@ -150,7 +148,7 @@ def log_actual_vs_predicted_do(
     """
     Logs a visualization of "Actual vs predicted DO" to W&B
 
-    Arguments:
+    Args:
         train_labels: pandas array of the labels (YSI DO mmHg) for training data
         train_predictions: pandas array of predictions on training data
         dev_labels: pandas array of the labels (YSI DO mmHg) for dev data
