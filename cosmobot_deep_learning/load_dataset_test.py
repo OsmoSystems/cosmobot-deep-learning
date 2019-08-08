@@ -2,53 +2,60 @@ import os
 import pkg_resources
 
 import pandas as pd
+import pytest
 
 from . import load_dataset as module
+from . import s3 as s3_module
 
 
 class ComparableSeries(pd.Series):
     """ pandas Series patched to allow equality testing """
 
     def __eq__(self, other):
-        return (super(ComparableSeries, self) == other).all()
+        return (super(ComparableSeries, self).values == other.values).all()
+
+
+def _mock_naive_sync_from_s3(
+    experiment_directory: str, file_names: pd.Series, output_directory_path: str
+):
+    return file_names.apply()
+
+
+@pytest.fixture
+def mock_download_s3_files(mocker):
+    return mocker.patch.object(s3_module, "_download_s3_files")
 
 
 class TestLoadMultiExperimentDatasetCsv:
-    def test_calls_get_local_filepaths_with_appropriate_info_and_returns_dataframe(
-        self, tmp_path, mocker
+    def test_downloads_files_to_correct_local_paths_and_returns_dataframe(
+        self, tmp_path, mocker, mock_download_s3_files
     ):
-        filename = "filenameeeee.jpeg"
-        experiment_name = "expeeeeeriment"
         test_df = pd.DataFrame(
-            [{"experiment": experiment_name, "image": filename, "other": "other"}]
+            [
+                {
+                    "experiment": "experiment_1",
+                    "image": "image_1.jpeg",
+                    "other": "other",
+                },
+                {
+                    "experiment": "experiment_2",
+                    "image": "image_2.jpeg",
+                    "other": "other",
+                },
+            ]
         )
-        csv_filename = "big_special_dataset.csv"
-        csv_filepath = os.path.join(tmp_path, csv_filename)
+        csv_filepath = os.path.join(tmp_path, "big_special_dataset.csv")
         test_df.to_csv(csv_filepath, index=False)
 
-        local_jpeg_path = mocker.sentinel.local_jpeg_path
-        expected_returned_dataframe = test_df.copy()
-        expected_returned_dataframe["local_filepath"] = [local_jpeg_path]
+        expected_df = test_df.copy()
+        expected_df["local_filepath"] = [
+            os.path.join(module.LOCAL_DATA_DIRECTORY, "experiment_1", "image_1.jpeg"),
+            os.path.join(module.LOCAL_DATA_DIRECTORY, "experiment_2", "image_2.jpeg"),
+        ]
 
-        mock_download_s3_files_and_get_local_filepaths = mocker.patch.object(
-            module, "naive_sync_from_s3", return_value=pd.Series([local_jpeg_path])
-        )
+        actual_df = module.load_multi_experiment_dataset_csv(csv_filepath)
 
-        actual_returned_dataframe = module.load_multi_experiment_dataset_csv(
-            csv_filepath
-        )
-
-        mock_download_s3_files_and_get_local_filepaths.assert_called_with(
-            experiment_directory=experiment_name,
-            file_names=ComparableSeries([filename]),
-            output_directory_path=os.path.expanduser(
-                "~/osmo/cosmobot-data-sets/big_special_dataset"
-            ),
-        )
-
-        pd.testing.assert_frame_equal(
-            expected_returned_dataframe, actual_returned_dataframe
-        )
+        pd.testing.assert_frame_equal(expected_df, actual_df)
 
 
 class TestGetPkgDatasetFilepath:
