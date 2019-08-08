@@ -70,8 +70,8 @@ def load_multi_experiment_dataset_csv(dataset_csv_filepath: str) -> pd.DataFrame
     print("Done syncing images. thanks for waiting.")
 
     # Transpose because progress_apply on the groupby object return series of the wrong shape
-    # when there's only one experiment, e.g. (1, 10) instead of (10,). Where there are
-    # multiple experiments, it returns the correct shape, and transpose doesn't affect it
+    # e.g. (1, 10) instead of (10,), when there's only one experiment. When there are multiple
+    # experiments, it returns the correct single-dimensional shape, and transpose has no effect
     full_dataset["local_filepath"] = local_filepaths.T
     return full_dataset
 
