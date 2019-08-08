@@ -1,4 +1,4 @@
-""" 
+"""
 This model is a dense-layer network that trains only on two numerical inputs:
  - temperature
  - spatial ratiometric ("OO DO patch Wet r_msorm" / "Type 1 Chemistry Hand Applied Dry r_msorm")
@@ -31,6 +31,8 @@ from cosmobot_deep_learning.custom_metrics import (
     get_fraction_outside_acceptable_error_fn,
     magical_incantation_to_make_custom_metric_work,
 )
+from cosmobot_deep_learning import visualizations
+
 
 _DATASET_FILENAME = "2019-06-27--08-24-58_osmo_ml_dataset.csv"
 _DATASET_FILEPATH = get_pkg_dataset_filepath(_DATASET_FILENAME)
@@ -148,6 +150,22 @@ def create_model(hyperparameters, input_numerical_data_dimensions):
     return sr_model
 
 
+def _log_visualizations(model, training_history, x_train, y_train, x_test, y_test):
+    train_inputs = y_train * LABEL_SCALE_FACTOR_MMHG
+    train_predictions = model.predict(x_train).flatten() * LABEL_SCALE_FACTOR_MMHG
+
+    dev_inputs = y_test * LABEL_SCALE_FACTOR_MMHG
+    dev_predictions = model.predict(x_test).flatten() * LABEL_SCALE_FACTOR_MMHG
+
+    visualizations.log_training_loss_over_epochs(training_history)
+    visualizations.log_do_prediction_error(
+        train_inputs, train_predictions, dev_inputs, dev_predictions
+    )
+    visualizations.log_actual_vs_predicted_do(
+        train_inputs, train_predictions, dev_inputs, dev_predictions
+    )
+
+
 def run(
     epochs: int,
     batch_size: int,
@@ -190,6 +208,8 @@ def run(
         validation_data=(x_test, y_test),
         callbacks=[WandbCallback()],
     )
+
+    _log_visualizations(model, history, x_train, y_train, x_test, y_test)
 
     return history
 

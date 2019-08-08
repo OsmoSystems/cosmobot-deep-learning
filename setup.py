@@ -18,6 +18,7 @@ setup(
         # Pandas 0.25 breaks tqdm (for now)
         # We can unpin when https://github.com/tqdm/tqdm/issues/780 is fixed
         "pandas <=0.24.2",
+        "plotly",
         "picamraw",
         "scipy",
         # Newer versions of tensorflow have memory issues on our graphics cards
