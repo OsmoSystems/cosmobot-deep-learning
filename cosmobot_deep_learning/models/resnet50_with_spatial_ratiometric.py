@@ -37,7 +37,7 @@ from cosmobot_deep_learning.custom_metrics import (
 from cosmobot_deep_learning.preprocess_image import open_and_preprocess_images
 
 
-_DATASET_FILENAME = "2019-08-08--11-09-20_osmo_ml_dataset.csv"
+_DATASET_FILENAME = "2019-08-09--14-33-26_osmo_ml_dataset.csv"
 _DATASET_FILEPATH = get_pkg_dataset_filepath(_DATASET_FILENAME)
 
 
