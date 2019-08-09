@@ -12,11 +12,12 @@ PACKAGE_NAME = "cosmobot_deep_learning"
 LOCAL_DATA_DIRECTORY = os.path.expanduser("~/osmo/cosmobot-data-sets/")
 
 
-def _get_files_for_experiment_df(experiment_df):
-    # All rows in the group are the same experiment, so just grab the first one
-    experiment_directory = experiment_df["experiment"].values[0]
+def _get_files_for_experiment_df(experiment_df_group):
+    # The experiment_df_group is a groupby object which has a .name property
+    # corresponding to the groupby value (in this case the experiment name)
+    experiment_directory = experiment_df_group.name
 
-    image_filenames = experiment_df["image"]
+    image_filenames = experiment_df_group["image"]
 
     local_image_files_directory = os.path.join(
         LOCAL_DATA_DIRECTORY, experiment_directory
