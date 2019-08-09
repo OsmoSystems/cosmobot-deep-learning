@@ -9,14 +9,23 @@ from .s3 import naive_sync_from_s3
 
 
 PACKAGE_NAME = "cosmobot_deep_learning"
+LOCAL_DATA_DIRECTORY = os.path.expanduser("~/osmo/cosmobot-data-sets/")
 
 
-def _get_files_for_experiment_df(experiment_df, local_image_files_directory):
-    # All rows in the group are the same experiment, so just grab the first one
-    experiment_directory = experiment_df["experiment"].values[0]
+def _get_files_for_experiment_df(experiment_df_group):
+    # The experiment_df_group is a groupby object which has a .name property
+    # corresponding to the groupby value (in this case the experiment name)
+    experiment_directory = experiment_df_group.name
+
+    image_filenames = experiment_df_group["image"]
+
+    local_image_files_directory = os.path.join(
+        LOCAL_DATA_DIRECTORY, experiment_directory
+    )
+
     return naive_sync_from_s3(
         experiment_directory=experiment_directory,
-        file_names=experiment_df["image"],
+        file_names=image_filenames,
         output_directory_path=local_image_files_directory,
     )
 
@@ -37,8 +46,8 @@ def load_multi_experiment_dataset_csv(dataset_csv_filepath: str) -> pd.DataFrame
         the locally stored images.
 
     Side-effects:
-        * syncs images corresponding to the ML dataset, from s3 to the standard folder:
-            ~/osmo/cosmobot-data-sets/{CSV file name without extension}/
+        * syncs images corresponding to the ML dataset from s3 to their associated experiment directory:
+            ~/osmo/cosmobot-data-sets/{experiment_directory}/
         * prints status messages so that the user can keep track of this very slow operation
         * calls tqdm.auto.tqdm.pandas() which patches pandas datatypes to have `.progress_apply()` methods
     """
@@ -47,12 +56,7 @@ def load_multi_experiment_dataset_csv(dataset_csv_filepath: str) -> pd.DataFrame
 
     full_dataset = pd.read_csv(dataset_csv_filepath)
 
-    dataset_csv_filename = os.path.basename(dataset_csv_filepath)
-    local_image_files_directory = os.path.join(
-        os.path.expanduser("~/osmo/cosmobot-data-sets/"),
-        os.path.splitext(dataset_csv_filename)[0],  # Get rid of the .csv part
-    )
-
+    # Group by experiment so that we can download from each experiment folder on s3
     dataset_by_experiment = full_dataset.groupby(
         "experiment", as_index=False, group_keys=False
     )
@@ -62,14 +66,14 @@ def load_multi_experiment_dataset_csv(dataset_csv_filepath: str) -> pd.DataFrame
         "you I am done:"
     )
 
-    local_filepaths = dataset_by_experiment.progress_apply(
-        _get_files_for_experiment_df,
-        local_image_files_directory=local_image_files_directory,
-    )
+    local_filepaths = dataset_by_experiment.progress_apply(_get_files_for_experiment_df)
 
     print("Done syncing images. thanks for waiting.")
 
-    full_dataset["local_filepath"] = local_filepaths
+    # Transpose because progress_apply on the groupby object return series of the wrong shape
+    # e.g. (1, 10) instead of (10,), when there's only one experiment. When there are multiple
+    # experiments, it returns the correct single-dimensional shape, and transpose has no effect
+    full_dataset["local_filepath"] = local_filepaths.T
     return full_dataset
 
 
