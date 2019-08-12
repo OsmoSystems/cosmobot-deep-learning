@@ -83,7 +83,7 @@ def extract_input_params(df):
             # Keep math on the same line
             # fmt: off
             "PicoLog temperature (C)": df["PicoLog temperature (C)"],
-            "spatial_ratiometric": df["OO DO patch r_msorm"] / df["reference patch r_msorm"],
+            "spatial_ratiometric": df["DO patch r_msorm"] / df["reference patch r_msorm"],
             # fmt: on
         }
     )
