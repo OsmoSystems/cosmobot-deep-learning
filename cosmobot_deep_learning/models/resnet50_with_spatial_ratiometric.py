@@ -56,7 +56,7 @@ _HYPERPARAMETERS = {
     "dataset_filename": _DATASET_FILENAME,
     "dataset_filepath": _DATASET_FILEPATH,
     "dataset_hash": get_dataset_hash(_DATASET_FILEPATH),
-    "epochs": 10000,
+    "epochs": 3,
     "batch_size": 125,
     "image_size": 128,
     "optimizer": keras.optimizers.Adadelta(),
@@ -145,9 +145,12 @@ def create_model(hyperparameters, input_numerical_data_dimension):
     image_size = hyperparameters["image_size"]
     input_layer = keras.layers.Input(shape=(image_size, image_size, 3))
 
-    resnet = keras_resnet.models.ResNet50(input_layer, include_top=False)
+    resnet = keras_resnet.models.ResNet18(input_layer, include_top=False)
+    RESNET_OUTPUT_LAYER_NAME = "res5b1_relu"
+
     intermediate_resnet_model = keras.Model(
-        inputs=resnet.input, outputs=resnet.get_layer("res5c_relu").get_output_at(0)
+        inputs=resnet.input,
+        outputs=resnet.get_layer(RESNET_OUTPUT_LAYER_NAME).get_output_at(0),
     )
 
     residual_model = keras.Sequential(
@@ -218,6 +221,7 @@ def run(
                 loss: Which loss function to use
 
     """
+
     x_train, y_train, x_test, y_test = prepare_dataset(
         raw_dataset=load_multi_experiment_dataset_csv(dataset_filepath),
         input_image_dimension=additional_hyperparameters["image_size"],
