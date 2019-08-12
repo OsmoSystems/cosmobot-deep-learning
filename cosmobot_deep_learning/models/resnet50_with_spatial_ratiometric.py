@@ -57,7 +57,7 @@ _HYPERPARAMETERS = {
     "dataset_filepath": _DATASET_FILEPATH,
     "dataset_hash": get_dataset_hash(_DATASET_FILEPATH),
     "epochs": 3,
-    "batch_size": 125,
+    "batch_size": 128,
     "image_size": 128,
     "optimizer": keras.optimizers.Adadelta(),
     "loss": "mean_squared_error",
@@ -145,8 +145,8 @@ def create_model(hyperparameters, input_numerical_data_dimension):
     image_size = hyperparameters["image_size"]
     input_layer = keras.layers.Input(shape=(image_size, image_size, 3))
 
-    resnet = keras_resnet.models.ResNet18(input_layer, include_top=False)
-    RESNET_OUTPUT_LAYER_NAME = "res5b1_relu"
+    resnet = keras_resnet.models.ResNet50(input_layer, include_top=False)
+    RESNET_OUTPUT_LAYER_NAME = "res5c_relu"
 
     intermediate_resnet_model = keras.Model(
         inputs=resnet.input,
@@ -171,6 +171,7 @@ def create_model(hyperparameters, input_numerical_data_dimension):
             ),
             keras.layers.Dense(32),
             keras.layers.advanced_activations.LeakyReLU(),
+            keras.layers.Dropout(0.10),
             keras.layers.Dense(1, name="sv_DO"),
         ]
     )
