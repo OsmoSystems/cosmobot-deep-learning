@@ -1,4 +1,4 @@
-""" 
+"""
 This model is a dense-layer network that trains only on two numerical inputs:
  - temperature
  - spatial ratiometric ("OO DO patch Wet r_msorm" / "Type 1 Chemistry Hand Applied Dry r_msorm")
