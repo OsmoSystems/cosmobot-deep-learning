@@ -199,18 +199,18 @@ def create_model(hyperparameters, input_numerical_data_dimension):
 
 
 def _log_visualizations(model, training_history, x_train, y_train, x_test, y_test):
-    train_inputs = y_train[0] * LABEL_SCALE_FACTOR_MMHG
-    train_predictions = model.predict(x_train).flatten() * LABEL_SCALE_FACTOR_MMHG
+    train_labels = y_train[0] * LABEL_SCALE_FACTOR_MMHG
+    train_predictions = model.predict(x_train) * LABEL_SCALE_FACTOR_MMHG
 
-    dev_inputs = y_test[0] * LABEL_SCALE_FACTOR_MMHG
-    dev_predictions = model.predict(x_test).flatten() * LABEL_SCALE_FACTOR_MMHG
+    dev_labels = y_test[0] * LABEL_SCALE_FACTOR_MMHG
+    dev_predictions = model.predict(x_test) * LABEL_SCALE_FACTOR_MMHG
 
-    visualizations.log_training_loss_over_epochs(training_history)
+    visualizations.log_loss_over_epochs(training_history)
     visualizations.log_do_prediction_error(
-        train_inputs, train_predictions, dev_inputs, dev_predictions
+        train_labels, train_predictions, dev_labels, dev_predictions
     )
     visualizations.log_actual_vs_predicted_do(
-        train_inputs, train_predictions, dev_inputs, dev_predictions
+        train_labels, train_predictions, dev_labels, dev_predictions
     )
 
 

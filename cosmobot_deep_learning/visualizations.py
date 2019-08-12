@@ -4,34 +4,42 @@ import plotly.graph_objs as go
 import wandb
 
 
-_TRAINING_LOSS_OVER_EPOCHS_TITLE = "Training loss over epochs"
+_TRAINING_LOSS_OVER_EPOCHS_TITLE = "Training and Dev loss over epochs"
 _DO_PREDICTION_ERROR_TITLE = "DO prediction error"
 _ACTUAL_VS_PREDICTED_TITLE = "Actual vs predicted DO"
 
 
-def _get_training_loss_over_epochs_figure(training_history):
+def _get_loss_over_epochs_figure(training_history):
+    """
+    Generates a figure that shows loss over epochs for both the dev and training data,
+    with their rolling meridians for the last 200 epochs.
+    """
     history_dict = training_history.history
 
-    loss_values = history_dict["loss"]
-    val_loss_values = history_dict["val_loss"]
-    epochs = list(range(1, len(loss_values) + 1))
+    loss_over_epochs = history_dict["loss"]
+    val_loss_over_epochs = history_dict["val_loss"]
+    epochs = list(range(1, len(loss_over_epochs) + 1))
     rolling_median_n_epochs = 200
 
     return go.Figure(
         [
-            {"x": epochs, "y": list(val_loss_values), "name": "Dev loss"},
-            {"x": epochs, "y": list(loss_values), "name": "Training loss"},
+            {"x": epochs, "y": list(val_loss_over_epochs), "name": "Dev loss"},
+            {"x": epochs, "y": list(loss_over_epochs), "name": "Training loss"},
             {
                 "x": epochs,
                 "y": list(
-                    pd.Series(val_loss_values).rolling(rolling_median_n_epochs).median()
+                    pd.Series(val_loss_over_epochs)
+                    .rolling(rolling_median_n_epochs)
+                    .median()
                 ),
                 "name": "Dev loss trailing median",
             },
             {
                 "x": epochs,
                 "y": list(
-                    pd.Series(loss_values).rolling(rolling_median_n_epochs).median()
+                    pd.Series(loss_over_epochs)
+                    .rolling(rolling_median_n_epochs)
+                    .median()
                 ),
                 "name": "Training loss trailing median",
             },
@@ -54,20 +62,20 @@ def _get_actual_vs_predicted_do_figure(
                 x=list(train_labels),
                 y=list(train_predictions),
                 mode="markers",
-                name="Training set",
+                name="training set",
             ),
             dict(
                 x=list(dev_labels),
                 y=list(dev_predictions),
                 mode="markers",
-                name="Dev set",
+                name="dev set",
             ),
             dict(x=[0, 160], y=[0, 160], mode="lines", name="truth"),
         ],
         layout={
             "title": _ACTUAL_VS_PREDICTED_TITLE,
             "xaxis": {"title": "YSI DO (mmHg)"},
-            "yaxis": {"title": "Predicted DO (mmHg)"},
+            "yaxis": {"title": "predicted DO (mmHg)"},
         },
     )
 
@@ -82,29 +90,28 @@ def _get_do_prediction_error_figure(
                 x=list(train_labels),
                 y=list(train_predictions - train_labels),
                 mode="markers",
-                name="Training set",
+                name="training set",
             ),
             dict(
                 x=list(dev_labels),
                 y=list(dev_predictions - dev_labels),
                 mode="markers",
-                name="Dev set",
+                name="dev set",
             ),
         ],
         layout={
             "title": _DO_PREDICTION_ERROR_TITLE,
             "xaxis": {"title": "YSI DO (mmHg)"},
-            "yaxis": {"title": "Error (Predicted DO - YSI DO (mmHg))"},
+            "yaxis": {"title": "error (predicted DO - YSI DO (mmHg))"},
         },
     )
 
 
 def _log_figure_to_wandb(name, figure):
-    # TODO is there anything we can do to log to a consistent step value (or not associate these with a step) across runs
     wandb.log({name: figure})
 
 
-def log_training_loss_over_epochs(history):
+def log_loss_over_epochs(history):
     """
     Logs a visualization of "Training loss over epochs" to W&B
 
@@ -112,7 +119,7 @@ def log_training_loss_over_epochs(history):
         history: History object from model.fit()
     """
     _log_figure_to_wandb(
-        _TRAINING_LOSS_OVER_EPOCHS_TITLE, _get_training_loss_over_epochs_figure(history)
+        _TRAINING_LOSS_OVER_EPOCHS_TITLE, _get_loss_over_epochs_figure(history)
     )
 
 
