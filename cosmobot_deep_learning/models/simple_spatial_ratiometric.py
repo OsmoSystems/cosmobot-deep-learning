@@ -151,7 +151,7 @@ def create_model(hyperparameters, input_numerical_data_dimensions):
     return sr_model
 
 
-def _log_to_wandb(hyperparameters, y_train, y_test):
+def _initialize_wandb(hyperparameters, y_train, y_test):
     wandb.init(
         entity="osmo",
         project="cosmobot-do-measurement",
@@ -185,7 +185,7 @@ def run(hyperparameters):
         raw_dataset=load_multi_experiment_dataset_csv(dataset_filepath)
     )
 
-    _log_to_wandb(hyperparameters, y_train, y_test)
+    _initialize_wandb(hyperparameters, y_train, y_test)
 
     model = create_model(
         hyperparameters, input_numerical_data_dimensions=x_train.shape[1]
