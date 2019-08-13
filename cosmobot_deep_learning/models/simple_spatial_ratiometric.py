@@ -33,12 +33,13 @@ from cosmobot_deep_learning.custom_metrics import (
     magical_incantation_to_make_custom_metric_work,
 )
 
-_DATASET_FILENAME = "2019-06-27--08-24-58_osmo_ml_dataset.csv"
+_DATASET_FILENAME = "2019-08-09--14-33-26_osmo_ml_dataset.csv"
 _DATASET_FILEPATH = get_pkg_dataset_filepath(_DATASET_FILENAME)
 
 
 # Normalize by the atmospheric partial pressure of oxygen, as that is roughly the max we expect
 LABEL_SCALE_FACTOR_MMHG = ATMOSPHERIC_OXYGEN_PRESSURE_MMHG
+LABEL_COLUMN_NAME = "YSI DO (mmHg)"
 
 # Ensure that our custom metric uses the same normalizing factor we use to scale our labels
 _ACCEPTABLE_ERROR_NORMALIZED = ACCEPTABLE_ERROR_MMHG / LABEL_SCALE_FACTOR_MMHG
@@ -51,7 +52,7 @@ _HYPERPARAMETERS = {
     "dataset_filename": _DATASET_FILENAME,
     "dataset_filepath": _DATASET_FILEPATH,
     "dataset_hash": get_dataset_hash(_DATASET_FILEPATH),
-    "epochs": 3000,
+    "epochs": 10000,
     "batch_size": 3000,
     "optimizer": keras.optimizers.Adadelta(),
     "loss": "mean_squared_error",
@@ -59,6 +60,7 @@ _HYPERPARAMETERS = {
     "ACCEPTABLE_ERROR_MG_L": ACCEPTABLE_ERROR_MG_L,
     "ACCEPTABLE_ERROR_MMHG": ACCEPTABLE_ERROR_MMHG,
     "LABEL_SCALE_FACTOR_MMHG": LABEL_SCALE_FACTOR_MMHG,
+    "LABEL_COLUMN_NAME": LABEL_COLUMN_NAME,
     "_ACCEPTABLE_ERROR_NORMALIZED": _ACCEPTABLE_ERROR_NORMALIZED,
 }
 
@@ -76,8 +78,8 @@ def extract_input_params(df):
         {
             # Keep math on the same line
             # fmt: off
-            "temperature_set_point": df["temperature_set_point"],
-            "spatial_ratiometric": df["OO DO patch Wet r_msorm"] / df["Type 1 Chemistry Hand Applied Dry r_msorm"],
+            "PicoLog temperature (C)": df["PicoLog temperature (C)"],
+            "spatial_ratiometric": df["DO patch r_msorm"] / df["reference patch r_msorm"],
             # fmt: on
         }
     )
@@ -93,7 +95,7 @@ def extract_label_values(df):
         Returns:
             Numpy array of dissolved oxygen label values, normalized by a constant scale factor
     """
-    scaled_labels = df["YSI Dissolved Oxygen (mmHg)"] / LABEL_SCALE_FACTOR_MMHG
+    scaled_labels = df[LABEL_COLUMN_NAME] / LABEL_SCALE_FACTOR_MMHG
 
     # Reshape to 2d array
     return np.reshape(scaled_labels.values, (-1, 1))
