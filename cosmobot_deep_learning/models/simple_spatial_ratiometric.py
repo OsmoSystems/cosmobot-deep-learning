@@ -213,4 +213,4 @@ if __name__ == "__main__":
     # hyperparameter sweeps. See https://www.wandb.com/articles/multi-gpu-sweeps
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
-    run(**_HYPERPARAMETERS)
+    run(_HYPERPARAMETERS)
