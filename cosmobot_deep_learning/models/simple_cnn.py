@@ -199,7 +199,7 @@ def create_model(hyperparameters, input_numerical_data_dimension):
     )(dense_2_with_temperature)
 
     temperature_aware_model = keras.models.Model(
-        inputs=[image_to_do_model.get_input_at(0), temperature_input],
+        inputs=[temperature_input, image_to_do_model.get_input_at(0)],
         outputs=[image_to_do_model.get_output_at(-1), temperature_aware_do_output],
     )
 
