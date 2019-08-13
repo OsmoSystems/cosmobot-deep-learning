@@ -96,7 +96,6 @@ def extract_label_values(df):
             Numpy array of dissolved oxygen label values, normalized by a constant scale factor
     """
     scaled_labels = df[LABEL_COLUMN_NAME] / LABEL_SCALE_FACTOR_MMHG
-    return scaled_labels.values
 
     # Reshape to 2d array
     return np.reshape(scaled_labels.values, (-1, 1))
