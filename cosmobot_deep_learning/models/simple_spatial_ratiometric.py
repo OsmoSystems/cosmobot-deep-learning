@@ -39,6 +39,7 @@ _DATASET_FILEPATH = get_pkg_dataset_filepath(_DATASET_FILENAME)
 
 # Normalize by the atmospheric partial pressure of oxygen, as that is roughly the max we expect
 LABEL_SCALE_FACTOR_MMHG = ATMOSPHERIC_OXYGEN_PRESSURE_MMHG
+LABEL_COLUMN_NAME = "YSI DO (mmHg)"
 
 # Ensure that our custom metric uses the same normalizing factor we use to scale our labels
 _ACCEPTABLE_ERROR_NORMALIZED = ACCEPTABLE_ERROR_MMHG / LABEL_SCALE_FACTOR_MMHG
@@ -59,6 +60,7 @@ _HYPERPARAMETERS = {
     "ACCEPTABLE_ERROR_MG_L": ACCEPTABLE_ERROR_MG_L,
     "ACCEPTABLE_ERROR_MMHG": ACCEPTABLE_ERROR_MMHG,
     "LABEL_SCALE_FACTOR_MMHG": LABEL_SCALE_FACTOR_MMHG,
+    "LABEL_COLUMN_NAME": LABEL_COLUMN_NAME,
     "_ACCEPTABLE_ERROR_NORMALIZED": _ACCEPTABLE_ERROR_NORMALIZED,
 }
 
@@ -93,7 +95,7 @@ def extract_label_values(df):
         Returns:
             Numpy array of dissolved oxygen label values, normalized by a constant scale factor
     """
-    scaled_labels = df["YSI DO (mmHg)"] / LABEL_SCALE_FACTOR_MMHG
+    scaled_labels = df[LABEL_COLUMN_NAME] / LABEL_SCALE_FACTOR_MMHG
     return scaled_labels.values
 
     # Reshape to 2d array
