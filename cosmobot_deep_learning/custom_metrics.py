@@ -7,19 +7,26 @@ def get_fraction_outside_acceptable_error_fn(acceptable_error):
     """ Returns a function that can be used as a keras metric, populated with the appropriate threshold
     """
 
-    def fraction_outside_acceptable_error(y, y_predicted):
+    def fraction_outside_acceptable_error(y_true, y_pred):
         """ Our custom "satisficing" metric that evaluates what fraction of predictions
             are outside of our acceptable error threshold.
 
             Aided by:
             https://stackoverflow.com/questions/45947351/how-to-use-tensorflow-metrics-in-keras
         """
-        _, fraction_below = tf.metrics.percentage_below(
-            tf.abs(y_predicted - y), threshold=acceptable_error
-        )
+        y_pred_error = tf.abs(y_pred - y_true)
+        is_outside_acceptable_error = tf.greater(y_pred_error, acceptable_error)
 
-        # We actually care about the fraction above
-        return 1 - fraction_below
+        # count_nonzero counts Trues as not zero and Falses as zero
+        count_outside_acceptable_error = tf.count_nonzero(is_outside_acceptable_error)
+        count_total = tf.size(y_true)
+
+        # Cast to float so that the division calculation returns a float (tf uses Python 2 semantics)
+        fraction_outside = tf.div(
+            tf.cast(count_outside_acceptable_error, tf.float32),
+            tf.cast(count_total, tf.float32),
+        )
+        return fraction_outside
 
     return fraction_outside_acceptable_error
 
