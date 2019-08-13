@@ -8,6 +8,7 @@ import os
 import sys
 
 import keras
+import numpy as np
 import pandas as pd
 import tensorflow as tf
 import wandb
@@ -51,7 +52,7 @@ _HYPERPARAMETERS = {
     "dataset_filepath": _DATASET_FILEPATH,
     "dataset_hash": get_dataset_hash(_DATASET_FILEPATH),
     "epochs": 3000,
-    "batch_size": 125,
+    "batch_size": 3000,
     "optimizer": keras.optimizers.Adadelta(),
     "loss": "mean_squared_error",
     # Toss in all the constants / assumptions we're using in this run
@@ -93,7 +94,9 @@ def extract_label_values(df):
             Numpy array of dissolved oxygen label values, normalized by a constant scale factor
     """
     scaled_labels = df["YSI Dissolved Oxygen (mmHg)"] / LABEL_SCALE_FACTOR_MMHG
-    return scaled_labels.values
+
+    # Reshape to 2d array
+    return np.reshape(scaled_labels.values, (-1, 1))
 
 
 def prepare_dataset(raw_dataset):
@@ -148,35 +151,44 @@ def create_model(hyperparameters, input_numerical_data_dimensions):
     return sr_model
 
 
-def run(
-    epochs: int,
-    batch_size: int,
-    model_name: str,
-    dataset_filepath: str,
-    **additional_hyperparameters
-):
+def _log_to_wandb(hyperparameters, y_train, y_test):
+    wandb.init(
+        entity="osmo",
+        project="cosmobot-do-measurement",
+        config={
+            "train_sample_count": y_train.shape[0],
+            "test_sample_count": y_test.shape[0],
+            **hyperparameters,
+        },
+    )
+
+
+def run(hyperparameters):
     """ Use the provided hyperparameters to train the model in this module.
 
-        Args:
+    Args:
+        hyperparameters: Any variables that are parameterizable for this model
             epochs: Number of epochs to train for
-            batch_size: Training input batch size
-            model_name: A string label for the model. Should match this module name
-            dataset_filepath: Filepath (within this package) of the dataset resource to load and train with
-            additional_hyperparameters: Any other variables that are parameterizable for this model
-                optimizer: Which optimizer function to use
-                loss: Which loss function to use
+            batch_size: Training batch size
+            model_name: A string label for the model
+            dataset_filepath: Filepath (within this package) of the dataset to use for training
+            optimizer: Which optimizer function to use
+            loss: Which loss function to use
 
     """
+
+    epochs = hyperparameters["epochs"]
+    batch_size = hyperparameters["batch_size"]
+    dataset_filepath = hyperparameters["dataset_filepath"]
+
     x_train, y_train, x_test, y_test = prepare_dataset(
         raw_dataset=load_multi_experiment_dataset_csv(dataset_filepath)
     )
 
-    # Report dataset sizes to wandb now that we know them
-    wandb.config.train_sample_count = y_train.shape[0]
-    wandb.config.test_sample_count = y_test.shape[0]
+    _log_to_wandb(hyperparameters, y_train, y_test)
 
     model = create_model(
-        additional_hyperparameters, input_numerical_data_dimensions=x_train.shape[1]
+        hyperparameters, input_numerical_data_dimensions=x_train.shape[1]
     )
 
     magical_incantation_to_make_custom_metric_work()
@@ -186,12 +198,12 @@ def run(
         y_train,
         batch_size=batch_size,
         epochs=epochs,
-        verbose=1,
+        verbose=2,
         validation_data=(x_test, y_test),
         callbacks=[WandbCallback()],
     )
 
-    return history
+    return x_train, y_train, x_test, y_test, model, history
 
 
 if __name__ == "__main__":
@@ -200,11 +212,5 @@ if __name__ == "__main__":
     # Note: we may eventually need to change how we set this to be compatible with
     # hyperparameter sweeps. See https://www.wandb.com/articles/multi-gpu-sweeps
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
-
-    wandb.init(
-        # Add a "jupyter" tag when running from jupyter notebooks
-        tags=[],
-        config=_HYPERPARAMETERS,
-    )
 
     run(**_HYPERPARAMETERS)
