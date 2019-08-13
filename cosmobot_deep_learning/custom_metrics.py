@@ -17,15 +17,15 @@ def get_fraction_outside_acceptable_error_fn(acceptable_error):
         y_pred_error = tf.abs(y_pred - y_true)
         is_outside_acceptable_error = tf.greater(y_pred_error, acceptable_error)
 
-        count_outside_acceptable_error = tf.reduce_sum(
-            # Cast bools to floats to make them countable *shrug*
-            tf.cast(is_outside_acceptable_error, tf.float32)
-        )
+        # count_nonzero counts Trues as not zero and Falses as zero
+        count_outside_acceptable_error = tf.count_nonzero(is_outside_acceptable_error)
+        count_total = tf.size(y_true)
 
         # Cast to float so that the division calculation returns a float (tf uses Python 2 semantics)
-        count_total = tf.cast(tf.size(y_true), tf.float32)
-
-        fraction_outside = tf.div(count_outside_acceptable_error, count_total)
+        fraction_outside = tf.div(
+            tf.cast(count_outside_acceptable_error, tf.float32),
+            tf.cast(count_total, tf.float32),
+        )
         return fraction_outside
 
     return fraction_outside_acceptable_error
