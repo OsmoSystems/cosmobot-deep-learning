@@ -160,6 +160,7 @@ def create_model(hyperparameters, input_numerical_data_dimension):
             keras.layers.Dense(32),
             keras.layers.BatchNormalization(),
             keras.layers.advanced_activations.LeakyReLU(),
+            keras.layers.Dropout(0.50),
             keras.layers.Dense(1, name="residual"),
         ]
     )
@@ -171,12 +172,12 @@ def create_model(hyperparameters, input_numerical_data_dimension):
             ),
             keras.layers.Dense(32),
             keras.layers.advanced_activations.LeakyReLU(),
-            keras.layers.Dropout(0.10),
+            keras.layers.Dropout(0.25),
             keras.layers.Dense(1, name="sv_DO"),
         ]
     )
 
-    prediction_with_residual = keras.layers.add(
+    prediction_with_residual = keras.layers.concatenate(
         [
             sv_model.get_layer(name="sv_DO").output,
             residual_model.get_layer(name="residual").output,
@@ -184,9 +185,16 @@ def create_model(hyperparameters, input_numerical_data_dimension):
         name="prediction_with_residual",
     )
 
+    regress_from_multiple_models = keras.layers.Dense(
+        11, name="regress_from_multiple_models"
+    )(prediction_with_residual)
+    output_layer = keras.layers.Dense(1, activation="softmax", name="output")(
+        regress_from_multiple_models
+    )
+
     combined_residual_model = keras.models.Model(
         inputs=[sv_model.get_input_at(0), residual_model.get_input_at(0)],
-        outputs=prediction_with_residual,
+        outputs=output_layer,
     )
 
     combined_residual_model.compile(
