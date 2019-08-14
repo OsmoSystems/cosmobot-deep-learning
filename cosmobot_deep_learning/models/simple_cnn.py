@@ -172,6 +172,16 @@ def create_model(hyperparameters, input_numerical_data_dimension):
         ]
     )
 
+    image_to_do_model.compile(
+        optimizer=hyperparameters["optimizer"],
+        loss=hyperparameters["loss"],
+        metrics=[
+            "mean_squared_error",
+            "mean_absolute_error",
+            fraction_outside_acceptable_error,
+        ],
+    )
+
     temperature_input = keras.layers.Input(
         shape=(input_numerical_data_dimension,), name="temperature"
     )
