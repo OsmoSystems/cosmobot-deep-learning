@@ -1,0 +1,1 @@
+include cosmobot_deep_learning/datasets/*.csv
