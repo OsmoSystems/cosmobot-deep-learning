@@ -12,7 +12,7 @@ _ACTUAL_VS_PREDICTED_TITLE = "Actual vs predicted DO"
 def _get_loss_over_epochs_figure(training_history):
     """
     Generates a figure that shows loss over epochs for both the dev and training data,
-    with their rolling meridians for the last 200 epochs.
+    with their rolling median for the last 200 epochs.
     """
     history_dict = training_history.history
 
