@@ -157,10 +157,10 @@ def create_model(hyperparameters, input_numerical_data_dimensions):
 
 def _log_visualizations(model, training_history, x_train, y_train, x_test, y_test):
     train_labels = y_train * LABEL_SCALE_FACTOR_MMHG
-    train_predictions = model.predict(x_train) * LABEL_SCALE_FACTOR_MMHG
+    train_predictions = model.predict(x_train).flatten() * LABEL_SCALE_FACTOR_MMHG
 
     dev_labels = y_test * LABEL_SCALE_FACTOR_MMHG
-    dev_predictions = model.predict(x_test) * LABEL_SCALE_FACTOR_MMHG
+    dev_predictions = model.predict(x_test).flatten() * LABEL_SCALE_FACTOR_MMHG
 
     visualizations.log_loss_over_epochs(training_history)
     visualizations.log_do_prediction_error(
