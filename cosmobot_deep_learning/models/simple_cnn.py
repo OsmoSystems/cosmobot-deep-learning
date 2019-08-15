@@ -63,6 +63,7 @@ _HYPERPARAMETERS = {
     "ACCEPTABLE_ERROR_MG_L": ACCEPTABLE_ERROR_MG_L,
     "ACCEPTABLE_ERROR_MMHG": ACCEPTABLE_ERROR_MMHG,
     "LABEL_SCALE_FACTOR_MMHG": LABEL_SCALE_FACTOR_MMHG,
+    "LABEL_COLUMN_NAME": LABEL_COLUMN_NAME,
     "_ACCEPTABLE_ERROR_NORMALIZED": _ACCEPTABLE_ERROR_NORMALIZED,
 }
 
@@ -76,12 +77,7 @@ def extract_input_params(df):
             Numpy array of temperature values.
     """
     normalized_dataset = pd.DataFrame(
-        {
-            # Keep math on the same line
-            # fmt: off
-            "PicoLog temperature (C)": df["PicoLog temperature (C)"],
-            # fmt: on
-        }
+        {"PicoLog temperature (C)": df["PicoLog temperature (C)"]}
     )
 
     return normalized_dataset.values
