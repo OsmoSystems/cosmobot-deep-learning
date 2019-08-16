@@ -10,6 +10,16 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
     )
 
     arg_parser.add_argument(
+        "--validate",
+        required=False,
+        action="store_true",
+        default=False,
+        help=(
+            "Flag to do a dry run with a small validation dataset to validate changes to a model will compile."
+        ),
+    )
+
+    arg_parser.add_argument(
         "--gpu",
         required=True,
         type=int,

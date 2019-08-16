@@ -275,6 +275,17 @@ if __name__ == "__main__":
     # hyperparameter sweeps. See https://www.wandb.com/articles/multi-gpu-sweeps
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
+    if args.validate:
+        os.environ["WANDB_MODE"] = "dryrun"
+        _DATASET_FILENAME = "validation_dataset.csv"
+        _DATASET_FILEPATH = get_pkg_dataset_filepath(_DATASET_FILENAME)
+
+        _HYPERPARAMETERS["dataset_filename"] = _DATASET_FILENAME
+        _HYPERPARAMETERS["dataset_filepath"] = _DATASET_FILEPATH
+        _HYPERPARAMETERS["dataset_hash"] = get_dataset_hash(_DATASET_FILEPATH)
+
+        _HYPERPARAMETERS["epochs"] = 2
+
     wandb.init(
         # Add a "jupyter" tag when running from jupyter notebooks
         tags=[],
