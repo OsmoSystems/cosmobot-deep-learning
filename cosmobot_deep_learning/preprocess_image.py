@@ -1,3 +1,4 @@
+import functools
 import multiprocessing
 
 import cv2
@@ -93,11 +94,9 @@ def open_and_preprocess_images(image_filepaths, image_size):
     """
 
     with multiprocessing.Pool(multiprocessing.cpu_count()) as p:
-        return np.array(
-            p.map(
-                lambda image_filepath: open_crop_and_scale_image(
-                    image_filepath, output_size=image_size
-                ),
-                tqdm(image_filepaths),
-            )
+
+        prepare_with_size = functools.partial(
+            open_crop_and_scale_image, output_size=image_size
         )
+
+        return np.array(p.map(prepare_with_size, tqdm(image_filepaths)))
