@@ -1,3 +1,5 @@
+import multiprocessing
+
 import cv2
 import numpy as np
 from tqdm.auto import tqdm
@@ -89,9 +91,13 @@ def open_and_preprocess_images(image_filepaths, image_size):
         Returns:
             A single numpy array of all images resized to the appropriate dimensions and concatenated
     """
-    return np.array(
-        [
-            open_crop_and_scale_image(image_filepath, output_size=image_size)
-            for image_filepath in tqdm(image_filepaths)
-        ]
-    )
+
+    with multiprocessing.Pool(multiprocessing.cpu_count()) as p:
+        return np.array(
+            p.map(
+                lambda image_filepath: open_crop_and_scale_image(
+                    image_filepath, output_size=image_size
+                ),
+                tqdm(image_filepaths),
+            )
+        )
