@@ -13,6 +13,7 @@ import keras
 import pandas as pd
 import wandb
 from wandb.keras import WandbCallback
+from typing import Callable, Dict, Tuple
 
 from cosmobot_deep_learning.load_dataset import (
     load_multi_experiment_dataset_csv,
@@ -95,7 +96,7 @@ def extract_label_values(df):
     return scaled_labels.values
 
 
-def prepare_dataset(raw_dataset, input_image_dimension):
+def prepare_dataset(raw_dataset: pd.DataFrame, input_image_dimension: int) -> Tuple:
     """ Transform a dataset CSV into the appropriate inputs for training the model in this module.
 
         Args:
@@ -127,7 +128,9 @@ def prepare_dataset(raw_dataset, input_image_dimension):
     )
 
 
-def create_model(hyperparameters, input_numerical_data_dimension):
+def create_model(
+    hyperparameters: Dict, input_numerical_data_dimension: Tuple
+) -> keras.callbacks.History:
     """ Build a model
 
     Args:
@@ -221,6 +224,8 @@ def run(
     batch_size: int,
     model_name: str,
     dataset_filepath: str,
+    prepare_dataset: Callable[[pd.DataFrame, int], Tuple] = prepare_dataset,
+    create_model: Callable[[Dict, Tuple], keras.callbacks.History] = create_model,
     **additional_hyperparameters
 ):
     """ Use the provided hyperparameters to train the model in this module.
