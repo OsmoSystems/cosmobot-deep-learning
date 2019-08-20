@@ -9,6 +9,20 @@ def rgb_px(n):
     return [px * n for px in [1, 2, 3]]
 
 
+test_rgb_image = np.array(
+    [
+        [rgb_px(1), rgb_px(2), rgb_px(3), rgb_px(4)],
+        [rgb_px(5), rgb_px(6), rgb_px(7), rgb_px(8)],
+        [rgb_px(1), rgb_px(2), rgb_px(3), rgb_px(4)],
+        [rgb_px(5), rgb_px(6), rgb_px(7), rgb_px(8)],
+        [rgb_px(1), rgb_px(2), rgb_px(3), rgb_px(4)],
+        [rgb_px(5), rgb_px(6), rgb_px(7), rgb_px(8)],
+    ],
+    # cv2 requires dtype to be "uint8"
+    dtype="uint8",
+)
+
+
 class TestCropSquare:
     @pytest.mark.parametrize(
         "name, image, expected",
@@ -81,19 +95,6 @@ class TestCropSquare:
 
 
 class TestCropAndScaleImage:
-    rgb_image = np.array(
-        [
-            [rgb_px(1), rgb_px(2), rgb_px(3), rgb_px(4)],
-            [rgb_px(5), rgb_px(6), rgb_px(7), rgb_px(8)],
-            [rgb_px(1), rgb_px(2), rgb_px(3), rgb_px(4)],
-            [rgb_px(5), rgb_px(6), rgb_px(7), rgb_px(8)],
-            [rgb_px(1), rgb_px(2), rgb_px(3), rgb_px(4)],
-            [rgb_px(5), rgb_px(6), rgb_px(7), rgb_px(8)],
-        ],
-        # cv2 requires dtype to be "uint8"
-        dtype="uint8",
-    )
-
     def test_doesnt_resize_if_crop_matches_output_size(self):
         expected = np.array(
             [
@@ -104,7 +105,7 @@ class TestCropAndScaleImage:
             ]
         )
 
-        actual = module.crop_and_scale_image(self.rgb_image, output_size=4)
+        actual = module.crop_and_scale_image(test_rgb_image, output_size=4)
 
         np.testing.assert_array_equal(actual, expected)
 
@@ -119,7 +120,66 @@ class TestCropAndScaleImage:
         )
         # fmt: on
 
-        actual = module.crop_and_scale_image(self.rgb_image, output_size=2)
+        actual = module.crop_and_scale_image(test_rgb_image, output_size=2)
         print(actual)
 
         np.testing.assert_array_equal(actual, expected)
+
+
+class TestOpenAndPreprocessImages:
+    def test_parallel_map_preserves_order(self, mocker):
+        # Mostly a smoke test, but also a valuable regression test if
+        # the map function is changed.
+
+        # fmt: off
+        images_to_open = [
+            np.array(
+                [
+                    [rgb_px(1), rgb_px(2)],
+                    [rgb_px(3), rgb_px(4)]
+                ]
+            ),
+            np.array(
+                [
+                    [rgb_px(5), rgb_px(6)],
+                    [rgb_px(7), rgb_px(8)]
+                ]
+            ),
+            np.array(
+                [
+                    [rgb_px(3), rgb_px(4)],
+                    [rgb_px(1), rgb_px(2)]
+                ]
+            ),
+        ]
+        # fmt: on
+
+        mocker.patch.object(module, "open_as_rgb", side_effect=images_to_open)
+
+        opened_images = module.open_and_preprocess_images(
+            ["image-0", "image-1", "image-3"],
+            image_size=2,  # Use settings to prevent any transformations from happening
+            pool_size=2,
+        )
+
+        np.testing.assert_array_equal(opened_images, np.array(images_to_open))
+
+    def test_image_size_partially_applied_correctly(self, mocker):
+        mocker.patch.object(module, "open_as_rgb", return_value=test_rgb_image)
+
+        # fmt: off
+        expected = np.array(
+            [
+                [[4, 7, 11], [6, 11, 17]],
+                [[4, 7, 11], [6, 11, 17]]
+            ]
+        )
+        # fmt: on
+
+        actual = module.open_and_preprocess_images(
+            ["image-0"],
+            image_size=2,  # Use settings to prevent any transformations from happening
+            pool_size=1,
+        )
+
+        np.testing.assert_array_equal(actual[0], expected)
