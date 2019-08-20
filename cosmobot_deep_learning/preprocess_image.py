@@ -84,7 +84,8 @@ def open_crop_and_scale_image(raw_image_path: str, output_size: int):
 
 
 def open_and_preprocess_images(image_filepaths, image_size, pool_size=None):
-    """ Preprocess the input images and prepare them for direct use in training a model
+    """ Preprocess the input images and prepare them for direct use in training a model.
+        NOTE: The progress bar will only update sporadically.
 
         Args:
             image_filepaths: An iterable list of filepaths to images to prepare
