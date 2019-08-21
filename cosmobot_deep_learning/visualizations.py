@@ -9,6 +9,18 @@ _DO_PREDICTION_ERROR_TITLE = "DO prediction error"
 _ACTUAL_VS_PREDICTED_TITLE = "Actual vs predicted DO"
 
 
+def _downsample(array: np.ndarray, max_samples: int):
+    """Returns max_samples items from the given array, spread out evenly across indexes.
+    """
+    if len(array) <= max_samples:
+        return array
+
+    downsampled_indexes = np.round(np.linspace(0, len(array) - 1, max_samples)).astype(
+        int
+    )
+    return array[downsampled_indexes]
+
+
 def _get_loss_over_epochs_figure(training_history):
     """
     Generates a figure that shows loss over epochs for both the dev and training data,
@@ -16,31 +28,50 @@ def _get_loss_over_epochs_figure(training_history):
     """
     history_dict = training_history.history
 
-    loss_over_epochs = history_dict["loss"]
-    val_loss_over_epochs = history_dict["val_loss"]
-    epochs = list(range(1, len(loss_over_epochs) + 1))
+    loss_over_epochs = np.array(history_dict["loss"])
+    val_loss_over_epochs = np.array(history_dict["val_loss"])
+    epochs = np.array(list(range(1, len(loss_over_epochs) + 1)))
     rolling_median_n_epochs = 200
+
+    val_loss_over_epochs_rolling_median = (
+        pd.Series(val_loss_over_epochs).rolling(rolling_median_n_epochs).median()
+    )
+    loss_over_epochs_rolling_median = (
+        pd.Series(loss_over_epochs).rolling(rolling_median_n_epochs).median()
+    )
+
+    # downsample for plotly performance
+    max_samples = 1000
+    downsampled_val_loss_over_epochs = _downsample(val_loss_over_epochs, max_samples)
+    downsampled_loss_over_epochs = _downsample(loss_over_epochs, max_samples)
+    downsampled_val_loss_over_epochs_rolling_median = _downsample(
+        val_loss_over_epochs_rolling_median, max_samples
+    )
+    downsampled_loss_over_epochs_rolling_median = _downsample(
+        loss_over_epochs_rolling_median, max_samples
+    )
+    downsampled_epochs = list(_downsample(epochs, max_samples))
 
     return go.Figure(
         [
-            {"x": epochs, "y": list(val_loss_over_epochs), "name": "Dev loss"},
-            {"x": epochs, "y": list(loss_over_epochs), "name": "Training loss"},
             {
-                "x": epochs,
-                "y": list(
-                    pd.Series(val_loss_over_epochs)
-                    .rolling(rolling_median_n_epochs)
-                    .median()
-                ),
+                "x": downsampled_epochs,
+                "y": list(downsampled_val_loss_over_epochs),
+                "name": "Dev loss",
+            },
+            {
+                "x": downsampled_epochs,
+                "y": list(downsampled_loss_over_epochs),
+                "name": "Training loss",
+            },
+            {
+                "x": downsampled_epochs,
+                "y": list(downsampled_val_loss_over_epochs_rolling_median),
                 "name": "Dev loss trailing median",
             },
             {
-                "x": epochs,
-                "y": list(
-                    pd.Series(loss_over_epochs)
-                    .rolling(rolling_median_n_epochs)
-                    .median()
-                ),
+                "x": downsampled_epochs,
+                "y": list(downsampled_loss_over_epochs_rolling_median),
                 "name": "Training loss trailing median",
             },
         ],
@@ -55,18 +86,20 @@ def _get_loss_over_epochs_figure(training_history):
 def _get_actual_vs_predicted_do_figure(
     train_labels, train_predictions, dev_labels, dev_predictions
 ):
+    max_samples = 1000
+
     # NOTE x and y values need to be lists to log correctly
     return go.Figure(
         [
             dict(
-                x=list(train_labels),
-                y=list(train_predictions),
+                x=list(_downsample(train_labels, max_samples)),
+                y=list(_downsample(train_predictions, max_samples)),
                 mode="markers",
                 name="training set",
             ),
             dict(
-                x=list(dev_labels),
-                y=list(dev_predictions),
+                x=list(_downsample(dev_labels, max_samples)),
+                y=list(_downsample(dev_predictions, max_samples)),
                 mode="markers",
                 name="dev set",
             ),
@@ -83,18 +116,20 @@ def _get_actual_vs_predicted_do_figure(
 def _get_do_prediction_error_figure(
     train_labels, train_predictions, dev_labels, dev_predictions
 ):
+    max_samples = 1000
+
     # NOTE x and y values need to be lists to log correctly
     return go.Figure(
         [
             dict(
-                x=list(train_labels),
-                y=list(train_predictions - train_labels),
+                x=list(_downsample(train_labels, max_samples)),
+                y=list(_downsample(train_predictions - train_labels, max_samples)),
                 mode="markers",
                 name="training set",
             ),
             dict(
-                x=list(dev_labels),
-                y=list(dev_predictions - dev_labels),
+                x=list(_downsample(dev_labels, max_samples)),
+                y=list(_downsample(dev_predictions - dev_labels, max_samples)),
                 mode="markers",
                 name="dev set",
             ),
@@ -118,9 +153,8 @@ def log_loss_over_epochs(history):
     Args:
         history: History object from model.fit()
     """
-    _log_figure_to_wandb(
-        _TRAINING_LOSS_OVER_EPOCHS_TITLE, _get_loss_over_epochs_figure(history)
-    )
+    figure = _get_loss_over_epochs_figure(history)
+    _log_figure_to_wandb(_TRAINING_LOSS_OVER_EPOCHS_TITLE, figure)
 
 
 def log_do_prediction_error(
@@ -138,12 +172,10 @@ def log_do_prediction_error(
         dev_labels: pandas array of the labels (YSI DO mmHg) for dev data
         dev_predictions: pandas array of the predictions on dev data
     """
-    _log_figure_to_wandb(
-        _DO_PREDICTION_ERROR_TITLE,
-        _get_do_prediction_error_figure(
-            train_labels, train_predictions, dev_labels, dev_predictions
-        ),
+    figure = _get_do_prediction_error_figure(
+        train_labels, train_predictions, dev_labels, dev_predictions
     )
+    _log_figure_to_wandb(_DO_PREDICTION_ERROR_TITLE, figure)
 
 
 def log_actual_vs_predicted_do(
@@ -161,9 +193,7 @@ def log_actual_vs_predicted_do(
         dev_labels: pandas array of the labels (YSI DO mmHg) for dev data
         dev_predictions: pandas array of the predictions on dev data
     """
-    _log_figure_to_wandb(
-        _ACTUAL_VS_PREDICTED_TITLE,
-        _get_actual_vs_predicted_do_figure(
-            train_labels, train_predictions, dev_labels, dev_predictions
-        ),
+    figure = _get_actual_vs_predicted_do_figure(
+        train_labels, train_predictions, dev_labels, dev_predictions
     )
+    _log_figure_to_wandb(_ACTUAL_VS_PREDICTED_TITLE, figure)
