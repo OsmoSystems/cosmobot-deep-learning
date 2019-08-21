@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# run this from within the cosmobot-deep-learning directory to rsync it into deepthought:/home/osmo/<username>
+# run this to rsync cosmobot-deep-thought into deepthought:/home/osmo/<username>
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 USAGE_MESSAGE="Usage: ./sync_to_deepthought.sh <username>"
@@ -15,7 +15,7 @@ elif [ $# -gt 1 ]; then
 fi
 
 # to avoid creating a new directory in case of a typo, only sync if the username directory already exists
-if ! ssh osmo@deepthought '[ -d $USER_DIRECTORY ]'; then
+if ! ssh osmo@deepthought "[ -d $USER_DIRECTORY ]"; then
   echo 1>&2 "$0: username directory $USER_DIRECTORY does not exist on deepthought."
   exit 2
 fi
