@@ -110,7 +110,8 @@ def open_and_preprocess_images(image_filepaths, image_size, max_workers=None):
                         open_crop_and_scale_image_with_size,
                         image_filepaths,
                         chunksize=100,  # SWAG value, but much faster than the default
-                    )
+                    ),
+                    total=len(image_filepaths),
                 )
             )
         )
