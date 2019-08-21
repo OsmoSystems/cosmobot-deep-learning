@@ -132,39 +132,50 @@ class TestOpenAndPreprocessImages:
         # the map function is changed.
 
         # fmt: off
-        images_to_open = [
-            np.array(
+        images_to_open = {
+            "image-0": np.array(
                 [
                     [rgb_px(1), rgb_px(2)],
                     [rgb_px(3), rgb_px(4)]
                 ]
             ),
-            np.array(
+            "image-1": np.array(
                 [
                     [rgb_px(5), rgb_px(6)],
                     [rgb_px(7), rgb_px(8)]
                 ]
             ),
-            np.array(
+            "image-2": np.array(
                 [
                     [rgb_px(3), rgb_px(4)],
                     [rgb_px(1), rgb_px(2)]
                 ]
             ),
-        ]
+        }
         # fmt: on
 
-        mocker.patch.object(module, "open_as_rgb", side_effect=images_to_open)
-
-        opened_images = module.open_and_preprocess_images(
-            ["image-0", "image-1", "image-3"],
-            image_size=2,  # Use settings to prevent any transformations from happening
-            pool_size=2,
+        # Ensure the images are returned in whatever order they are requested
+        mocker.patch.object(
+            module, "open_as_rgb", side_effect=lambda x: images_to_open[x]
         )
 
-        np.testing.assert_array_equal(opened_images, np.array(images_to_open))
+        actual = module.open_and_preprocess_images(
+            ["image-0", "image-1", "image-2"],
+            image_size=2,  # Use settings to prevent any transformations from happening
+            max_workers=2,
+        )
 
-    def test_image_size_partially_applied_correctly(self, mocker):
+        expected = np.array(
+            [
+                images_to_open["image-0"],
+                images_to_open["image-1"],
+                images_to_open["image-2"],
+            ]
+        )
+
+        np.testing.assert_array_equal(actual, expected)
+
+    def test_image_size_applied_correctly(self, mocker):
         mocker.patch.object(module, "open_as_rgb", return_value=test_rgb_image)
 
         # fmt: off
@@ -179,7 +190,7 @@ class TestOpenAndPreprocessImages:
         actual = module.open_and_preprocess_images(
             ["image-0"],
             image_size=2,  # Use settings to prevent any transformations from happening
-            pool_size=1,
+            max_workers=1,
         )
 
         np.testing.assert_array_equal(actual[0], expected)

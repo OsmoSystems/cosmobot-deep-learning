@@ -1,5 +1,5 @@
 import functools
-import multiprocessing
+import concurrent.futures
 
 import cv2
 import numpy as np
@@ -83,23 +83,20 @@ def open_crop_and_scale_image(raw_image_path: str, output_size: int):
     return crop_and_scale_image(rgb_image, output_size)
 
 
-def open_and_preprocess_images(image_filepaths, image_size, pool_size=None):
+def open_and_preprocess_images(image_filepaths, image_size, max_workers=None):
     """ Preprocess the input images and prepare them for direct use in training a model.
         NOTE: The progress bar will only update sporadically.
 
         Args:
             image_filepaths: An iterable list of filepaths to images to prepare
             image_size: The desired side length of the output (square) image
-            pool_size: Optional. Number of parallel processes to use to prepare images.
+            max_workers: Optional. Number of parallel processes to use to prepare images.
                 Defaults to the number of CPU cores.
         Returns:
             A single numpy array of all images resized to the appropriate dimensions and concatenated
     """
 
-    if pool_size is None:
-        pool_size = multiprocessing.cpu_count()
-
-    with multiprocessing.Pool(pool_size) as pool:
+    with concurrent.futures.ProcessPoolExecutor(max_workers) as executor:
 
         # Use partial function to pass desired image_size through to new process
         open_crop_and_scale_image_with_size = functools.partial(
@@ -107,9 +104,13 @@ def open_and_preprocess_images(image_filepaths, image_size, pool_size=None):
         )
 
         return np.array(
-            pool.map(
-                open_crop_and_scale_image_with_size,
-                tqdm(image_filepaths),
-                chunksize=100,  # SWAG value, but much faster than the default
+            list(
+                tqdm(
+                    executor.map(
+                        open_crop_and_scale_image_with_size,
+                        image_filepaths,
+                        chunksize=100,  # SWAG value, but much faster than the default
+                    )
+                )
             )
         )
