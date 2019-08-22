@@ -10,6 +10,9 @@ from cosmobot_deep_learning.custom_metrics import (
     magical_incantation_to_make_custom_metric_work,
 )
 
+TRAINING_SET_NAME = "training_resampled"
+DEV_SET_NAME = "test"
+
 
 def _loggable_hyperparameters(hyperparameters):
     # W&B logging chokes on our custom metric function.
@@ -38,6 +41,14 @@ def _initialize_wandb(hyperparameters, y_train, y_test):
     )
 
 
+def _generate_tiny_dataset(dataset):
+    """ Grab the first training and dev data points to create a tiny dataset.
+    """
+    training_sample = dataset[dataset[TRAINING_SET_NAME]][:1]
+    test_sample = dataset[dataset[DEV_SET_NAME]][:1]
+    return training_sample.append(test_sample)
+
+
 def run(hyperparameters, prepare_dataset, create_model):
     """ Use the provided hyperparameters to train the model in this module.
 
@@ -51,16 +62,13 @@ def run(hyperparameters, prepare_dataset, create_model):
     epochs = hyperparameters["epochs"]
     batch_size = hyperparameters["batch_size"]
     dataset_filepath = hyperparameters["dataset_filepath"]
-    tiny = hyperparameters["tiny"]
+    dryrun = hyperparameters["dryrun"]
 
     dataset = pd.read_csv(dataset_filepath)
 
-    if tiny:
-        # Grab the first training and dev data points and replace the existing dataset
-        dataset = dataset[dataset["training_resampled"]][:1].append(
-            dataset[dataset["test"]][:1]
-        )
-        # Disable W&B logging since we don't care about the results
+    if dryrun:
+        dataset = _generate_tiny_dataset(dataset_filepath)
+        # Disable W&B syncing to cloud since we don't care about the results
         os.environ["WANDB_MODE"] = "dryrun"
 
     x_train, y_train, x_test, y_test = prepare_dataset(

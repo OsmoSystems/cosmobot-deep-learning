@@ -7,16 +7,16 @@ from . import configure as module
 
 class TestParseArgs:
     def test_all_args_parsed_appropriately(self):
-        args_in = ["--gpu", "-1", "--tiny"]
+        args_in = ["--gpu", "-1", "--dryrun"]
 
-        expected_args_out = {"gpu": -1, "tiny": True}
+        expected_args_out = {"gpu": -1, "dryrun": True}
 
         assert vars(module.parse_model_run_args(args_in)) == expected_args_out
 
     def test_optional_args_take_default_value(self):
         args_in = ["--gpu", "-1"]
 
-        expected_args_out = {"gpu": -1, "tiny": False}
+        expected_args_out = {"gpu": -1, "dryrun": False}
 
         assert vars(module.parse_model_run_args(args_in)) == expected_args_out
 

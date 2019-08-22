@@ -22,12 +22,12 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
     )
 
     arg_parser.add_argument(
-        "--tiny",
+        "--dryrun",
         required=False,
         action="store_true",
         default=False,
         help=(
-            "Flag to do a dry run with a small dataset to validate changes to a model will compile."
+            "Perform a dry run with a tiny dataset to check that a model will compile."
         ),
     )
 

@@ -22,7 +22,7 @@ def mock_download_s3_files(mocker):
 
 class TestLoadMultiExperimentDatasetCsv:
     def test_downloads_files_to_correct_local_paths_and_returns_dataframe(
-        self, tmp_path, mocker, mock_download_s3_files
+        self, mocker, mock_download_s3_files
     ):
         test_df = pd.DataFrame(
             [
@@ -59,7 +59,7 @@ class TestLoadMultiExperimentDatasetCsv:
     # returns a series of the wrong shape, e.g. (1, 10) instead of (10,).
     # I seem to get a consistent repro when there is only one experiment
     def test_loads_single_experiment_dataset_files(
-        self, tmp_path, mocker, mock_download_s3_files
+        self, mocker, mock_download_s3_files
     ):
 
         test_df = pd.DataFrame(
