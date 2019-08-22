@@ -3,132 +3,30 @@ This model is a dense-layer network that trains only on two numerical inputs:
  - temperature
  - spatial ratiometric ("OO DO patch Wet r_msorm" / "Type 1 Chemistry Hand Applied Dry r_msorm")
 """
-
 import os
 import sys
 
 import keras
-import numpy as np
-import pandas as pd
 import tensorflow as tf
-import wandb
-from wandb.keras import WandbCallback
 
-from cosmobot_deep_learning.load_dataset import (
-    load_multi_experiment_dataset_csv,
-    get_pkg_dataset_filepath,
-    get_dataset_hash,
-)
 from cosmobot_deep_learning.configure import (
     parse_model_run_args,
     get_model_name_from_filepath,
 )
-from cosmobot_deep_learning.constants import (
-    ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
-    ACCEPTABLE_ERROR_MG_L,
-    ACCEPTABLE_ERROR_MMHG,
-)
-from cosmobot_deep_learning.custom_metrics import (
-    get_fraction_outside_acceptable_error_fn,
-    magical_incantation_to_make_custom_metric_work,
-)
-
-_DATASET_FILENAME = "2019-08-09--14-33-26_osmo_ml_dataset.csv"
-_DATASET_FILEPATH = get_pkg_dataset_filepath(_DATASET_FILENAME)
+from cosmobot_deep_learning.constants import ATMOSPHERIC_OXYGEN_PRESSURE_MMHG
+from cosmobot_deep_learning.hyperparameters import get_hyperparameters
+from cosmobot_deep_learning.prepare_dataset import prepare_dataset_numerical
+from cosmobot_deep_learning.run import run
 
 
-# Normalize by the atmospheric partial pressure of oxygen, as that is roughly the max we expect
-LABEL_SCALE_FACTOR_MMHG = ATMOSPHERIC_OXYGEN_PRESSURE_MMHG
-LABEL_COLUMN_NAME = "YSI DO (mmHg)"
-
-# Ensure that our custom metric uses the same normalizing factor we use to scale our labels
-_ACCEPTABLE_ERROR_NORMALIZED = ACCEPTABLE_ERROR_MMHG / LABEL_SCALE_FACTOR_MMHG
-fraction_outside_acceptable_error = get_fraction_outside_acceptable_error_fn(
-    acceptable_error=_ACCEPTABLE_ERROR_NORMALIZED
-)
-
-_HYPERPARAMETERS = {
-    "model_name": get_model_name_from_filepath(__file__),
-    "dataset_filename": _DATASET_FILENAME,
-    "dataset_filepath": _DATASET_FILEPATH,
-    "dataset_hash": get_dataset_hash(_DATASET_FILEPATH),
-    "epochs": 10000,
-    "batch_size": 3000,
-    "optimizer": keras.optimizers.Adadelta(),
-    "loss": "mean_squared_error",
-    # Toss in all the constants / assumptions we're using in this run
-    "ACCEPTABLE_ERROR_MG_L": ACCEPTABLE_ERROR_MG_L,
-    "ACCEPTABLE_ERROR_MMHG": ACCEPTABLE_ERROR_MMHG,
-    "LABEL_SCALE_FACTOR_MMHG": LABEL_SCALE_FACTOR_MMHG,
-    "LABEL_COLUMN_NAME": LABEL_COLUMN_NAME,
-    "_ACCEPTABLE_ERROR_NORMALIZED": _ACCEPTABLE_ERROR_NORMALIZED,
-}
-
-
-def extract_input_params(df):
-    """ Get the non-image input data values
-
-        Args:
-            df: A DataFrame representing a standard cosmobot dataset (from /datasets)
-        Returns:
-            Numpy array of temperature and spatial ratiometric values.
-            Ratiometric value is Wet DO Patch / Dry Reference Patch.
-    """
-    normalized_dataset = pd.DataFrame(
-        {
-            # Keep math on the same line
-            # fmt: off
-            "PicoLog temperature (C)": df["PicoLog temperature (C)"],
-            "spatial_ratiometric": df["DO patch r_msorm"] / df["reference patch r_msorm"],
-            # fmt: on
-        }
-    )
-
-    return normalized_dataset.values
-
-
-def extract_label_values(df):
-    """ Get the label (y) data values for a given dataset (x)
-
-        Args:
-            df: A DataFrame representing a standard cosmobot dataset (from /datasets)
-        Returns:
-            Numpy array of dissolved oxygen label values, normalized by a constant scale factor
-    """
-    scaled_labels = df[LABEL_COLUMN_NAME] / LABEL_SCALE_FACTOR_MMHG
-
-    # Reshape to 2d array
-    return np.reshape(scaled_labels.values, (-1, 1))
-
-
-def prepare_dataset(raw_dataset):
-    """ Transform a dataset CSV into the appropriate inputs for training the model in this module.
-
-        Args:
-            raw_dataset: A DataFrame corresponding to a standard cosmobot dataset csv
-        Returns:
-            A 4-tuple containing (x_train, y_train, x_test, y_test) data sets.
-    """
-
-    train_samples = raw_dataset[raw_dataset["training_resampled"]]
-    test_samples = raw_dataset[raw_dataset["test"]]
-
-    x_train_sr = extract_input_params(train_samples)
-    y_train_do = extract_label_values(train_samples)
-
-    x_test_sr = extract_input_params(test_samples)
-    y_test_do = extract_label_values(test_samples)
-
-    return (x_train_sr, y_train_do, x_test_sr, y_test_do)
-
-
-def create_model(hyperparameters, input_numerical_data_dimensions):
+def create_model(hyperparameters, x_train):
     """ Build a model
 
     Args:
         hyperparameters: See definition in `run()`
-        input_numerical_data_dimension: The number of numerical inputs to feed to the model
+        x_train: The input training data (used to determine input layer shape)
     """
+    input_numerical_data_dimensions = x_train.shape[1]
     sr_model = keras.models.Sequential(
         [
             keras.layers.Dense(
@@ -143,69 +41,10 @@ def create_model(hyperparameters, input_numerical_data_dimensions):
     sr_model.compile(
         optimizer=hyperparameters["optimizer"],
         loss=hyperparameters["loss"],
-        metrics=[
-            "mean_squared_error",
-            "mean_absolute_error",
-            fraction_outside_acceptable_error,
-        ],
+        metrics=hyperparameters["metrics"],
     )
 
     return sr_model
-
-
-def _initialize_wandb(hyperparameters, y_train, y_test):
-    wandb.init(
-        entity="osmo",
-        project="cosmobot-do-measurement",
-        config={
-            "train_sample_count": y_train.shape[0],
-            "test_sample_count": y_test.shape[0],
-            **hyperparameters,
-        },
-    )
-
-
-def run(hyperparameters):
-    """ Use the provided hyperparameters to train the model in this module.
-
-    Args:
-        hyperparameters: Any variables that are parameterizable for this model
-            epochs: Number of epochs to train for
-            batch_size: Training batch size
-            model_name: A string label for the model
-            dataset_filepath: Filepath (within this package) of the dataset to use for training
-            optimizer: Which optimizer function to use
-            loss: Which loss function to use
-
-    """
-
-    epochs = hyperparameters["epochs"]
-    batch_size = hyperparameters["batch_size"]
-    dataset_filepath = hyperparameters["dataset_filepath"]
-
-    x_train, y_train, x_test, y_test = prepare_dataset(
-        raw_dataset=load_multi_experiment_dataset_csv(dataset_filepath)
-    )
-
-    _initialize_wandb(hyperparameters, y_train, y_test)
-
-    model = create_model(
-        hyperparameters, input_numerical_data_dimensions=x_train.shape[1]
-    )
-
-    magical_incantation_to_make_custom_metric_work()
-
-    history = model.fit(
-        x_train,
-        y_train,
-        batch_size=batch_size,
-        epochs=epochs,
-        verbose=2,
-        validation_data=(x_test, y_test),
-        callbacks=[WandbCallback()],
-    )
-
-    return x_train, y_train, x_test, y_test, model, history
 
 
 if __name__ == "__main__":
@@ -215,4 +54,19 @@ if __name__ == "__main__":
     # hyperparameter sweeps. See https://www.wandb.com/articles/multi-gpu-sweeps
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
-    run(_HYPERPARAMETERS)
+    hyperparameters = get_hyperparameters(
+        {
+            "model_name": get_model_name_from_filepath(__file__),
+            # TODO: revert these for-testing changes
+            "dataset_filename": "2019-08-09--14-33-26_osmo_ml_dataset_tiny.csv",
+            "epochs": 1,  # 0000,
+            "batch_size": 3000,
+            "optimizer": keras.optimizers.Adadelta(),
+            "loss": "mean_squared_error",
+            "input_columns": ["sr", "PicoLog temperature (C)"],
+            # "label_column": "YSI DO (mmHg)",
+            "label_scale_factor_mmhg": ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
+        }
+    )
+
+    run(hyperparameters, prepare_dataset_numerical, create_model)
