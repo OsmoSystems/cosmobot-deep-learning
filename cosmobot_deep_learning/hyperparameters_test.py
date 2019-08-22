@@ -44,16 +44,25 @@ class TestGetHyperparameters:
         missing_attributes = set(REQUIRED_HYPERPARAMETERS).difference(actual.keys())
         assert not missing_attributes
 
+
+class TestCalculateHyperparameters:
     def test_calculates_dataset_attributes(self, mock_dataset_fns):
-        actual = module.get_hyperparameters(**MIN_MODEL_HYPERPARAMETERS)
+        actual = module._calculate_additional_hyperparameters(
+            dataset_filename=sentinel.dataset_filename,
+            acceptable_error_mg_l=0.5,
+            label_scale_factor_mmhg=100,
+        )
         assert actual["dataset_filepath"] == sentinel.dataset_filepath
         assert actual["dataset_hash"] == sentinel.dataset_hash
 
     def test_calculates_acceptable_errors(self, mock_dataset_fns):
-        actual = module.get_hyperparameters(**MIN_MODEL_HYPERPARAMETERS)
-        assert actual["acceptable_error_mg_l"] == 0.5
+        actual = module._calculate_additional_hyperparameters(
+            dataset_filename=sentinel.dataset_filename,
+            acceptable_error_mg_l=0.5,
+            label_scale_factor_mmhg=100,
+        )
         assert actual["acceptable_error_mmhg"] == 9.638554216867469
-        assert actual["acceptable_error_normalized"] == 0.06024096385542168
+        assert actual["acceptable_error_normalized"] == 0.09638554216867469
 
 
 class TestGuardNoOverriddenCalculatedHyperparameters:
