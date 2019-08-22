@@ -12,9 +12,8 @@ def _loggable_hyperparameters(hyperparameters):
     # W&B logging chokes on our custom metric function.
     # Manually fix this by replacing metric function with its __name__
     loggable_metrics = [
-        metric.__name__
+        metric.__name__ if hasattr(metric, "__name__") else metric
         for metric in hyperparameters["metrics"]
-        if hasattr(metric, "__name__")
     ]
 
     return {
@@ -25,11 +24,6 @@ def _loggable_hyperparameters(hyperparameters):
 
 
 def _initialize_wandb(hyperparameters, y_train, y_test):
-    # TODO: better handle case where y_train is a list (in multi-branch models)
-    # if type(y_train) == list:
-    #     y_train = y_train[0]
-    #     y_test = y_test[0]
-
     wandb.init(
         entity="osmo",
         project="cosmobot-do-measurement",
