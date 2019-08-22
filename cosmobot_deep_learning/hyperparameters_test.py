@@ -54,3 +54,27 @@ class TestGetHyperparameters:
         assert actual["acceptable_error_mg_l"] == 0.5
         assert actual["acceptable_error_mmhg"] == 9.638554216867469
         assert actual["acceptable_error_normalized"] == 0.06024096385542168
+
+
+class TestGuardNoOverriddenCalculatedHyperparameters:
+    def test_raises_if_overridden(self):
+        with pytest.raises(ValueError):
+            module._guard_no_overridden_calculated_hyperparameters(
+                calculated={
+                    "calculated": sentinel.calculated,
+                    "overridden": sentinel.overridden,
+                },
+                model_specific={
+                    "overridden": sentinel.overridden,
+                    "model_specific": sentinel.model_specific,
+                },
+            )
+
+    def test_doesnt_raise_if_not_overridden(self):
+        module._guard_no_overridden_calculated_hyperparameters(
+            calculated={
+                "calculated": sentinel.calculated,
+                "overridden": sentinel.overridden,
+            },
+            model_specific={"model_specific": sentinel.model_specific},
+        )
