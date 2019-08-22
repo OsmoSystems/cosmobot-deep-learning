@@ -67,7 +67,7 @@ def run(hyperparameters, prepare_dataset, create_model):
     dataset = pd.read_csv(dataset_filepath)
 
     if dryrun:
-        dataset = _generate_tiny_dataset(dataset_filepath)
+        dataset = _generate_tiny_dataset(dataset)
         # Disable W&B syncing to the cloud since we don't care about the results
         os.environ["WANDB_MODE"] = "dryrun"
 
