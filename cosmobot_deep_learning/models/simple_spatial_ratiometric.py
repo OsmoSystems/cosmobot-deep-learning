@@ -55,10 +55,11 @@ if __name__ == "__main__":
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
     hyperparameters = get_hyperparameters(
-        {
+        **{
+            **vars(args),
             "model_name": get_model_name_from_filepath(__file__),
             # TODO: revert these for-testing changes
-            "dataset_filename": "2019-08-09--14-33-26_osmo_ml_dataset_tiny.csv",
+            "dataset_filename": "2019-08-09--14-33-26_osmo_ml_dataset.csv",
             "epochs": 1,  # 0000,
             "batch_size": 3000,
             "optimizer": keras.optimizers.Adadelta(),

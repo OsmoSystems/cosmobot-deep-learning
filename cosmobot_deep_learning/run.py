@@ -1,3 +1,6 @@
+import os
+
+import pandas as pd
 import wandb
 from wandb.keras import WandbCallback
 
@@ -45,9 +48,20 @@ def run(hyperparameters, prepare_dataset, create_model):
     epochs = hyperparameters["epochs"]
     batch_size = hyperparameters["batch_size"]
     dataset_filepath = hyperparameters["dataset_filepath"]
+    tiny = hyperparameters["tiny"]
+
+    dataset = pd.read_csv(dataset_filepath)
+
+    if tiny:
+        # Grab the first training and dev data points and replace the existing dataset
+        dataset = dataset[dataset["training_resampled"]][:1].append(
+            dataset[dataset["test"]][:1]
+        )
+        # Disable W&B logging since we don't care about the results
+        os.environ["WANDB_MODE"] = "dryrun"
 
     x_train, y_train, x_test, y_test = prepare_dataset(
-        raw_dataset=load_multi_experiment_dataset_csv(dataset_filepath),
+        raw_dataset=load_multi_experiment_dataset_csv(dataset),
         hyperparameters=hyperparameters,
     )
 

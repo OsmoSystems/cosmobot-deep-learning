@@ -83,4 +83,5 @@ def get_hyperparameters(
             "mean_absolute_error",
             fraction_outside_acceptable_error,
         ],
+        "tiny": False,
     }
