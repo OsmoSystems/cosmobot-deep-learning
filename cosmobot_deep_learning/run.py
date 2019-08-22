@@ -44,8 +44,8 @@ def _initialize_wandb(hyperparameters, y_train, y_test):
 def _generate_tiny_dataset(dataset):
     """ Grab the first training and dev data points to create a tiny dataset.
     """
-    training_sample = dataset[dataset[TRAINING_SET_NAME]][:1]
-    test_sample = dataset[dataset[DEV_SET_NAME]][:1]
+    training_sample = dataset[dataset[TRAINING_SET_NAME]][:2]
+    test_sample = dataset[dataset[DEV_SET_NAME]][:2]
     return training_sample.append(test_sample)
 
 

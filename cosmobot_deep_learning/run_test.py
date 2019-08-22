@@ -27,20 +27,18 @@ class TestDryRunFlag:
     def test_creates_tiny_dataset(self):
         test_df = pd.DataFrame(
             {
-                "training": [True, True, True, True, False, False],
-                "training_resampled": [False, True, False, True, False, False],
-                "test": [False, False, False, False, True, True],
+                "training_resampled": [True, True, True, False, False, False],
+                "test": [False, False, False, True, True, True],
             },
             index=[0, 1, 2, 3, 4, 5],
         )
 
         expected_df = pd.DataFrame(
             {
-                "training": [True, False],
-                "training_resampled": [True, False],
-                "test": [False, True],
+                "training_resampled": [True, True, False, False],
+                "test": [False, False, True, True],
             },
-            index=[1, 4],
+            index=[0, 1, 3, 4],
         )
 
         actual_df = module._generate_tiny_dataset(test_df)
