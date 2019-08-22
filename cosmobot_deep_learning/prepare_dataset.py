@@ -68,7 +68,6 @@ def prepare_dataset_numerical(raw_dataset: pd.DataFrame, hyperparameters):
     return (x_train, y_train, x_test, y_test)
 
 
-# TODO: test this in the cnn / resnet
 def prepare_dataset_image_and_numerical(raw_dataset: pd.DataFrame, hyperparameters):
     """ Transform a dataset CSV into the appropriate inputs and labels for training and
     validating a model, for a model that uses separate image and numerical inputs
@@ -79,36 +78,36 @@ def prepare_dataset_image_and_numerical(raw_dataset: pd.DataFrame, hyperparamete
                 input_columns: A list of column names to be included as inputs.
                 label_column: The column to use as the label (y) data values for a given dataset (x)
                 label_scale_factor_mmhg: The scaling factor to use to scale labels into the [0,1] range
-                input_image_dimension: TODO
+                image_size: The desired side length of the scaled (square) images
         Returns:
             A 4-tuple containing (x_train, y_train, x_test, y_test) data sets.
     """
     input_columns = hyperparameters["input_columns"]
     label_column = hyperparameters["label_column"]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
-    input_image_dimension = hyperparameters["image_size"]
+    image_size = hyperparameters["image_size"]
 
     train_samples = raw_dataset[raw_dataset["training_resampled"]]
     test_samples = raw_dataset[raw_dataset["test"]]
 
-    x_train_sr = extract_inputs(train_samples, input_columns)
+    x_train_numerical = extract_inputs(train_samples, input_columns)
     x_train_images = open_and_preprocess_images(
-        train_samples["local_filepath"].values, input_image_dimension
+        train_samples["local_filepath"].values, image_size
     )
-    y_train_do = extract_labels(test_samples, label_column, label_scale_factor_mmhg)
+    y_train = extract_labels(train_samples, label_column, label_scale_factor_mmhg)
 
-    x_test_sr = extract_inputs(train_samples, input_columns)
+    x_test_numerical = extract_inputs(test_samples, input_columns)
     x_test_images = open_and_preprocess_images(
-        test_samples["local_filepath"].values, input_image_dimension
+        test_samples["local_filepath"].values, image_size
     )
-    y_test_do = extract_labels(test_samples, label_column, label_scale_factor_mmhg)
+    y_test = extract_labels(test_samples, label_column, label_scale_factor_mmhg)
 
     return (
-        [x_train_sr, x_train_images],
+        [x_train_numerical, x_train_images],
         # TODO: I changed this to not return a list for the labels, because that breaks other stuff now.
         # It seems like it works (training runs) but I should double-check somehow
         # Or, alternately, maybe I could change the numerical dataset to always return these in lists?
-        y_train_do,
-        [x_test_sr, x_test_images],
-        y_test_do,
+        y_train,
+        [x_test_numerical, x_test_images],
+        y_test,
     )
