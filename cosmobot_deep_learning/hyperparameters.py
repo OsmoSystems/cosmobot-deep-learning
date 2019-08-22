@@ -61,8 +61,9 @@ DEFAULT_LOSS = "mean_squared_error"
 DEFAULT_OPTIMIZER = keras.optimizers.Adadelta()
 DEFAULT_EPOCHS = 1000
 DEFAULT_BATCH_SIZE = 128
-DEFAULT_TRAINING_SET_LABEL = "training_resampled"
-DEFAULT_DEV_SET_LABEL = "test"
+DEFAULT_TRAINING_SET_COLUMN_NAME = "training_resampled"
+DEFAULT_DEV_SET_COLUMN_NAME = "test"
+DEFAULT_DRYRUN = False
 
 
 def get_hyperparameters(
@@ -76,8 +77,9 @@ def get_hyperparameters(
     optimizer=DEFAULT_OPTIMIZER,
     loss=DEFAULT_LOSS,
     acceptable_error_mg_l: float = ACCEPTABLE_ERROR_MG_L,
-    training_set_label: str = DEFAULT_TRAINING_SET_LABEL,
-    dev_set_label: str = DEFAULT_DEV_SET_LABEL,
+    training_set_column_name: str = DEFAULT_TRAINING_SET_COLUMN_NAME,
+    dev_set_column_name: str = DEFAULT_DEV_SET_COLUMN_NAME,
+    dryrun: bool = False,
     **model_specific_hyperparameters,
 ):
     """ This function:
@@ -96,6 +98,8 @@ def get_hyperparameters(
         optimizer: Which optimizer function to use
         loss: Which loss function to use
         acceptable_error_mg_l: The threshold, in mg/L to use in our custom "fraction_outside_acceptable_error" metric
+        training_set_column_name: The dataset column name of the training set flag.
+        dev_set_column_name: The dataset column name of the dev set flag.
         **model_specific_hyperparameters: All other kwargs get slurped up here
 
     Returns: A dict of hyperparameters
@@ -121,8 +125,9 @@ def get_hyperparameters(
         "optimizer": optimizer,
         "loss": loss,
         "acceptable_error_mg_l": acceptable_error_mg_l,
-        "training_set_label": training_set_label,
-        "dev_set_label": dev_set_label,
+        "training_set_column_name": training_set_column_name,
+        "dev_set_column_name": dev_set_column_name,
+        "dryrun": dryrun,
         **calculated_hyperparameters,
         **model_specific_hyperparameters,
     }
