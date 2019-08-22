@@ -66,7 +66,7 @@ DEFAULT_BATCH_SIZE = 128
 def get_hyperparameters(
     model_name: str,
     dataset_filename: str,
-    input_columns: List[str],
+    numerical_input_columns: List[str],
     label_column: str = DEFAULT_LABEL_COLUMN,
     label_scale_factor_mmhg: float = ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
     epochs: int = DEFAULT_EPOCHS,
@@ -84,7 +84,7 @@ def get_hyperparameters(
     Args:
         model_name: A string label for the model
         dataset_filename: Filename of the dataset to use for training
-        input_columns: A List of column names from the dataset to use as numerical inputs (x) to the model
+        numerical_input_columns: A List of column names from the dataset to use as numerical inputs (x) to the model
         label_column: A column name from the dataset to use as the labels (y) for the model
         label_scale_factor_mmhg: The scaling factor to use to scale labels into the [0,1] range
         epochs: Number of epochs to train for
@@ -109,7 +109,7 @@ def get_hyperparameters(
         # Pass through defined/default hyperparameters
         "model_name": model_name,
         "dataset_filename": dataset_filename,
-        "input_columns": input_columns,
+        "numerical_input_columns": numerical_input_columns,
         "label_column": label_column,
         "label_scale_factor_mmhg": label_scale_factor_mmhg,
         "epochs": epochs,

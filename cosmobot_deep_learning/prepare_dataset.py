@@ -10,13 +10,13 @@ def extract_inputs(df, input_column_names):
 
         Args:
             df: A DataFrame representing a standard cosmobot dataset (from /datasets)
-            input_columns: A list of column names to be included as inputs.
+            numerical_input_columns: A list of column names to be included as inputs.
                 Special case: "sr" can be specified in this list to include the calculated spatial ratiometric value
         Returns:
             A numpy array of inputs, including just the values of the specified columns
     """
     # Manually add a spatial ratiometric "sr" column to the dataset, so that models can specify using it
-    # as a numerical input simply by referring to it in the `input_columns` hyperparameter
+    # as a numerical input simply by referring to it in the `numerical_input_columns` hyperparameter
     dataset = df.assign(
         **{"sr": df["DO patch r_msorm"] / df["reference patch r_msorm"]}
     )[input_column_names]
@@ -47,23 +47,23 @@ def prepare_dataset_numerical(raw_dataset: pd.DataFrame, hyperparameters):
         Args:
             raw_dataset: A DataFrame corresponding to a standard cosmobot dataset csv
             hyperparameters: A dictionary that includes at least:
-                input_columns: A list of column names to be included as inputs.
+                numerical_input_columns: A list of column names to be included as inputs.
                 label_column: The column to use as the label (y) data values for a given dataset (x)
                 label_scale_factor_mmhg: The scaling factor to use to scale labels into the [0,1] range
         Returns:
             A 4-tuple containing (x_train, y_train, x_test, y_test) data sets.
     """
-    input_columns = hyperparameters["input_columns"]
+    numerical_input_columns = hyperparameters["numerical_input_columns"]
     label_column = hyperparameters["label_column"]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
 
     train_samples = raw_dataset[raw_dataset["training_resampled"]]
     test_samples = raw_dataset[raw_dataset["test"]]
 
-    x_train = extract_inputs(train_samples, input_columns)
+    x_train = extract_inputs(train_samples, numerical_input_columns)
     y_train = extract_labels(train_samples, label_column, label_scale_factor_mmhg)
 
-    x_test = extract_inputs(test_samples, input_columns)
+    x_test = extract_inputs(test_samples, numerical_input_columns)
     y_test = extract_labels(test_samples, label_column, label_scale_factor_mmhg)
 
     return (x_train, y_train, x_test, y_test)
@@ -76,14 +76,14 @@ def prepare_dataset_image_and_numerical(raw_dataset: pd.DataFrame, hyperparamete
         Args:
             raw_dataset: A DataFrame corresponding to a standard cosmobot dataset csv
             hyperparameters: A dictionary that includes at least:
-                input_columns: A list of column names to be included as inputs.
+                numerical_input_columns: A list of column names to be included as inputs.
                 label_column: The column to use as the label (y) data values for a given dataset (x)
                 label_scale_factor_mmhg: The scaling factor to use to scale labels into the [0,1] range
                 image_size: The desired side length of the scaled (square) images
         Returns:
             A 4-tuple containing (x_train, y_train, x_test, y_test) data sets.
     """
-    input_columns = hyperparameters["input_columns"]
+    numerical_input_columns = hyperparameters["numerical_input_columns"]
     label_column = hyperparameters["label_column"]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
     image_size = hyperparameters["image_size"]
@@ -91,13 +91,13 @@ def prepare_dataset_image_and_numerical(raw_dataset: pd.DataFrame, hyperparamete
     train_samples = raw_dataset[raw_dataset["training_resampled"]]
     test_samples = raw_dataset[raw_dataset["test"]]
 
-    x_train_numerical = extract_inputs(train_samples, input_columns)
+    x_train_numerical = extract_inputs(train_samples, numerical_input_columns)
     x_train_images = open_and_preprocess_images(
         train_samples["local_filepath"].values, image_size
     )
     y_train = extract_labels(train_samples, label_column, label_scale_factor_mmhg)
 
-    x_test_numerical = extract_inputs(test_samples, input_columns)
+    x_test_numerical = extract_inputs(test_samples, numerical_input_columns)
     x_test_images = open_and_preprocess_images(
         test_samples["local_filepath"].values, image_size
     )

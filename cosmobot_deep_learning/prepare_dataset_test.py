@@ -86,7 +86,7 @@ class TestPrepareDatasetNumerical:
         actual = module.prepare_dataset_numerical(
             MOCK_DATASET,
             {
-                "input_columns": ["numerical_input_column", "sr"],
+                "numerical_input_columns": ["numerical_input_column", "sr"],
                 "label_column": "DO_label_column",
                 "label_scale_factor_mmhg": scale_factor,
             },
@@ -129,7 +129,7 @@ class TestPrepareDatasetImageAndNumerical:
         actual = module.prepare_dataset_image_and_numerical(
             MOCK_DATASET,
             {
-                "input_columns": ["numerical_input_column", "sr"],
+                "numerical_input_columns": ["numerical_input_column", "sr"],
                 "label_column": "DO_label_column",
                 "label_scale_factor_mmhg": scale_factor,
                 "image_size": sentinel.image_size,
