@@ -25,6 +25,11 @@ class TestLoggableHyperparameters:
 
 class TestDryRunFlag:
     def test_creates_tiny_dataset(self):
+        mock_hyperparameters = {
+            "training_set_label": "training_resampled",
+            "dev_set_label": "test",
+        }
+
         test_df = pd.DataFrame(
             {
                 "training_resampled": [True, True, True, False, False, False],
@@ -41,6 +46,6 @@ class TestDryRunFlag:
             index=[0, 1, 3, 4],
         )
 
-        actual_df = module._generate_tiny_dataset(test_df)
+        actual_df = module._generate_tiny_dataset(test_df, mock_hyperparameters)
 
         pd.testing.assert_frame_equal(actual_df, expected_df)

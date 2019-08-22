@@ -117,6 +117,7 @@ if __name__ == "__main__":
         dataset_filename="2019-08-09--14-33-26_osmo_ml_dataset.csv",
         numeric_input_columns=["PicoLog temperature (C)"],
         image_size=128,
+        **vars(args),
     )
 
     run(hyperparameters, prepare_dataset_image_and_numeric, create_model)
