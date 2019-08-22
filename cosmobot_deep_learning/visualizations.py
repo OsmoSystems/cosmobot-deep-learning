@@ -8,6 +8,10 @@ _TRAINING_LOSS_OVER_EPOCHS_TITLE = "Training and Dev loss over epochs"
 _DO_PREDICTION_ERROR_TITLE = "DO prediction error"
 _ACTUAL_VS_PREDICTED_TITLE = "Actual vs predicted DO"
 
+# meximum number of points to allow on a plotly figure that we send to W&B
+# turn this down if the plotly charts on W&B are unresponsive
+_PLOTLY_WANDB_MAX_POINTS = 4000
+
 
 def _downsample(array: np.ndarray, max_samples: int):
     """Returns max_samples items from the given array, spread out evenly across indexes.
@@ -41,16 +45,19 @@ def _get_loss_over_epochs_figure(training_history):
     )
 
     # downsample for plotly performance
-    max_samples = 1000
-    downsampled_val_loss_over_epochs = _downsample(val_loss_over_epochs, max_samples)
-    downsampled_loss_over_epochs = _downsample(loss_over_epochs, max_samples)
+    num_traces = 4  # number of traces on this figure
+    max_samples_per_trace = int(_PLOTLY_WANDB_MAX_POINTS / num_traces)
+    downsampled_val_loss_over_epochs = _downsample(
+        val_loss_over_epochs, max_samples_per_trace
+    )
+    downsampled_loss_over_epochs = _downsample(loss_over_epochs, max_samples_per_trace)
     downsampled_val_loss_over_epochs_rolling_median = _downsample(
-        val_loss_over_epochs_rolling_median, max_samples
+        val_loss_over_epochs_rolling_median, max_samples_per_trace
     )
     downsampled_loss_over_epochs_rolling_median = _downsample(
-        loss_over_epochs_rolling_median, max_samples
+        loss_over_epochs_rolling_median, max_samples_per_trace
     )
-    downsampled_epochs = list(_downsample(epochs, max_samples))
+    downsampled_epochs = list(_downsample(epochs, max_samples_per_trace))
 
     return go.Figure(
         [
@@ -86,20 +93,21 @@ def _get_loss_over_epochs_figure(training_history):
 def _get_actual_vs_predicted_do_figure(
     train_labels, train_predictions, dev_labels, dev_predictions
 ):
-    max_samples = 1000
+    num_traces = 2  # traces in this figure
+    max_samples_per_trace = int(_PLOTLY_WANDB_MAX_POINTS / num_traces)
 
     # NOTE x and y values need to be lists to log correctly
     return go.Figure(
         [
             dict(
-                x=list(_downsample(train_labels, max_samples)),
-                y=list(_downsample(train_predictions, max_samples)),
+                x=list(_downsample(train_labels, max_samples_per_trace)),
+                y=list(_downsample(train_predictions, max_samples_per_trace)),
                 mode="markers",
                 name="training set",
             ),
             dict(
-                x=list(_downsample(dev_labels, max_samples)),
-                y=list(_downsample(dev_predictions, max_samples)),
+                x=list(_downsample(dev_labels, max_samples_per_trace)),
+                y=list(_downsample(dev_predictions, max_samples_per_trace)),
                 mode="markers",
                 name="dev set",
             ),
@@ -116,20 +124,25 @@ def _get_actual_vs_predicted_do_figure(
 def _get_do_prediction_error_figure(
     train_labels, train_predictions, dev_labels, dev_predictions
 ):
-    max_samples = 1000
+    num_traces = 2
+    max_samples_per_trace = int(_PLOTLY_WANDB_MAX_POINTS / num_traces)
 
     # NOTE x and y values need to be lists to log correctly
     return go.Figure(
         [
             dict(
-                x=list(_downsample(train_labels, max_samples)),
-                y=list(_downsample(train_predictions - train_labels, max_samples)),
+                x=list(_downsample(train_labels, max_samples_per_trace)),
+                y=list(
+                    _downsample(train_predictions - train_labels, max_samples_per_trace)
+                ),
                 mode="markers",
                 name="training set",
             ),
             dict(
-                x=list(_downsample(dev_labels, max_samples)),
-                y=list(_downsample(dev_predictions - dev_labels, max_samples)),
+                x=list(_downsample(dev_labels, max_samples_per_trace)),
+                y=list(
+                    _downsample(dev_predictions - dev_labels, max_samples_per_trace)
+                ),
                 mode="markers",
                 name="dev set",
             ),
