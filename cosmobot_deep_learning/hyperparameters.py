@@ -51,7 +51,7 @@ def get_hyperparameters(
     dataset_hash = get_dataset_hash(dataset_filepath)
 
     # Ensure that our custom metric uses the same normalizing factor we use to scale our labels
-    acceptable_error_normalized = ACCEPTABLE_ERROR_MMHG / label_scale_factor_mmhg
+    acceptable_error_normalized = acceptable_error_mmhg / label_scale_factor_mmhg
     fraction_outside_acceptable_error = get_fraction_outside_acceptable_error_fn(
         acceptable_error=acceptable_error_normalized
     )
