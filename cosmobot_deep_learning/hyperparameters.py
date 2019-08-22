@@ -59,7 +59,7 @@ def _calculate_additional_hyperparameters(
 DEFAULT_LABEL_COLUMN = "YSI DO (mmHg)"
 DEFAULT_LOSS = "mean_squared_error"
 DEFAULT_OPTIMIZER = keras.optimizers.Adadelta()
-DEFAULT_EPOCHS = 1  # 000
+DEFAULT_EPOCHS = 1000
 DEFAULT_BATCH_SIZE = 128
 
 
