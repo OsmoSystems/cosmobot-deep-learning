@@ -36,7 +36,7 @@ def load_multi_experiment_dataset_csv(dataset: pd.DataFrame) -> pd.DataFrame:
     are already downloaded.
 
     Args:
-        dataset: ML dataset DataFramne. DataFramne is expected to have at least the following columns:
+        dataset: ML dataset DataFramne. DataFrame is expected to have at least the following columns:
             'experiment': experiment directory on s3
             'image': image filename on s3
             All other columns are passed through.
