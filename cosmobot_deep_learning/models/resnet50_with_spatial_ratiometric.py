@@ -6,8 +6,6 @@ This model is a 2-branch network that combines:
     - spatial ratiometric ("OO DO patch Wet r_msorm" / "Type 1 Chemistry Hand Applied Dry r_msorm")
 """
 
-# TODO: this is working yet!
-
 import os
 import sys
 
@@ -31,9 +29,10 @@ def create_model(hyperparameters, x_train):
         hyperparameters: See definition in `run()`
         x_train: The input training data (used to determine input layer shape)
     """
-    # TODO: make this clearer
-    x_train_sr = x_train[0]
-    input_numerical_data_dimension = x_train_sr.shape[1]
+    # x_train is a list of two inputs: numerical and images
+    x_train_numerical, x_train_images = x_train
+    x_train_samples_count, numerical_inputs_count = x_train_numerical.shape
+
     image_size = hyperparameters["image_size"]
     input_layer = keras.layers.Input(shape=(image_size, image_size, 3))
 
@@ -56,7 +55,7 @@ def create_model(hyperparameters, x_train):
     sv_model = keras.models.Sequential(
         [
             keras.layers.Dense(
-                11, activation=tf.nn.relu, input_shape=[input_numerical_data_dimension]
+                11, activation=tf.nn.relu, input_shape=[numerical_inputs_count]
             ),
             keras.layers.Dense(32),
             keras.layers.advanced_activations.LeakyReLU(),

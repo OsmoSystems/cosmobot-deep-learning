@@ -27,9 +27,9 @@ def create_model(hyperparameters, x_train):
         hyperparameters: See definition in `run()`
         x_train: The input training data (used to determine input layer shape)
     """
-    # TODO: make this clearer
-    x_train_sr = x_train[0]
-    input_numerical_data_dimension = x_train_sr.shape[1]
+    # x_train is a list of two inputs: numerical and images
+    x_train_numerical, x_train_images = x_train
+    x_train_samples_count, numerical_inputs_count = x_train_numerical.shape
 
     image_size = hyperparameters["image_size"]
 
@@ -72,7 +72,7 @@ def create_model(hyperparameters, x_train):
     )
 
     temperature_input = keras.layers.Input(
-        shape=(input_numerical_data_dimension,), name="temperature"
+        shape=(numerical_inputs_count,), name="temperature"
     )
 
     temp_and_image_add = keras.layers.concatenate(
