@@ -13,7 +13,6 @@ from cosmobot_deep_learning.configure import (
     parse_model_run_args,
     get_model_name_from_filepath,
 )
-from cosmobot_deep_learning.constants import ATMOSPHERIC_OXYGEN_PRESSURE_MMHG
 from cosmobot_deep_learning.hyperparameters import get_hyperparameters
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_numerical
 from cosmobot_deep_learning.run import run
@@ -54,19 +53,17 @@ if __name__ == "__main__":
     # hyperparameter sweeps. See https://www.wandb.com/articles/multi-gpu-sweeps
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
+    # TODO: remove
+    os.environ["WANDB_MODE"] = "dryrun"
+
     hyperparameters = get_hyperparameters(
-        {
-            "model_name": get_model_name_from_filepath(__file__),
-            # TODO: revert these for-testing changes
-            "dataset_filename": "2019-08-09--14-33-26_osmo_ml_dataset_tiny.csv",
-            "epochs": 1,  # 0000,
-            "batch_size": 3000,
-            "optimizer": keras.optimizers.Adadelta(),
-            "loss": "mean_squared_error",
-            "input_columns": ["sr", "PicoLog temperature (C)"],
-            # "label_column": "YSI DO (mmHg)",
-            "label_scale_factor_mmhg": ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
-        }
+        model_name=get_model_name_from_filepath(__file__),
+        # TODO: revert these for-testing changes
+        dataset_filename="2019-08-09--14-33-26_osmo_ml_dataset_tiny.csv",
+        epochs=1,
+        # End TODO
+        batch_size=3000,
+        input_columns=["sr", "PicoLog temperature (C)"],
     )
 
     run(hyperparameters, prepare_dataset_numerical, create_model)

@@ -1,9 +1,11 @@
+from typing import List
+
 import keras
 
 from cosmobot_deep_learning.constants import (
     ACCEPTABLE_ERROR_MG_L,
-    ACCEPTABLE_ERROR_MMHG,
     ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
+    MG_L_TO_MMHG_AT_25_C_1_ATM,
 )
 from cosmobot_deep_learning.load_dataset import (
     get_pkg_dataset_filepath,
@@ -15,6 +17,45 @@ from cosmobot_deep_learning.custom_metrics import (
 )
 
 
+def _guard_no_overridden_calculated_hyperparameters(calculated, model_specific):
+    """ Don't allow the model to override hyperparameters that are calculated here
+    """
+    # Check for any shared keys
+    overridden_parameters = set(calculated) & set(model_specific)
+
+    if overridden_parameters:
+        raise ValueError(
+            "Model-specific hyperparameters attempting to override calculated parameters: {overridden_parameters}"
+        )
+
+
+def _calculate_additional_hyperparameters(
+    dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
+):
+    dataset_filepath = get_pkg_dataset_filepath(dataset_filename)
+    dataset_hash = get_dataset_hash(dataset_filepath)
+
+    acceptable_error_mmhg = acceptable_error_mg_l * MG_L_TO_MMHG_AT_25_C_1_ATM
+
+    # Ensure that our custom metric uses the same normalizing factor we use to scale our labels
+    acceptable_error_normalized = acceptable_error_mmhg / label_scale_factor_mmhg
+    fraction_outside_acceptable_error = get_fraction_outside_acceptable_error_fn(
+        acceptable_error=acceptable_error_normalized
+    )
+
+    return {
+        "dataset_filepath": dataset_filepath,
+        "dataset_hash": dataset_hash,
+        "acceptable_error_mmhg": acceptable_error_mmhg,
+        "acceptable_error_normalized": acceptable_error_normalized,
+        "metrics": [
+            "mean_squared_error",
+            "mean_absolute_error",
+            fraction_outside_acceptable_error,
+        ],
+    }
+
+
 DEFAULT_LABEL_COLUMN = "YSI DO (mmHg)"
 DEFAULT_LOSS = "mean_squared_error"
 DEFAULT_OPTIMIZER = keras.optimizers.Adadelta()
@@ -23,17 +64,16 @@ DEFAULT_BATCH_SIZE = 128
 
 
 def get_hyperparameters(
-    model_name,
-    dataset_filename,
-    input_columns,
-    label_column=DEFAULT_LABEL_COLUMN,
-    label_scale_factor_mmhg=ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
-    epochs=DEFAULT_EPOCHS,
-    batch_size=DEFAULT_BATCH_SIZE,
+    model_name: str,
+    dataset_filename: str,
+    input_columns: List[str],
+    label_column: str = DEFAULT_LABEL_COLUMN,
+    label_scale_factor_mmhg: float = ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
+    epochs: int = DEFAULT_EPOCHS,
+    batch_size: int = DEFAULT_BATCH_SIZE,
     optimizer=DEFAULT_OPTIMIZER,
     loss=DEFAULT_LOSS,
-    acceptable_error_mg_l=ACCEPTABLE_ERROR_MG_L,
-    acceptable_error_mmhg=ACCEPTABLE_ERROR_MMHG,
+    acceptable_error_mg_l: float = ACCEPTABLE_ERROR_MG_L,
     **model_specific_hyperparameters,
 ):
     """ This function:
@@ -42,27 +82,31 @@ def get_hyperparameters(
         3) Guards that required hyperparameters have been defined
 
     Args:
-        TODO
+        model_name: A string label for the model
+        dataset_filename: Filename of the dataset to use for training
+        input_columns: A List of column names from the dataset to use as numerical inputs (x) to the model
+        label_column: A column name from the dataset to use as the labels (y) for the model
+        label_scale_factor_mmhg: The scaling factor to use to scale labels into the [0,1] range
+        epochs: Number of epochs to train for
+        batch_size: Training batch size
+        optimizer: Which optimizer function to use
+        loss: Which loss function to use
+        acceptable_error_mg_l: The threshold, in mg/L to use in our custom "fraction_outside_acceptable_error" metric
+        **model_specific_hyperparameters: All other kwargs get slurped up here
 
     Returns: A dict of hyperparameters
 
     """
-    dataset_filepath = get_pkg_dataset_filepath(dataset_filename)
-    dataset_hash = get_dataset_hash(dataset_filepath)
+    calculated_hyperparameters = _calculate_additional_hyperparameters(
+        dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
+    )
 
-    # Ensure that our custom metric uses the same normalizing factor we use to scale our labels
-    acceptable_error_normalized = acceptable_error_mmhg / label_scale_factor_mmhg
-    # TODO: pull out calculation of acceptable_error_mmhg from constants and don't pass it in
-
-    fraction_outside_acceptable_error = get_fraction_outside_acceptable_error_fn(
-        acceptable_error=acceptable_error_normalized
+    _guard_no_overridden_calculated_hyperparameters(
+        calculated_hyperparameters, model_specific_hyperparameters
     )
 
     return {
-        # Splat the model_specific_hyperparameters first so they can't override calculated ones
-        # TODO: maybe add validation that this isn't happening
-        **model_specific_hyperparameters,
-        # Defined or default hyperparameters
+        # Pass through defined/default hyperparameters
         "model_name": model_name,
         "dataset_filename": dataset_filename,
         "input_columns": input_columns,
@@ -73,14 +117,6 @@ def get_hyperparameters(
         "optimizer": optimizer,
         "loss": loss,
         "acceptable_error_mg_l": acceptable_error_mg_l,
-        "acceptable_error_mmhg": acceptable_error_mmhg,
-        # Cacluated hyperparameters
-        "dataset_filepath": dataset_filepath,
-        "dataset_hash": dataset_hash,
-        "acceptable_error_normalized": acceptable_error_normalized,
-        "metrics": [
-            "mean_squared_error",
-            "mean_absolute_error",
-            fraction_outside_acceptable_error,
-        ],
+        **calculated_hyperparameters,
+        **model_specific_hyperparameters,
     }

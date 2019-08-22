@@ -8,20 +8,35 @@ from cosmobot_deep_learning.custom_metrics import (
 )
 
 
-def _initialize_wandb(hyperparameters, y_train, y_test):
-    # TODO: do something better? I want metrics defined in hyperparameters, but
-    # something chokes when I try to send them to W&B
-    hyperparameters_minus_metrics = {
-        key: value for key, value in hyperparameters.items() if key != "metrics"
+def _loggable_hyperparameters(hyperparameters):
+    # W&B logging chokes on our custom metric function.
+    # Manually fix this by replacing metric function with its __name__
+    loggable_metrics = [
+        metric.__name__
+        for metric in hyperparameters["metrics"]
+        if hasattr(metric, "__name__")
+    ]
+
+    return {
+        **hyperparameters,
+        # Override the original "unloggable" metrics key
+        "metrics": loggable_metrics,
     }
+
+
+def _initialize_wandb(hyperparameters, y_train, y_test):
+    # TODO: better handle case where y_train is a list (in multi-branch models)
+    # if type(y_train) == list:
+    #     y_train = y_train[0]
+    #     y_test = y_test[0]
 
     wandb.init(
         entity="osmo",
         project="cosmobot-do-measurement",
         config={
+            **_loggable_hyperparameters(hyperparameters),
             "train_sample_count": y_train.shape[0],
             "test_sample_count": y_test.shape[0],
-            **hyperparameters_minus_metrics,
         },
     )
 
@@ -30,15 +45,9 @@ def run(hyperparameters, prepare_dataset, create_model):
     """ Use the provided hyperparameters to train the model in this module.
 
     Args:
-        hyperparameters: Any variables that are parameterizable for this model
-            epochs: Number of epochs to train for
-            batch_size: Training batch size
-            model_name: A string label for the model
-            dataset_filepath: Filepath (within this package) of the dataset to use for training
-            optimizer: Which optimizer function to use
-            loss: Which loss function to use
-        prepare_dataset: A function that a raw_dataset and returns (x_train, y_train, x_test, y_test)
-        create_model: A function that takes hyperparameters and x_train
+        hyperparameters: Any variables that are parameterizable for this model. See `get_hyperparameters` for details
+        prepare_dataset: A function that takes a raw_dataset and returns (x_train, y_train, x_test, y_test)
+        create_model: A function that takes hyperparameters and x_train and returns a compiled model
 
     """
 

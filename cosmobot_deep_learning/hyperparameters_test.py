@@ -4,16 +4,10 @@ import pytest
 
 from . import hyperparameters as module
 
-MOCK_HYPERPARAMETERS = {
+MIN_MODEL_HYPERPARAMETERS = {
     "model_name": sentinel.something,
     "dataset_filename": "dataset.csv",
-    "epochs": sentinel.something,
-    "batch_size": sentinel.something,
-    "optimizer": sentinel.something,
-    "loss": sentinel.something,
     "input_columns": sentinel.something,
-    "label_column": sentinel.something,
-    "label_scale_factor_mmhg": 100,
 }
 
 
@@ -37,26 +31,26 @@ REQUIRED_HYPERPARAMETERS = [
     "loss",
     "acceptable_error_mg_l",
     "acceptable_error_mmhg",
+    "acceptable_error_normalized",
     "dataset_filepath",
     "dataset_hash",
-    "acceptable_error_normalized",
 ]
 
 
 class TestGetHyperparameters:
     def test_includes_all_required_attributes(self, mock_dataset_fns):
-        actual = module.get_hyperparameters(**MOCK_HYPERPARAMETERS)
+        actual = module.get_hyperparameters(**MIN_MODEL_HYPERPARAMETERS)
 
         missing_attributes = set(REQUIRED_HYPERPARAMETERS).difference(actual.keys())
         assert not missing_attributes
 
     def test_calculates_dataset_attributes(self, mock_dataset_fns):
-        actual = module.get_hyperparameters(**MOCK_HYPERPARAMETERS)
+        actual = module.get_hyperparameters(**MIN_MODEL_HYPERPARAMETERS)
         assert actual["dataset_filepath"] == sentinel.dataset_filepath
         assert actual["dataset_hash"] == sentinel.dataset_hash
 
     def test_calculates_acceptable_errors(self, mock_dataset_fns):
-        actual = module.get_hyperparameters(**MOCK_HYPERPARAMETERS)
+        actual = module.get_hyperparameters(**MIN_MODEL_HYPERPARAMETERS)
         assert actual["acceptable_error_mg_l"] == 0.5
         assert actual["acceptable_error_mmhg"] == 9.638554216867469
-        assert actual["acceptable_error_normalized"] == 0.09638554216867469
+        assert actual["acceptable_error_normalized"] == 0.06024096385542168
