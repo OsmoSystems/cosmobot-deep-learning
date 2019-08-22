@@ -27,8 +27,8 @@ setup(
         # https://github.com/tensorflow/tensorflow/issues/24496#issuecomment-456243093
         # On macs/Docker/CI we have to install just `tensorflow` (no GPU support)
         # On non-macs, install just `tensorflow-gpu` to get GPU support
-        "tf": ["tensorflow==1.12.0"],
-        "tf-gpu": ["tensorflow-gpu==1.12.0"],
+        "no-gpu": ["tensorflow==1.12.0"],
+        "gpu": ["tensorflow-gpu==1.12.0"],
     },
     include_package_data=True,
 )
