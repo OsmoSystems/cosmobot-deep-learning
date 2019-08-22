@@ -53,15 +53,9 @@ if __name__ == "__main__":
     # hyperparameter sweeps. See https://www.wandb.com/articles/multi-gpu-sweeps
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
-    # TODO: remove
-    os.environ["WANDB_MODE"] = "dryrun"
-
     hyperparameters = get_hyperparameters(
         model_name=get_model_name_from_filepath(__file__),
-        # TODO: revert these for-testing changes
-        dataset_filename="2019-08-09--14-33-26_osmo_ml_dataset_tiny.csv",
-        epochs=1,
-        # End TODO
+        dataset_filename="2019-08-09--14-33-26_osmo_ml_dataset.csv",
         batch_size=3000,
         input_columns=["sr", "PicoLog temperature (C)"],
     )
