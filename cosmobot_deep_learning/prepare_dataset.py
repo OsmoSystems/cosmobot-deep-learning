@@ -15,7 +15,8 @@ def extract_inputs(df, input_column_names):
         Returns:
             A numpy array of inputs, including just the values of the specified columns
     """
-    # TODO: less hacky solution? Include in dataset?
+    # Manually add a spatial ratiometric "sr" column to the dataset, so that models can specify using it
+    # as a numerical input simply by referring to it in the `input_columns` hyperparameter
     dataset = df.assign(
         **{"sr": df["DO patch r_msorm"] / df["reference patch r_msorm"]}
     )[input_column_names]
@@ -104,9 +105,6 @@ def prepare_dataset_image_and_numerical(raw_dataset: pd.DataFrame, hyperparamete
 
     return (
         [x_train_numerical, x_train_images],
-        # TODO: I changed this to not return a list for the labels, because that breaks other stuff now.
-        # It seems like it works (training runs) but I should double-check somehow
-        # Or, alternately, maybe I could change the numerical dataset to always return these in lists?
         y_train,
         [x_test_numerical, x_test_images],
         y_test,
