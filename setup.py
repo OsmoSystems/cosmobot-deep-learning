@@ -21,7 +21,7 @@ setup(
         "tqdm",
         "wandb",
     ],
-    extra_requires={
+    extras_require={
         # Newer versions of tensorflow have memory issues on our graphics cards
         # https://github.com/tensorflow/tensorflow/issues/24496#issuecomment-456243093
         "tf": ["tensorflow==1.12.0"],
