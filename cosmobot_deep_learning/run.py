@@ -68,7 +68,7 @@ def run(hyperparameters, prepare_dataset, create_model):
 
     if dryrun:
         dataset = _generate_tiny_dataset(dataset_filepath)
-        # Disable W&B syncing to cloud since we don't care about the results
+        # Disable W&B syncing to the cloud since we don't care about the results
         os.environ["WANDB_MODE"] = "dryrun"
 
     x_train, y_train, x_test, y_test = prepare_dataset(
