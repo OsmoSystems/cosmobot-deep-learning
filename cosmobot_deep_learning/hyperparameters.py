@@ -100,6 +100,7 @@ def get_hyperparameters(
         acceptable_error_mg_l: The threshold, in mg/L to use in our custom "fraction_outside_acceptable_error" metric
         training_set_column_name: The dataset column name of the training set flag.
         dev_set_column_name: The dataset column name of the dev set flag.
+        dryrun: Whether the model should be run with a tiny dataset in dryrun mode.
         **model_specific_hyperparameters: All other kwargs get slurped up here
 
     Returns: A dict of hyperparameters
