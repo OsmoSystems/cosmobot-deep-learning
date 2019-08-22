@@ -52,6 +52,8 @@ def get_hyperparameters(
 
     # Ensure that our custom metric uses the same normalizing factor we use to scale our labels
     acceptable_error_normalized = acceptable_error_mmhg / label_scale_factor_mmhg
+    # TODO: pull out calculation of acceptable_error_mmhg from constants and don't pass it in
+
     fraction_outside_acceptable_error = get_fraction_outside_acceptable_error_fn(
         acceptable_error=acceptable_error_normalized
     )
