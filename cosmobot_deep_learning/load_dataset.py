@@ -30,19 +30,19 @@ def _get_files_for_experiment_df(experiment_df_group):
     )
 
 
-def load_multi_experiment_dataset_csv(dataset_csv_filepath: str) -> pd.DataFrame:
+def load_multi_experiment_dataset_csv(dataset: pd.DataFrame) -> pd.DataFrame:
     """ For a pre-prepared ML dataset, load the DataFrame with local image paths, optionally downloading said images
     Note that syncing tends to take a long time, though syncing for individual experiments will be skipped if all files
     are already downloaded.
 
     Args:
-        dataset_csv_filepath: path to ML dataset CSV. CSV is expected to have at least the following columns:
+        dataset: ML dataset DataFramne. DataFramne is expected to have at least the following columns:
             'experiment': experiment directory on s3
             'image': image filename on s3
             All other columns are passed through.
 
     Returns:
-        DataFrame of the CSV file provided with the additional column 'local_filepath' which will contain file paths of
+        The dataset provided with the additional column 'local_filepath' which will contain file paths of
         the locally stored images.
 
     Side-effects:
@@ -54,10 +54,8 @@ def load_multi_experiment_dataset_csv(dataset_csv_filepath: str) -> pd.DataFrame
     # Side effect: patch pandas datatypes to have .progress_apply() methods
     tqdm.pandas()
 
-    full_dataset = pd.read_csv(dataset_csv_filepath)
-
     # Group by experiment so that we can download from each experiment folder on s3
-    dataset_by_experiment = full_dataset.groupby(
+    dataset_by_experiment = dataset.groupby(
         "experiment", as_index=False, group_keys=False
     )
 
@@ -73,8 +71,8 @@ def load_multi_experiment_dataset_csv(dataset_csv_filepath: str) -> pd.DataFrame
     # Transpose because progress_apply on the groupby object return series of the wrong shape
     # e.g. (1, 10) instead of (10,), when there's only one experiment. When there are multiple
     # experiments, it returns the correct single-dimensional shape, and transpose has no effect
-    full_dataset["local_filepath"] = local_filepaths.T
-    return full_dataset
+    dataset["local_filepath"] = local_filepaths.T
+    return dataset
 
 
 def get_pkg_dataset_filepath(dataset_filename):

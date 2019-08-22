@@ -21,6 +21,16 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
         dest="gpu",
     )
 
+    arg_parser.add_argument(
+        "--tiny",
+        required=False,
+        action="store_true",
+        default=False,
+        help=(
+            "Flag to do a dry run with a small dataset to validate changes to a model will compile."
+        ),
+    )
+
     arg_namespace = arg_parser.parse_args(args)
     return arg_namespace
 
