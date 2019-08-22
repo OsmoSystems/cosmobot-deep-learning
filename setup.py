@@ -18,15 +18,15 @@ setup(
         "pandas",
         "picamraw",
         "scipy",
-        # Newer versions of tensorflow have memory issues on our graphics cards
-        # https://github.com/tensorflow/tensorflow/issues/24496#issuecomment-456243093
-        # On macs we have to install just `tensorflow` (no GPU support)
-        # On non-macs, install just `tensorflow-gpu` to get GPU support
-        # "tensorflow==1.12.0",
-        "tensorflow-gpu==1.12.0",
         "tqdm",
         "wandb",
     ],
+    extra_requires={
+        # Newer versions of tensorflow have memory issues on our graphics cards
+        # https://github.com/tensorflow/tensorflow/issues/24496#issuecomment-456243093
+        "tf": ["tensorflow==1.12.0"],
+        "tf-gpu": ["tensorflow-gpu==1.12.0"]
+    },
     # fmt: on
     include_package_data=True,
 )
