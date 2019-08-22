@@ -10,6 +10,7 @@ import os
 import sys
 
 import keras
+import numpy as np
 import pandas as pd
 import wandb
 from wandb.keras import WandbCallback
@@ -33,6 +34,7 @@ from cosmobot_deep_learning.custom_metrics import (
     magical_incantation_to_make_custom_metric_work,
 )
 from cosmobot_deep_learning.preprocess_image import open_and_preprocess_images
+from cosmobot_deep_learning import visualizations
 
 
 _DATASET_FILENAME = "2019-08-09--14-33-26_osmo_ml_dataset.csv"
@@ -217,10 +219,10 @@ def create_model(hyperparameters, input_numerical_data_dimension):
 
 
 def _log_visualizations(model, training_history, x_train, y_train, x_test, y_test):
-    train_labels = y_train * LABEL_SCALE_FACTOR_MMHG
+    train_labels = np.array(y_train).flatten() * LABEL_SCALE_FACTOR_MMHG
     train_predictions = model.predict(x_train).flatten() * LABEL_SCALE_FACTOR_MMHG
 
-    dev_labels = y_test * LABEL_SCALE_FACTOR_MMHG
+    dev_labels = np.array(y_test).flatten() * LABEL_SCALE_FACTOR_MMHG
     dev_predictions = model.predict(x_test).flatten() * LABEL_SCALE_FACTOR_MMHG
 
     visualizations.log_loss_over_epochs(training_history)
