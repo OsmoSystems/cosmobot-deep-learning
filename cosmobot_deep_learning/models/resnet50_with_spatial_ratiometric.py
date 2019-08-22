@@ -24,13 +24,16 @@ from cosmobot_deep_learning.prepare_dataset import prepare_dataset_image_and_num
 from cosmobot_deep_learning.run import run
 
 
-def create_model(hyperparameters, input_numerical_data_dimension):
+def create_model(hyperparameters, x_train):
     """ Build a model
 
     Args:
         hyperparameters: See definition in `run()`
-        input_numerical_data_dimension: The number of numerical inputs to feed to the model
+        x_train: The input training data (used to determine input layer shape)
     """
+    # TODO: make this clearer
+    x_train_sr = x_train[0]
+    input_numerical_data_dimension = x_train_sr.shape[1]
     image_size = hyperparameters["image_size"]
     input_layer = keras.layers.Input(shape=(image_size, image_size, 3))
 
