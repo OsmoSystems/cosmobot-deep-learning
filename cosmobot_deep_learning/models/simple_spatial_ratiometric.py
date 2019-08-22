@@ -25,11 +25,12 @@ def create_model(hyperparameters, x_train):
         hyperparameters: See definition in `run()`
         x_train: The input training data (used to determine input layer shape)
     """
-    input_numerical_data_dimensions = x_train.shape[1]
+    x_train_samples_count, numerical_inputs_count = x_train.shape
+
     sr_model = keras.models.Sequential(
         [
             keras.layers.Dense(
-                11, activation=tf.nn.relu, input_shape=[input_numerical_data_dimensions]
+                11, activation=tf.nn.relu, input_shape=[numerical_inputs_count]
             ),
             keras.layers.Dense(32),
             keras.layers.advanced_activations.LeakyReLU(),
