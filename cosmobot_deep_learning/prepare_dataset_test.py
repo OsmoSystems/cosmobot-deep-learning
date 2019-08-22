@@ -9,7 +9,7 @@ from . import prepare_dataset as module
 
 MOCK_DATASET = pd.DataFrame(
     {
-        "numerical_input_column": [1, 2, 3],
+        "numeric_input_column": [1, 2, 3],
         "other_column": [4, 5, 6],
         "another_column": [7, 8, 9],
         "DO_label_column": [10, 20, 30],
@@ -27,7 +27,7 @@ class TestExtractInputs:
         expected = np.array([[1, 2, 3]]).T
 
         actual = module.extract_inputs(
-            MOCK_DATASET, input_column_names=["numerical_input_column"]
+            MOCK_DATASET, input_column_names=["numeric_input_column"]
         )
 
         np.testing.assert_array_equal(actual, expected)
@@ -43,7 +43,7 @@ class TestExtractInputs:
         ).T
 
         actual = module.extract_inputs(
-            MOCK_DATASET, input_column_names=["numerical_input_column", "sr"]
+            MOCK_DATASET, input_column_names=["numeric_input_column", "sr"]
         )
 
         np.testing.assert_array_equal(actual, expected)
@@ -74,7 +74,7 @@ class TestExtractLabels:
         np.testing.assert_array_equal(actual, expected)
 
 
-class TestPrepareDatasetNumerical:
+class TestPrepareDatasetnumeric:
     def test_returns_expected_x_y_train_test(self):
         scale_factor = 100
 
@@ -83,10 +83,10 @@ class TestPrepareDatasetNumerical:
         expected_x_test = np.array([[3], [6 / 9]]).T
         expected_y_test = np.array([[30 / scale_factor]]).T
 
-        actual = module.prepare_dataset_numerical(
+        actual = module.prepare_dataset_numeric(
             MOCK_DATASET,
             {
-                "numerical_input_columns": ["numerical_input_column", "sr"],
+                "numeric_input_columns": ["numeric_input_column", "sr"],
                 "label_column": "DO_label_column",
                 "label_scale_factor_mmhg": scale_factor,
             },
@@ -115,21 +115,21 @@ def mock_open_and_preprocess_images(mocker):
     )
 
 
-class TestPrepareDatasetImageAndNumerical:
+class TestPrepareDatasetImageAndnumeric:
     def test_returns_expected_x_y_train_test(self, mock_open_and_preprocess_images):
         scale_factor = 100
 
-        expected_x_train_numerical = np.array([[1, 2], [4 / 7, 5 / 8]]).T
+        expected_x_train_numeric = np.array([[1, 2], [4 / 7, 5 / 8]]).T
         expected_x_train_images = np.array([sentinel.image, sentinel.image])
         expected_y_train = np.array([[10 / scale_factor, 20 / scale_factor]]).T
-        expected_x_test_numerical = np.array([[3], [6 / 9]]).T
+        expected_x_test_numeric = np.array([[3], [6 / 9]]).T
         expected_x_test_images = np.array([sentinel.image])
         expected_y_test = np.array([[30 / scale_factor]]).T
 
-        actual = module.prepare_dataset_image_and_numerical(
+        actual = module.prepare_dataset_image_and_numeric(
             MOCK_DATASET,
             {
-                "numerical_input_columns": ["numerical_input_column", "sr"],
+                "numeric_input_columns": ["numeric_input_column", "sr"],
                 "label_column": "DO_label_column",
                 "label_scale_factor_mmhg": scale_factor,
                 "image_size": sentinel.image_size,
@@ -137,20 +137,16 @@ class TestPrepareDatasetImageAndNumerical:
         )
 
         (
-            (actual_x_train_numerical, actual_x_train_images),
+            (actual_x_train_numeric, actual_x_train_images),
             actual_y_train,
-            (actual_x_test_numerical, actual_x_test_images),
+            (actual_x_test_numeric, actual_x_test_images),
             actual_y_test,
         ) = actual
 
         # No easy way to compare tuples of np arrays
-        np.testing.assert_array_equal(
-            actual_x_train_numerical, expected_x_train_numerical
-        )
+        np.testing.assert_array_equal(actual_x_train_numeric, expected_x_train_numeric)
         np.testing.assert_array_equal(actual_x_train_images, expected_x_train_images)
         np.testing.assert_array_equal(actual_y_train, expected_y_train)
-        np.testing.assert_array_equal(
-            actual_x_test_numerical, expected_x_test_numerical
-        )
+        np.testing.assert_array_equal(actual_x_test_numeric, expected_x_test_numeric)
         np.testing.assert_array_equal(actual_x_test_images, expected_x_test_images)
         np.testing.assert_array_equal(actual_y_test, expected_y_test)

@@ -1,5 +1,5 @@
 """
-This model is a dense-layer network that trains only on two numerical inputs:
+This model is a dense-layer network that trains only on two numeric inputs:
  - temperature
  - spatial ratiometric ("OO DO patch Wet r_msorm" / "Type 1 Chemistry Hand Applied Dry r_msorm")
 """
@@ -14,7 +14,7 @@ from cosmobot_deep_learning.configure import (
     get_model_name_from_filepath,
 )
 from cosmobot_deep_learning.hyperparameters import get_hyperparameters
-from cosmobot_deep_learning.prepare_dataset import prepare_dataset_numerical
+from cosmobot_deep_learning.prepare_dataset import prepare_dataset_numeric
 from cosmobot_deep_learning.run import run
 
 
@@ -25,12 +25,12 @@ def create_model(hyperparameters, x_train):
         hyperparameters: See definition in `run()`
         x_train: The input training data (used to determine input layer shape)
     """
-    x_train_samples_count, numerical_inputs_count = x_train.shape
+    x_train_samples_count, numeric_inputs_count = x_train.shape
 
     sr_model = keras.models.Sequential(
         [
             keras.layers.Dense(
-                11, activation=tf.nn.relu, input_shape=[numerical_inputs_count]
+                11, activation=tf.nn.relu, input_shape=[numeric_inputs_count]
             ),
             keras.layers.Dense(32),
             keras.layers.advanced_activations.LeakyReLU(),
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         model_name=get_model_name_from_filepath(__file__),
         dataset_filename="2019-08-09--14-33-26_osmo_ml_dataset.csv",
         batch_size=3000,
-        numerical_input_columns=["sr", "PicoLog temperature (C)"],
+        numeric_input_columns=["sr", "PicoLog temperature (C)"],
     )
 
-    run(hyperparameters, prepare_dataset_numerical, create_model)
+    run(hyperparameters, prepare_dataset_numeric, create_model)

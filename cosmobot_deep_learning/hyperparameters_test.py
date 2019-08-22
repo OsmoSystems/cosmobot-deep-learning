@@ -7,7 +7,7 @@ from . import hyperparameters as module
 MIN_MODEL_HYPERPARAMETERS = {
     "model_name": sentinel.something,
     "dataset_filename": "dataset.csv",
-    "numerical_input_columns": sentinel.something,
+    "numeric_input_columns": sentinel.something,
 }
 
 
@@ -22,7 +22,7 @@ def mock_dataset_fns(mocker):
 REQUIRED_HYPERPARAMETERS = [
     "model_name",
     "dataset_filename",
-    "numerical_input_columns",
+    "numeric_input_columns",
     "label_column",
     "label_scale_factor_mmhg",
     "epochs",

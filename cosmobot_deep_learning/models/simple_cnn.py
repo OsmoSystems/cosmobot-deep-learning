@@ -1,9 +1,9 @@
 """
 This model is a 2-branch network that combines:
 1. A hand-made CNN with 3 convolutional layers that trains on full images
-2. A dense network that trains on two numerical inputs:
+2. A dense network that trains on two numeric inputs:
     - temperature
-    - numerical output of the hand-made CNN
+    - numeric output of the hand-made CNN
 """
 
 import os
@@ -16,7 +16,7 @@ from cosmobot_deep_learning.configure import (
     get_model_name_from_filepath,
 )
 from cosmobot_deep_learning.hyperparameters import get_hyperparameters
-from cosmobot_deep_learning.prepare_dataset import prepare_dataset_image_and_numerical
+from cosmobot_deep_learning.prepare_dataset import prepare_dataset_image_and_numeric
 from cosmobot_deep_learning.run import run
 
 
@@ -27,9 +27,9 @@ def create_model(hyperparameters, x_train):
         hyperparameters: See definition in `run()`
         x_train: The input training data (used to determine input layer shape)
     """
-    # x_train is a list of two inputs: numerical and images
-    x_train_numerical, x_train_images = x_train
-    x_train_samples_count, numerical_inputs_count = x_train_numerical.shape
+    # x_train is a list of two inputs: numeric and images
+    x_train_numeric, x_train_images = x_train
+    x_train_samples_count, numeric_inputs_count = x_train_numeric.shape
 
     image_size = hyperparameters["image_size"]
 
@@ -72,7 +72,7 @@ def create_model(hyperparameters, x_train):
     )
 
     temperature_input = keras.layers.Input(
-        shape=(numerical_inputs_count,), name="temperature"
+        shape=(numeric_inputs_count,), name="temperature"
     )
 
     temp_and_image_add = keras.layers.concatenate(
@@ -115,8 +115,8 @@ if __name__ == "__main__":
     hyperparameters = get_hyperparameters(
         model_name=get_model_name_from_filepath(__file__),
         dataset_filename="2019-08-09--14-33-26_osmo_ml_dataset.csv",
-        numerical_input_columns=["PicoLog temperature (C)"],
+        numeric_input_columns=["PicoLog temperature (C)"],
         image_size=128,
     )
 
-    run(hyperparameters, prepare_dataset_image_and_numerical, create_model)
+    run(hyperparameters, prepare_dataset_image_and_numeric, create_model)
