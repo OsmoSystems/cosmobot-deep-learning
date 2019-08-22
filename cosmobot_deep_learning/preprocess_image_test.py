@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 import numpy as np
 import pytest
 
@@ -133,13 +131,28 @@ class TestOpenAndPreprocessImages:
         # Mostly a smoke test, but also a valuable regression test if
         # the map function is changed.
 
-        images_to_open = OrderedDict(
-            [
-                ("image-0", np.array([[rgb_px(1), rgb_px(2)], [rgb_px(3), rgb_px(4)]])),
-                ("image-1", np.array([[rgb_px(5), rgb_px(6)], [rgb_px(7), rgb_px(8)]])),
-                ("image-2", np.array([[rgb_px(3), rgb_px(4)], [rgb_px(1), rgb_px(2)]])),
-            ]
-        )
+        # fmt: off
+        images_to_open = {
+            "image-0": np.array(
+                [
+                    [rgb_px(1), rgb_px(2)],
+                    [rgb_px(3), rgb_px(4)]
+                ]
+            ),
+            "image-1": np.array(
+                [
+                    [rgb_px(5), rgb_px(6)],
+                    [rgb_px(7), rgb_px(8)]
+                ]
+            ),
+            "image-2": np.array(
+                [
+                    [rgb_px(3), rgb_px(4)],
+                    [rgb_px(1), rgb_px(2)]
+                ]
+            ),
+        }
+        # fmt: on
 
         # Ensure the images are returned in whatever order they are requested
         mocker.patch.object(
