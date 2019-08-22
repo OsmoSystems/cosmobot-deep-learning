@@ -49,9 +49,16 @@ def run(hyperparameters, prepare_dataset, create_model):
     batch_size = hyperparameters["batch_size"]
     dataset_filepath = hyperparameters["dataset_filepath"]
 
+    print("shuffling dataset...")
+    dataset = load_multi_experiment_dataset_csv(dataset_filepath)
+
+    shuffled_dataset = dataset.sample(
+        frac=1,  # setting frac to 1 tells this to sample the full dataset, essentially shuffling it
+        random_state=0,  # set a constant random seed for consistent shuffling
+    ).reset_index()  # reset index to match new order
+
     x_train, y_train, x_test, y_test = prepare_dataset(
-        raw_dataset=load_multi_experiment_dataset_csv(dataset_filepath),
-        hyperparameters=hyperparameters,
+        raw_dataset=shuffled_dataset, hyperparameters=hyperparameters
     )
 
     _initialize_wandb(hyperparameters, y_train, y_test)
