@@ -18,7 +18,7 @@ class TestExtractInputs:
 
         expected = np.array([[1, 2, 3]]).T
 
-        actual = module._extract_inputs(
+        actual = module.extract_inputs(
             raw_dataset, input_column_names=["column_to_include"]
         )
 
@@ -42,8 +42,18 @@ class TestExtractInputs:
             ]
         ).T
 
-        actual = module._extract_inputs(
+        actual = module.extract_inputs(
             raw_dataset, input_column_names=["column_to_include", "sr"]
         )
 
         np.testing.assert_array_equal(actual, expected)
+
+
+class TestExtractLabels:
+    # TODO
+    pass
+
+
+class TestPrepareDatasetNumerical:
+    # TODO
+    pass
