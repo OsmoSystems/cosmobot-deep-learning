@@ -124,4 +124,5 @@ if __name__ == "__main__":
         prepare_dataset_image_and_numeric,
         create_model,
         dryrun=args.dryrun,
+        dataset_cache_name=args.dataset_cache,
     )
