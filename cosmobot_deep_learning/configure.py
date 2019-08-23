@@ -21,6 +21,16 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
         dest="gpu",
     )
 
+    arg_parser.add_argument(
+        "--dryrun",
+        required=False,
+        action="store_true",
+        default=False,
+        help=(
+            "Perform a dry run with a tiny dataset to check that a model will compile."
+        ),
+    )
+
     arg_namespace = arg_parser.parse_args(args)
     return arg_namespace
 
