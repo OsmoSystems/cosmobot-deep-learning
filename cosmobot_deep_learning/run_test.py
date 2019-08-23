@@ -26,8 +26,8 @@ class TestLoggableHyperparameters:
 class TestDryRunFlag:
     def test_creates_tiny_dataset(self):
         mock_hyperparameters = {
-            "training_set_column_name": "training_resampled",
-            "dev_set_column_name": "test",
+            "training_set_column": "training_resampled",
+            "dev_set_column": "test",
         }
 
         test_df = pd.DataFrame(

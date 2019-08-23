@@ -41,25 +41,24 @@ def _initialize_wandb(hyperparameters, y_train, y_test):
 def _generate_tiny_dataset(dataset, hyperparameters):
     """ Grab the first two training and dev data points to create a tiny dataset.
     """
-    training_sample = dataset[dataset[hyperparameters["training_set_column_name"]]][:2]
-    test_sample = dataset[dataset[hyperparameters["dev_set_column_name"]]][:2]
+    training_sample = dataset[dataset[hyperparameters["training_set_column"]]][:2]
+    test_sample = dataset[dataset[hyperparameters["dev_set_column"]]][:2]
     return training_sample.append(test_sample)
 
 
-def run(hyperparameters, prepare_dataset, create_model):
+def run(hyperparameters, prepare_dataset, create_model, dryrun=False):
     """ Use the provided hyperparameters to train the model in this module.
 
     Args:
         hyperparameters: Any variables that are parameterizable for this model. See `get_hyperparameters` for details
         prepare_dataset: A function that takes a raw_dataset and returns (x_train, y_train, x_test, y_test)
         create_model: A function that takes hyperparameters and x_train and returns a compiled model
-
+        dryrun: Whether the model should be run with a tiny dataset in dryrun mode.
     """
 
     epochs = hyperparameters["epochs"]
     batch_size = hyperparameters["batch_size"]
     dataset_filepath = hyperparameters["dataset_filepath"]
-    dryrun = hyperparameters["dryrun"]
 
     dataset = pd.read_csv(dataset_filepath)
 
