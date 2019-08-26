@@ -49,7 +49,6 @@ def run(hyperparameters, prepare_dataset, create_model):
     batch_size = hyperparameters["batch_size"]
     dataset_filepath = hyperparameters["dataset_filepath"]
 
-    print("shuffling dataset...")
     dataset = load_multi_experiment_dataset_csv(dataset_filepath)
 
     shuffled_dataset = dataset.sample(
