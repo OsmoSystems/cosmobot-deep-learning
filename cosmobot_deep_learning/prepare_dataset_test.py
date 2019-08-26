@@ -89,6 +89,8 @@ class TestPrepareDatasetnumeric:
                 "numeric_input_columns": ["numeric_input_column", "sr"],
                 "label_column": "DO_label_column",
                 "label_scale_factor_mmhg": scale_factor,
+                "training_set_column": "training_resampled",
+                "dev_set_column": "test",
             },
         )
 
@@ -133,6 +135,8 @@ class TestPrepareDatasetImageAndnumeric:
                 "label_column": "DO_label_column",
                 "label_scale_factor_mmhg": scale_factor,
                 "image_size": sentinel.image_size,
+                "training_set_column": "training_resampled",
+                "dev_set_column": "test",
             },
         )
 

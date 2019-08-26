@@ -56,9 +56,11 @@ def prepare_dataset_numeric(raw_dataset: pd.DataFrame, hyperparameters):
     numeric_input_columns = hyperparameters["numeric_input_columns"]
     label_column = hyperparameters["label_column"]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
+    training_set_column = hyperparameters["training_set_column"]
+    dev_set_column = hyperparameters["dev_set_column"]
 
-    train_samples = raw_dataset[raw_dataset["training_resampled"]]
-    test_samples = raw_dataset[raw_dataset["test"]]
+    train_samples = raw_dataset[raw_dataset[training_set_column]]
+    test_samples = raw_dataset[raw_dataset[dev_set_column]]
 
     x_train = extract_inputs(train_samples, numeric_input_columns)
     y_train = extract_labels(train_samples, label_column, label_scale_factor_mmhg)
@@ -87,9 +89,11 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
     label_column = hyperparameters["label_column"]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
     image_size = hyperparameters["image_size"]
+    training_set_column = hyperparameters["training_set_column"]
+    dev_set_column = hyperparameters["dev_set_column"]
 
-    train_samples = raw_dataset[raw_dataset["training_resampled"]]
-    test_samples = raw_dataset[raw_dataset["test"]]
+    train_samples = raw_dataset[raw_dataset[training_set_column]]
+    test_samples = raw_dataset[raw_dataset[dev_set_column]]
 
     x_train_numeric = extract_inputs(train_samples, numeric_input_columns)
     x_train_images = open_and_preprocess_images(

@@ -99,4 +99,9 @@ if __name__ == "__main__":
         image_size=128,
     )
 
-    run(hyperparameters, prepare_dataset_image_and_numeric, create_model)
+    run(
+        hyperparameters,
+        prepare_dataset_image_and_numeric,
+        create_model,
+        dryrun=args.dryrun,
+    )

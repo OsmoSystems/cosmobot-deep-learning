@@ -61,4 +61,4 @@ if __name__ == "__main__":
         numeric_input_columns=["sr", "PicoLog temperature (C)"],
     )
 
-    run(hyperparameters, prepare_dataset_numeric, create_model)
+    run(hyperparameters, prepare_dataset_numeric, create_model, dryrun=args.dryrun)
