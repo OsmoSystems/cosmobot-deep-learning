@@ -97,6 +97,7 @@ if __name__ == "__main__":
         dataset_filename="2019-08-09--14-33-26_osmo_ml_dataset.csv",
         numeric_input_columns=["sr", "PicoLog temperature (C)"],
         image_size=128,
+        dataset_cache_name=args.dataset_cache,
     )
 
     run(
@@ -104,5 +105,4 @@ if __name__ == "__main__":
         prepare_dataset_image_and_numeric,
         create_model,
         dryrun=args.dryrun,
-        dataset_cache_name=args.dataset_cache,
     )

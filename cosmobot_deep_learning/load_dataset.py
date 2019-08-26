@@ -10,6 +10,7 @@ from .s3 import naive_sync_from_s3
 
 PACKAGE_NAME = "cosmobot_deep_learning"
 LOCAL_DATA_DIRECTORY = os.path.expanduser("~/osmo/cosmobot-data-sets/")
+LOCAL_CACHE_DIRECTORY = os.path.expanduser("~/osmo/data-set-cache/")
 
 
 def _get_files_for_experiment_df(experiment_df_group):
@@ -73,6 +74,12 @@ def load_multi_experiment_dataset_csv(dataset: pd.DataFrame) -> pd.DataFrame:
     # experiments, it returns the correct single-dimensional shape, and transpose has no effect
     dataset["local_filepath"] = local_filepaths.T
     return dataset
+
+
+def get_dataset_cache_filepath(dataset_cache_name):
+    """ Returns the filepath for a named dataset cache to be loaded or created.
+    """
+    return os.path.join(LOCAL_CACHE_DIRECTORY, f"{dataset_cache_name}.pickle")
 
 
 def get_pkg_dataset_filepath(dataset_filename):

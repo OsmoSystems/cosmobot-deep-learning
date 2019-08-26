@@ -1,4 +1,4 @@
-from unittest.mock import sentinel
+from unittest.mock import call, sentinel
 
 import pytest
 
@@ -16,7 +16,15 @@ def mock_dataset_fns(mocker):
     mocker.patch.object(
         module, "get_pkg_dataset_filepath", return_value=sentinel.dataset_filepath
     )
-    mocker.patch.object(module, "get_dataset_hash", return_value=sentinel.dataset_hash)
+    mocker.patch.object(
+        module,
+        "get_dataset_cache_filepath",
+        return_value=sentinel.dataset_cache_filepath,
+    )
+    mock_get_dataset_hash = mocker.patch.object(
+        module, "get_dataset_hash", return_value=sentinel.dataset_hash
+    )
+    return {"mock_get_dataset_hash": mock_get_dataset_hash}
 
 
 REQUIRED_HYPERPARAMETERS = [
@@ -34,6 +42,9 @@ REQUIRED_HYPERPARAMETERS = [
     "acceptable_error_normalized",
     "dataset_filepath",
     "dataset_hash",
+    "use_cache",
+    "dataset_cache_name",
+    "dataset_cache_filepath",
 ]
 
 
@@ -51,15 +62,36 @@ class TestCalculateHyperparameters:
             dataset_filename=sentinel.dataset_filename,
             acceptable_error_mg_l=0.5,
             label_scale_factor_mmhg=100,
+            dataset_cache_name=None,
         )
         assert actual["dataset_filepath"] == sentinel.dataset_filepath
+        assert actual["dataset_cache_filepath"] is None
         assert actual["dataset_hash"] == sentinel.dataset_hash
+        assert actual["dataset_cache_name"] is None
+        assert not actual["use_cache"]
+
+    def test_calculates_dataset_cache_attributes(self, mock_dataset_fns):
+        actual = module._calculate_additional_hyperparameters(
+            dataset_filename=sentinel.dataset_filename,
+            acceptable_error_mg_l=0.5,
+            label_scale_factor_mmhg=100,
+            dataset_cache_name=sentinel.dataset_cache_name,
+        )
+        assert actual["dataset_filepath"] == sentinel.dataset_filepath
+        assert actual["dataset_cache_filepath"] == sentinel.dataset_cache_filepath
+        assert actual["dataset_cache_name"] == sentinel.dataset_cache_name
+        assert actual["dataset_cache_hash"] == sentinel.dataset_hash
+        assert actual["use_cache"]
+        mock_dataset_fns["mock_get_dataset_hash"].assert_has_calls(
+            [call(sentinel.dataset_filepath), call(sentinel.dataset_cache_filepath)]
+        )
 
     def test_calculates_acceptable_errors(self, mock_dataset_fns):
         actual = module._calculate_additional_hyperparameters(
             dataset_filename=sentinel.dataset_filename,
             acceptable_error_mg_l=0.5,
             label_scale_factor_mmhg=100,
+            dataset_cache_name=None,
         )
         assert actual["acceptable_error_mmhg"] == 9.638554216867469
         assert actual["acceptable_error_normalized"] == 0.09638554216867469

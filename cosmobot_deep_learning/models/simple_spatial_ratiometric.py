@@ -59,12 +59,7 @@ if __name__ == "__main__":
         dataset_filename="2019-08-09--14-33-26_osmo_ml_dataset.csv",
         batch_size=3000,
         numeric_input_columns=["sr", "PicoLog temperature (C)"],
-    )
-
-    run(
-        hyperparameters,
-        prepare_dataset_numeric,
-        create_model,
-        dryrun=args.dryrun,
         dataset_cache_name=args.dataset_cache,
     )
+
+    run(hyperparameters, prepare_dataset_numeric, create_model, dryrun=args.dryrun)
