@@ -19,15 +19,17 @@ setup(
         "plotly>=4,<5",
         "picamraw",
         "scipy",
-        # Newer versions of tensorflow have memory issues on our graphics cards
-        # https://github.com/tensorflow/tensorflow/issues/24496#issuecomment-456243093
-        # On macs we have to install just `tensorflow` (no GPU support)
-        # On non-macs, install just `tensorflow-gpu` to get GPU support
-        # "tensorflow==1.12.0",
-        "tensorflow-gpu==1.12.0",
         "tqdm",
         "wandb",
     ],
     # fmt: on
+    extras_require={
+        # Newer versions of tensorflow have memory issues on our graphics cards
+        # https://github.com/tensorflow/tensorflow/issues/24496#issuecomment-456243093
+        # On macs/Docker/CI we have to install just `tensorflow` (no GPU support)
+        # On non-macs, install just `tensorflow-gpu` to get GPU support
+        "no-gpu": ["tensorflow==1.12.0"],
+        "gpu": ["tensorflow-gpu==1.12.0"],
+    },
     include_package_data=True,
 )
