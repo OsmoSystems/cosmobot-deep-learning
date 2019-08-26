@@ -8,7 +8,7 @@ _TRAINING_LOSS_OVER_EPOCHS_TITLE = "Training and Dev loss over epochs"
 _DO_PREDICTION_ERROR_TITLE = "DO prediction error"
 _ACTUAL_VS_PREDICTED_TITLE = "Actual vs predicted DO"
 
-# meximum number of points to allow on a plotly figure that we send to W&B
+# maximum number of points to allow on a plotly figure that we send to W&B
 # turn this down if the plotly charts on W&B are unresponsive
 _PLOTLY_WANDB_MAX_POINTS = 4000
 
