@@ -38,12 +38,14 @@ def _initialize_wandb(hyperparameters, y_train, y_test):
     )
 
 
-def _log_visualizations(model, training_history, x_train, y_train, x_test, y_test):
-    train_labels = y_train.flatten() * LABEL_SCALE_FACTOR_MMHG
-    train_predictions = model.predict(x_train).flatten() * LABEL_SCALE_FACTOR_MMHG
+def _log_visualizations(
+    model, training_history, label_scale_factor_mmhg, x_train, y_train, x_test, y_test
+):
+    train_labels = y_train.flatten() * label_scale_factor_mmhg
+    train_predictions = model.predict(x_train).flatten() * label_scale_factor_mmhg
 
-    dev_labels = y_test.flatten() * LABEL_SCALE_FACTOR_MMHG
-    dev_predictions = model.predict(x_test).flatten() * LABEL_SCALE_FACTOR_MMHG
+    dev_labels = y_test.flatten() * label_scale_factor_mmhg
+    dev_predictions = model.predict(x_test).flatten() * label_scale_factor_mmhg
 
     visualizations.log_loss_over_epochs(training_history)
     visualizations.log_do_prediction_error(
@@ -104,6 +106,14 @@ def run(hyperparameters, prepare_dataset, create_model, dryrun=False):
         callbacks=[WandbCallback()],
     )
 
-    _log_visualizations(model, history, x_train, y_train, x_test, y_test)
+    _log_visualizations(
+        model,
+        history,
+        hyperparameters["label_scale_factor_mmhg"],
+        x_train,
+        y_train,
+        x_test,
+        y_test,
+    )
 
     return x_train, y_train, x_test, y_test, model, history
