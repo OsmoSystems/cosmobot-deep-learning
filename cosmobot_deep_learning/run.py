@@ -54,8 +54,10 @@ def run(hyperparameters, prepare_dataset, create_model):
 
     shuffled_dataset = dataset.sample(
         frac=1,  # setting frac to 1 tells this to sample the full dataset, essentially shuffling it
-        random_state=0,  # set a constant random seed for consistent shuffling
-    ).reset_index()  # reset index to match new order
+        random_state=0,  # set a random seed for consistent shuffling
+    ).reset_index(
+        drop=True
+    )  # reset index to match new order
 
     x_train, y_train, x_test, y_test = prepare_dataset(
         raw_dataset=shuffled_dataset, hyperparameters=hyperparameters
