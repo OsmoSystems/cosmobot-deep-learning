@@ -98,17 +98,19 @@ def open_crop_and_scale_image(raw_image_path: str, output_size: int):
     return crop_and_scale_image(rgb_image, output_size)
 
 
-# COPY-PASTA from cosmobot-process-experiment
-def _get_ROIs_for_image(rgb_image, ROI_definitions, crop_size):
+# COPY-PASTA modifired from cosmobot-process-experiment
+def _get_ROIs_for_image(rgb_image, ROI_definitions, ROI_names, crop_size):
     return np.array(
         [
-            crop_and_scale_image(crop_image(rgb_image, ROI_definition), crop_size)
-            for ROI_name, ROI_definition in ROI_definitions.items()
+            crop_and_scale_image(
+                crop_image(rgb_image, ROI_definitions[ROI_name]), crop_size
+            )
+            for ROI_name in ROI_names  # Extract ROIs in same order listed in hyperparameter
         ]
     )
 
 
-def open_crop_and_scale_rois(image_and_rois, output_size):
+def open_crop_and_scale_ROIs(image_and_ROIs, ROI_names, output_size):
     """ Opens a JPEG+RAW file as an `RGB Image`, then crops each individual ROI to a
         square and resizes to the desired ouput_size.
 
@@ -119,9 +121,9 @@ def open_crop_and_scale_rois(image_and_rois, output_size):
         Returns:
             A numpy array of ROIs, cropped and scaled
     """
-    rgb_image = open_as_rgb(image_and_rois[0])
-    ROI_definitions = image_and_rois[1]
-    return _get_ROIs_for_image(rgb_image, ROI_definitions, output_size)
+    rgb_image = open_as_rgb(image_and_ROIs[0])
+    ROI_definitions = image_and_ROIs[1]
+    return _get_ROIs_for_image(rgb_image, ROI_definitions, ROI_names, output_size)
 
 
 def open_and_preprocess_images(image_filepaths, image_size, max_workers=None):
@@ -158,12 +160,14 @@ def open_and_preprocess_images(image_filepaths, image_size, max_workers=None):
         )
 
 
-def open_and_preprocess_image_rois(images_and_rois, crop_size, max_workers=None):
+def open_and_preprocess_image_ROIs(
+    images_and_ROIs, ROI_names, crop_size, max_workers=None
+):
     """ Preprocess the input images and prepare them for direct use in training a model.
         NOTE: The progress bar will only update sporadically.
 
         Args:
-            images_and_rois: An iterable list of (filepath, ROI_definition) tuples of images to prepare
+            images_and_ROIs: An iterable list of (filepath, ROI_definition) tuples of images to prepare
             crop_size: The desired side length of the output (square) ROI images
             max_workers: Optional. Number of parallel processes to use to prepare images.
                 Defaults to the number of CPU cores.
@@ -174,23 +178,23 @@ def open_and_preprocess_image_rois(images_and_rois, crop_size, max_workers=None)
     with concurrent.futures.ProcessPoolExecutor(max_workers) as executor:
 
         # Use partial function to pass desired crop_size through to new process
-        open_crop_and_scale_rois_with_size = functools.partial(
-            open_crop_and_scale_rois, output_size=crop_size
+        open_crop_and_scale_ROIs_with_size = functools.partial(
+            open_crop_and_scale_ROIs, ROI_names=ROI_names, output_size=crop_size
         )
 
         # numpy array of [[image_1_roi_1, image_1_roi_2, ...], ...]
-        rois = np.array(
+        cropped_ROIs = np.array(
             list(
                 tqdm(
                     executor.map(
-                        open_crop_and_scale_rois_with_size,
-                        images_and_rois,
+                        open_crop_and_scale_ROIs_with_size,
+                        images_and_ROIs,
                         chunksize=100,  # SWAG value, but much faster than the default
                     ),
-                    total=len(images_and_rois),
+                    total=len(images_and_ROIs),
                 )
             )
         )
 
         # reorder the axis ROIs are grouped [[image_1_roi_1, image_2_roi_1, ...], ...]
-        return np.moveaxis(rois, 0, 1)
+        return np.moveaxis(cropped_ROIs, 0, 1)
