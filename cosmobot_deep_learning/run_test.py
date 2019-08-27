@@ -1,5 +1,3 @@
-import os
-import pickle
 from unittest.mock import Mock, sentinel
 
 import pytest
@@ -9,8 +7,18 @@ from . import run as module
 
 
 @pytest.fixture
-def tmp_cache_filepath(tmp_path):
-    return tmp_path / "test.pickle"
+def mock_get_dataset_cache_filepath(mocker):
+    return mocker.patch.object(module, "get_dataset_cache_filepath")
+
+
+@pytest.fixture
+def mock_dataset_cache_helpers(mocker):
+    mock_load_dataset_cache = mocker.patch.object(module, "_load_dataset_cache")
+    mock_save_dataset_cache = mocker.patch.object(module, "_save_dataset_cache")
+    return {
+        "_load_dataset_cache": mock_load_dataset_cache,
+        "_save_dataset_cache": mock_save_dataset_cache,
+    }
 
 
 class TestLoggableHyperparameters:
@@ -60,73 +68,71 @@ class TestDryRunFlag:
 
 
 class TestDatasetCache:
-    def test_saves_new_dataset_cache(self, tmp_cache_filepath):
-        test_dataset = "serialize me"
-        mock_raw_dataset = pd.DataFrame([{"test": "value"}])
-        mock_hyperparameters = {
-            "dataset_cache_name": "test",
-            "use_cache": True,
-            "dataset_cache_filepath": tmp_cache_filepath,
-        }
+    test_dataset = ("1", "2", "3", "4")
 
-        mock_prepare_dataset = Mock(return_value=test_dataset)
+    def test_saves_new_dataset_cache_when_file_doesnt_exist(
+        self, mocker, mock_get_dataset_cache_filepath, mock_dataset_cache_helpers
+    ):
+        mocker.patch("os.path.isfile", return_value=False)
+        mock_prepare_dataset = Mock(return_value=self.test_dataset)
+        mock_get_dataset_cache_filepath.return_value = sentinel.cache_filepath
 
         actual_dataset = module._prepare_dataset_with_caching(
-            raw_dataset=mock_raw_dataset,
+            raw_dataset=sentinel.raw_datatset,
             prepare_dataset=mock_prepare_dataset,
-            hyperparameters=mock_hyperparameters,
+            hyperparameters=sentinel.hyperparameters,
+            dataset_cache_name="test",
         )
 
         mock_prepare_dataset.assert_called_once_with(
-            raw_dataset=mock_raw_dataset, hyperparameters=mock_hyperparameters
+            raw_dataset=sentinel.raw_datatset, hyperparameters=sentinel.hyperparameters
         )
-        assert actual_dataset == test_dataset
-        assert os.path.isfile(tmp_cache_filepath)
+        assert actual_dataset == self.test_dataset
+        mock_dataset_cache_helpers["_load_dataset_cache"].assert_not_called()
+        mock_dataset_cache_helpers["_save_dataset_cache"].assert_called_once_with(
+            sentinel.cache_filepath, self.test_dataset
+        )
 
-        with open(tmp_cache_filepath, "rb") as f:
-            # Pickling doesn't preserve sentinel identity, so check the name
-            assert pickle.load(f) == test_dataset
+    def test_loads_existing_dataset_cache_when_file_exists(
+        self, mocker, mock_get_dataset_cache_filepath, mock_dataset_cache_helpers
+    ):
+        mocker.patch("os.path.isfile", return_value=True)
+        mock_prepare_dataset = Mock()
+        mock_get_dataset_cache_filepath.return_value = sentinel.cache_filepath
 
-    def test_loads_existing_dataset_cache(self, tmp_cache_filepath):
-        test_dataset = "serialize me"
-        mock_hyperparameters = {
-            "dataset_cache_name": "test",
-            "use_cache": True,
-            "dataset_cache_filepath": tmp_cache_filepath,
-        }
-        mock_prepare_dataset = Mock(return_value=test_dataset)
-
-        with open(tmp_cache_filepath, "wb+") as f:
-            pickle.dump(test_dataset, f)
+        mock_dataset_cache_helpers[
+            "_load_dataset_cache"
+        ].return_value = sentinel.mock_dataset
 
         actual_dataset = module._prepare_dataset_with_caching(
-            raw_dataset=pd.DataFrame(),
+            raw_dataset=sentinel.raw_datatset,
             prepare_dataset=mock_prepare_dataset,
-            hyperparameters=mock_hyperparameters,
+            hyperparameters=sentinel.hyperparameters,
+            dataset_cache_name="test",
         )
 
         mock_prepare_dataset.assert_not_called()
-        assert actual_dataset == test_dataset
+        mock_dataset_cache_helpers["_load_dataset_cache"].assert_called_once_with(
+            sentinel.cache_filepath
+        )
+        mock_dataset_cache_helpers["_save_dataset_cache"].assert_not_called()
+        assert actual_dataset == sentinel.mock_dataset
 
-    def test_ignores_cache_when_not_specified(self, mocker):
-        mock_open = mocker.patch.object(module, "open")
-        mock_raw_dataset = pd.DataFrame([{"test": "value"}])
-        mock_hyperparameters = {
-            "dataset_cache_name": None,
-            "use_cache": False,
-            "dataset_cache_filepath": None,
-        }
-
-        mock_prepare_dataset = Mock(return_value=sentinel.dataset)
+    def test_ignores_cache_when_no_name_specified(
+        self, mocker, mock_get_dataset_cache_filepath, mock_dataset_cache_helpers
+    ):
+        mock_prepare_dataset = Mock(return_value=self.test_dataset)
 
         actual_dataset = module._prepare_dataset_with_caching(
-            raw_dataset=mock_raw_dataset,
+            raw_dataset=sentinel.raw_datatset,
             prepare_dataset=mock_prepare_dataset,
-            hyperparameters=mock_hyperparameters,
+            hyperparameters=sentinel.hyperparameters,
+            dataset_cache_name=None,
         )
 
         mock_prepare_dataset.assert_called_once_with(
-            raw_dataset=mock_raw_dataset, hyperparameters=mock_hyperparameters
+            raw_dataset=sentinel.raw_datatset, hyperparameters=sentinel.hyperparameters
         )
-        mock_open.assert_not_called()
-        assert actual_dataset == sentinel.dataset
+        mock_dataset_cache_helpers["_load_dataset_cache"].assert_not_called()
+        mock_dataset_cache_helpers["_save_dataset_cache"].assert_not_called()
+        assert actual_dataset == self.test_dataset

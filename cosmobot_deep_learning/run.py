@@ -6,7 +6,10 @@ import pandas as pd
 import wandb
 from wandb.keras import WandbCallback
 
-from cosmobot_deep_learning.load_dataset import load_multi_experiment_dataset_csv
+from cosmobot_deep_learning.load_dataset import (
+    get_dataset_cache_filepath,
+    get_local_image_files_and_attach_to_dataset,
+)
 
 from cosmobot_deep_learning.custom_metrics import (
     magical_incantation_to_make_custom_metric_work,
@@ -48,38 +51,49 @@ def _generate_tiny_dataset(dataset, hyperparameters):
     return training_sample.append(test_sample)
 
 
-def _prepare_dataset_with_caching(raw_dataset, prepare_dataset, hyperparameters):
-    dataset_cache_name = hyperparameters["dataset_cache_name"]
-    cache_filepath = hyperparameters["dataset_cache_filepath"]
-    use_cache = hyperparameters["use_cache"]
+def _load_dataset_cache(dataset_cache_filepath):
+    with open(dataset_cache_filepath, "rb") as cache_file:
+        return pickle.load(cache_file)
 
-    if use_cache and os.path.isfile(cache_filepath):
+
+def _save_dataset_cache(dataset_cache_filepath, dataset):
+    with open(dataset_cache_filepath, "wb+") as cache_file:
+        pickle.dump(dataset, cache_file)
+
+
+def _prepare_dataset_with_caching(
+    raw_dataset, prepare_dataset, hyperparameters, dataset_cache_name=None
+):
+    dataset_cache_filepath = get_dataset_cache_filepath(dataset_cache_name)
+
+    print(dataset_cache_filepath)
+    if dataset_cache_name is not None and os.path.isfile(dataset_cache_filepath):
         logging.info(f"Using dataset cache file {dataset_cache_name}")
 
-        with open(cache_filepath, "rb") as cache_file:
-            return pickle.load(cache_file)
+        return _load_dataset_cache(dataset_cache_filepath)
 
     else:
-        if use_cache:
+        logging.info(f"Preparing dataset")
+
+        dataset = prepare_dataset(
+            raw_dataset=raw_dataset, hyperparameters=hyperparameters
+        )
+
+        if dataset_cache_name is not None:
             logging.info(f"Creating new dataset cache file {dataset_cache_name}")
 
-            prepared_dataset = prepare_dataset(
-                raw_dataset=raw_dataset, hyperparameters=hyperparameters
-            )
-            with open(cache_filepath, "wb+") as cache_file:
-                pickle.dump(prepared_dataset, cache_file)
+            _save_dataset_cache(dataset_cache_filepath, dataset)
 
-        else:
-            logging.info(f"Preparing dataset")
-
-            prepared_dataset = prepare_dataset(
-                raw_dataset=raw_dataset, hyperparameters=hyperparameters
-            )
-
-        return prepared_dataset
+        return dataset
 
 
-def run(hyperparameters, prepare_dataset, create_model, dryrun=False):
+def run(
+    hyperparameters,
+    prepare_dataset,
+    create_model,
+    dryrun=False,
+    dataset_cache_name=None,
+):
     """ Use the provided hyperparameters to train the model in this module.
 
     Args:
@@ -106,10 +120,13 @@ def run(hyperparameters, prepare_dataset, create_model, dryrun=False):
         # Disable W&B syncing to the cloud since we don't care about the results
         os.environ["WANDB_MODE"] = "dryrun"
 
+    dataset_with_local_filepaths = get_local_image_files_and_attach_to_dataset(dataset)
+
     x_train, y_train, x_test, y_test = _prepare_dataset_with_caching(
-        raw_dataset=load_multi_experiment_dataset_csv(dataset),
+        raw_dataset=dataset_with_local_filepaths,
         prepare_dataset=prepare_dataset,
         hyperparameters=hyperparameters,
+        dataset_cache_name=dataset_cache_name,
     )
 
     _initialize_wandb(hyperparameters, y_train, y_test)

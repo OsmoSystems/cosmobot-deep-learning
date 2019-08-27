@@ -37,13 +37,10 @@ def _calculate_additional_hyperparameters(
     dataset_hash = get_dataset_hash(dataset_filepath)
 
     if dataset_cache_name is None:
-        dataset_cache_filepath = None
         dataset_cache_hash = None
-        use_cache = False
     else:
         dataset_cache_filepath = get_dataset_cache_filepath(dataset_cache_name)
         dataset_cache_hash = get_dataset_hash(dataset_cache_filepath)
-        use_cache = True
 
     acceptable_error_mmhg = acceptable_error_mg_l * MG_L_TO_MMHG_AT_25_C_1_ATM
 
@@ -56,10 +53,7 @@ def _calculate_additional_hyperparameters(
     return {
         "dataset_filepath": dataset_filepath,
         "dataset_hash": dataset_hash,
-        "dataset_cache_name": dataset_cache_name,
-        "dataset_cache_filepath": dataset_cache_filepath,
         "dataset_cache_hash": dataset_cache_hash,
-        "use_cache": use_cache,
         "acceptable_error_mmhg": acceptable_error_mmhg,
         "acceptable_error_normalized": acceptable_error_normalized,
         "metrics": [

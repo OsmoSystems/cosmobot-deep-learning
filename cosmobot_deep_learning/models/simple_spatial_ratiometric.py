@@ -62,4 +62,10 @@ if __name__ == "__main__":
         dataset_cache_name=args.dataset_cache,
     )
 
-    run(hyperparameters, prepare_dataset_numeric, create_model, dryrun=args.dryrun)
+    run(
+        hyperparameters,
+        prepare_dataset_numeric,
+        create_model,
+        dryrun=args.dryrun,
+        dataset_cache_name=args.dataset_cache,
+    )

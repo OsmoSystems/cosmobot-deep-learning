@@ -10,7 +10,7 @@ from .s3 import naive_sync_from_s3
 
 PACKAGE_NAME = "cosmobot_deep_learning"
 LOCAL_DATA_DIRECTORY = os.path.expanduser("~/osmo/cosmobot-data-sets/")
-LOCAL_CACHE_DIRECTORY = os.path.expanduser("~/osmo/data-set-cache/")
+LOCAL_CACHE_DIRECTORY = os.path.expanduser("~/osmo/cosmobot-dataset-cache/")
 
 
 def _get_files_for_experiment_df(experiment_df_group):
@@ -31,13 +31,13 @@ def _get_files_for_experiment_df(experiment_df_group):
     )
 
 
-def load_multi_experiment_dataset_csv(dataset: pd.DataFrame) -> pd.DataFrame:
+def get_local_image_files_and_attach_to_dataset(dataset: pd.DataFrame) -> pd.DataFrame:
     """ For a pre-prepared ML dataset, load the DataFrame with local image paths, optionally downloading said images
     Note that syncing tends to take a long time, though syncing for individual experiments will be skipped if all files
     are already downloaded.
 
     Args:
-        dataset: ML dataset DataFramne. DataFrame is expected to have at least the following columns:
+        dataset: ML dataset DataFrame. DataFrame is expected to have at least the following columns:
             'experiment': experiment directory on s3
             'image': image filename on s3
             All other columns are passed through.

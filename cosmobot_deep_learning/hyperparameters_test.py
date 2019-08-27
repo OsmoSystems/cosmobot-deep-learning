@@ -42,9 +42,7 @@ REQUIRED_HYPERPARAMETERS = [
     "acceptable_error_normalized",
     "dataset_filepath",
     "dataset_hash",
-    "use_cache",
-    "dataset_cache_name",
-    "dataset_cache_filepath",
+    "dataset_cache_hash",
 ]
 
 
@@ -65,10 +63,8 @@ class TestCalculateHyperparameters:
             dataset_cache_name=None,
         )
         assert actual["dataset_filepath"] == sentinel.dataset_filepath
-        assert actual["dataset_cache_filepath"] is None
         assert actual["dataset_hash"] == sentinel.dataset_hash
-        assert actual["dataset_cache_name"] is None
-        assert not actual["use_cache"]
+        assert actual["dataset_cache_hash"] is None
 
     def test_calculates_dataset_cache_attributes(self, mock_dataset_fns):
         actual = module._calculate_additional_hyperparameters(
@@ -78,10 +74,7 @@ class TestCalculateHyperparameters:
             dataset_cache_name=sentinel.dataset_cache_name,
         )
         assert actual["dataset_filepath"] == sentinel.dataset_filepath
-        assert actual["dataset_cache_filepath"] == sentinel.dataset_cache_filepath
-        assert actual["dataset_cache_name"] == sentinel.dataset_cache_name
         assert actual["dataset_cache_hash"] == sentinel.dataset_hash
-        assert actual["use_cache"]
         mock_dataset_fns["mock_get_dataset_hash"].assert_has_calls(
             [call(sentinel.dataset_filepath), call(sentinel.dataset_cache_filepath)]
         )
