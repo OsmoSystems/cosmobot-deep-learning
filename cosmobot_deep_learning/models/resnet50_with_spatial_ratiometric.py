@@ -86,6 +86,15 @@ def create_model(hyperparameters, x_train):
 
 
 if __name__ == "__main__":
+    if sys.platform == "darwin":
+        # The concurrent futures process pool used to process images doesn't like something about keras on MacOS
+        # Learn more about python fork/spawn trickiness here
+        # https://codewithoutrules.com/2018/09/04/python-multiprocessing/
+        # With python 3.7 this can be set per-process pool, rather than globally
+        import multiprocessing
+
+        multiprocessing.set_start_method("spawn")
+
     args = parse_model_run_args(sys.argv[1:])
 
     # Note: we may eventually need to change how we set this to be compatible with
