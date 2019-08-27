@@ -20,6 +20,9 @@ from cosmobot_deep_learning.prepare_dataset import prepare_dataset_image_and_num
 from cosmobot_deep_learning.run import run
 
 
+LEARNING_RATE = 0.0001
+
+
 def create_model(hyperparameters, x_train):
     """ Build a model
 
@@ -117,6 +120,8 @@ if __name__ == "__main__":
         dataset_filename="2019-08-09--14-33-26_osmo_ml_dataset.csv",
         numeric_input_columns=["PicoLog temperature (C)"],
         image_size=128,
+        optimizer=keras.optimizers.Adam(lr=LEARNING_RATE),
+        learning_rate=LEARNING_RATE,
     )
 
     run(
