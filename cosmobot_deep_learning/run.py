@@ -5,10 +5,10 @@ import wandb
 from wandb.keras import WandbCallback
 
 from cosmobot_deep_learning.load_dataset import load_multi_experiment_dataset_csv
-
 from cosmobot_deep_learning.custom_metrics import (
     magical_incantation_to_make_custom_metric_work,
 )
+from cosmobot_deep_learning import visualizations
 
 
 def _loggable_hyperparameters(hyperparameters):
@@ -35,6 +35,24 @@ def _initialize_wandb(hyperparameters, y_train, y_test):
             "train_sample_count": y_train.shape[0],
             "test_sample_count": y_test.shape[0],
         },
+    )
+
+
+def _log_visualizations(
+    model, training_history, label_scale_factor_mmhg, x_train, y_train, x_test, y_test
+):
+    train_labels = y_train.flatten() * label_scale_factor_mmhg
+    train_predictions = model.predict(x_train).flatten() * label_scale_factor_mmhg
+
+    dev_labels = y_test.flatten() * label_scale_factor_mmhg
+    dev_predictions = model.predict(x_test).flatten() * label_scale_factor_mmhg
+
+    visualizations.log_loss_over_epochs(training_history)
+    visualizations.log_do_prediction_error(
+        train_labels, train_predictions, dev_labels, dev_predictions
+    )
+    visualizations.log_actual_vs_predicted_do(
+        train_labels, train_predictions, dev_labels, dev_predictions
     )
 
 
@@ -86,6 +104,16 @@ def run(hyperparameters, prepare_dataset, create_model, dryrun=False):
         verbose=2,
         validation_data=(x_test, y_test),
         callbacks=[WandbCallback()],
+    )
+
+    _log_visualizations(
+        model,
+        history,
+        hyperparameters["label_scale_factor_mmhg"],
+        x_train,
+        y_train,
+        x_test,
+        y_test,
     )
 
     return x_train, y_train, x_test, y_test, model, history
