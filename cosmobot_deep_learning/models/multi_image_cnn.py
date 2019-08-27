@@ -111,10 +111,6 @@ def create_model(hyperparameters, x_train):
 
 
 if __name__ == "__main__":
-    import multiprocessing
-
-    multiprocessing.set_start_method("spawn")
-
     args = parse_model_run_args(sys.argv[1:])
 
     # Note: we may eventually need to change how we set this to be compatible with
