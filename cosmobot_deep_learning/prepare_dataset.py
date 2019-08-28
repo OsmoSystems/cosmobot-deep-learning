@@ -122,7 +122,7 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
 
 def prepare_dataset_ROIs_and_numeric(raw_dataset: pd.DataFrame, hyperparameters):
     """ Transform a dataset CSV into the appropriate inputs and labels for training and
-    validating a model, for a model that uses separate image and numeric inputs
+    validating a model, for a model that uses multiple ROI-crop input images as well as numeric inputs
 
         Args:
             raw_dataset: A DataFrame corresponding to a standard cosmobot dataset csv

@@ -110,7 +110,7 @@ def open_crop_and_scale_image(raw_image_path: str, output_size: int):
     return crop_and_scale_image(rgb_image, output_size)
 
 
-# COPY-PASTA modifired from cosmobot-process-experiment
+# Not quite COPY-PASTA from cosmobot-process-experiment (modified!)
 def _get_ROIs_for_image(rgb_image, ROI_definitions, ROI_names, crop_size):
     return np.array(
         [
@@ -127,14 +127,15 @@ def open_crop_and_scale_ROIs(image_and_ROIs, ROI_names, output_size):
         square and resizes to the desired ouput_size.
 
         Args:
-            raw_image_path: The full path to a JPEG+RAW file
+            image_and_ROIs: A tuple of rgb_image_filepath, ROI_definitions)
+            ROI_names: Names of ROIs in ROI_definitions to extract and return
             output_size: The desired width and height (in pixels) of the square output ROIs
 
         Returns:
             A numpy array of ROIs, cropped and scaled
     """
-    rgb_image = open_as_rgb(image_and_ROIs[0])
-    ROI_definitions = image_and_ROIs[1]
+    rgb_image_filepath, ROI_definitions = image_and_ROIs
+    rgb_image = open_as_rgb(rgb_image_filepath)
     return _get_ROIs_for_image(rgb_image, ROI_definitions, ROI_names, output_size)
 
 
@@ -180,6 +181,7 @@ def open_and_preprocess_image_ROIs(
 
         Args:
             images_and_ROIs: An iterable list of (filepath, ROI_definition) tuples of images to prepare
+            ROI_names: A list of ROI names in the ROI_definitions to extract.
             crop_size: The desired side length of the output (square) ROI images
             max_workers: Optional. Number of parallel processes to use to prepare images.
                 Defaults to the number of CPU cores.
@@ -208,5 +210,5 @@ def open_and_preprocess_image_ROIs(
             )
         )
 
-        # reorder the axis ROIs are grouped [[image_1_roi_1, image_2_roi_1, ...], ...]
+        # reorder the axis ROIs are grouped by [[image_1_roi_1, image_2_roi_1, ...], ...]
         return np.moveaxis(cropped_ROIs, 0, 1)
