@@ -9,6 +9,7 @@ from wandb.keras import WandbCallback
 from cosmobot_deep_learning.load_dataset import (
     get_dataset_cache_filepath,
     download_images_and_attach_filepaths_to_dataset,
+    get_loaded_dataset_hash,
 )
 
 from cosmobot_deep_learning.custom_metrics import (
@@ -170,7 +171,13 @@ def run(
         dataset_cache_name=dataset_cache_name,
     )
 
-    _initialize_wandb(hyperparameters, y_train, y_test)
+    loaded_dataset_hash = get_loaded_dataset_hash((x_train, y_train, x_test, y_test))
+
+    _initialize_wandb(
+        hyperparameters={"loaded_dataset_hash": loaded_dataset_hash, **hyperparameters},
+        y_train=y_train,
+        y_test=y_test,
+    )
 
     model = create_model(hyperparameters, x_train)
 

@@ -1,6 +1,7 @@
 import os
 import pkg_resources
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -85,10 +86,40 @@ class TestGetPkgDatasetFilepath:
         assert actual == expected
 
 
-class TestGetDatasetHash:
+class TestGetDatasetCsvHash:
     def test_returns_correct_hash(self):
         dataset_filepath = pkg_resources.resource_filename(
             "cosmobot_deep_learning", "datasets/test_dataset.csv"
         )
-        actual = module.get_dataset_hash(dataset_filepath)
+        actual = module.get_dataset_csv_hash(dataset_filepath)
         assert actual == "3af53004962e90b42e2bcfa82f6a345c"
+
+
+class TestGetDatasetHash:
+    def test_works_with_nested_arrays_and_lists_with_mismatched_shapes(self):
+        # fmt: off
+        hash_ = module.get_loaded_dataset_hash(
+            (
+                [
+                    np.ones((2, 1)),
+                    np.ones((2, 128, 128, 3))
+                ],
+                np.ones((2, 1))
+            )
+        )
+        # fmt: on
+        assert isinstance(hash_, str)
+
+    def test_returns_same_hash_for_the_same_data(self):
+        hash_1 = module.get_loaded_dataset_hash((np.array([1, 2, 3]), np.array([1])))
+        hash_2 = module.get_loaded_dataset_hash((np.array([1, 2, 3]), np.array([1])))
+        assert hash_1 == hash_2
+
+    def test_returns_different_hash_for_the_different_data(self):
+        hash_1 = module.get_loaded_dataset_hash(
+            (np.array([1, 2, 3]), np.array([1, 1, 3]))
+        )
+        hash_2 = module.get_loaded_dataset_hash(
+            (np.array([1, 2, 3]), np.array([1, 2, 3]))
+        )
+        assert hash_1 != hash_2

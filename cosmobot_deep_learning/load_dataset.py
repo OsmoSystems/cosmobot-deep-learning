@@ -1,5 +1,6 @@
 import hashlib
 import os
+import pickle
 import pkg_resources
 
 import pandas as pd
@@ -93,6 +94,27 @@ def get_pkg_dataset_filepath(dataset_filename):
     return dataset_filepath
 
 
-def get_dataset_hash(dataset_filepath):
+def get_dataset_csv_hash(dataset_filepath):
+    """ Get a unique hash based on the content of a dataset CSV file
+    Args:
+        dataset_filepath: path to a .csv file
+
+    Returns:
+        hash which will be the same for identical datasets, and different for different datasets
+    """
     with open(dataset_filepath, "rb") as f:
         return hashlib.md5(f.read()).hexdigest()
+
+
+def get_loaded_dataset_hash(dataset):
+    """ Get a unique hash based on a dataset that has been loaded into memory
+
+    Args:
+        dataset: iterable containing lists and/or numpy arrays. Usually (x_train, y_train, x_test, y_test)
+
+    Returns:
+        hash which will be the same for identical datasets that have been loaded identically,
+        and different for different datasets or different preprocessing
+    """
+    serialized_dataset = pickle.dumps(dataset)
+    return hashlib.md5(serialized_dataset).hexdigest()
