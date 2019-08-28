@@ -31,6 +31,20 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
         ),
     )
 
+    arg_parser.add_argument(
+        "--dataset-cache",
+        required=False,
+        type=str,
+        metavar="CACHED-DATASET-NAME",
+        help=(
+            "Name of cached dataset to load, or, if named dataset doesn't exist, save "
+            "the prepared dataset created during this run with the provided name.\n"
+            "NOTE that if the named dataset cache does exist, all preprocessing and preparation will "
+            "be skipped on this run. "
+            "Files are saved in ~/osmo/cosmobot-dataset-cache/ with a .pickle extension."
+        ),
+    )
+
     arg_namespace = arg_parser.parse_args(args)
     return arg_namespace
 
