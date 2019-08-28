@@ -57,8 +57,6 @@ def download_images_and_attach_filepaths_to_dataset(
     # Side effect: patch pandas datatypes to have .progress_apply() methods
     tqdm.pandas()
 
-    dataset = dataset.copy()
-
     # Group by experiment so that we can download from each experiment folder on s3
     dataset_by_experiment = dataset.groupby(
         "experiment", as_index=False, group_keys=False
@@ -76,8 +74,7 @@ def download_images_and_attach_filepaths_to_dataset(
     # Transpose because progress_apply on the groupby object return series of the wrong shape
     # e.g. (1, 10) instead of (10,), when there's only one experiment. When there are multiple
     # experiments, it returns the correct single-dimensional shape, and transpose has no effect
-    dataset["local_filepath"] = local_filepaths.T
-    return dataset
+    return dataset.assign(local_filepath=local_filepaths.T)
 
 
 def get_dataset_cache_filepath(dataset_cache_name):
