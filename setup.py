@@ -16,6 +16,7 @@ setup(
         "numpy",
         "opencv-python",
         "pandas",
+        "plotly>=4,<5",
         "picamraw",
         "scipy",
         "tqdm",

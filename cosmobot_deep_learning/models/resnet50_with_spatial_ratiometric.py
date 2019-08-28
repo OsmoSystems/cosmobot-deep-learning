@@ -20,6 +20,9 @@ from cosmobot_deep_learning.configure import (
 from cosmobot_deep_learning.hyperparameters import get_hyperparameters
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_image_and_numeric
 from cosmobot_deep_learning.run import run
+from cosmobot_deep_learning.preprocess_image import (
+    fix_multiprocessing_with_keras_on_macos,
+)
 
 
 def create_model(hyperparameters, x_train):
@@ -86,6 +89,8 @@ def create_model(hyperparameters, x_train):
 
 
 if __name__ == "__main__":
+    fix_multiprocessing_with_keras_on_macos()
+
     args = parse_model_run_args(sys.argv[1:])
 
     # Note: we may eventually need to change how we set this to be compatible with
@@ -97,6 +102,7 @@ if __name__ == "__main__":
         dataset_filename="2019-08-09--14-33-26_osmo_ml_dataset.csv",
         numeric_input_columns=["sr", "PicoLog temperature (C)"],
         image_size=128,
+        dataset_cache_name=args.dataset_cache,
     )
 
     run(
@@ -104,4 +110,5 @@ if __name__ == "__main__":
         prepare_dataset_image_and_numeric,
         create_model,
         dryrun=args.dryrun,
+        dataset_cache_name=args.dataset_cache,
     )

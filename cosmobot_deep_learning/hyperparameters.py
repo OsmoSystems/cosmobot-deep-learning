@@ -9,6 +9,7 @@ from cosmobot_deep_learning.constants import (
 )
 from cosmobot_deep_learning.load_dataset import (
     get_pkg_dataset_filepath,
+    get_dataset_cache_filepath,
     get_dataset_hash,
 )
 
@@ -30,10 +31,16 @@ def _guard_no_overridden_calculated_hyperparameters(calculated, model_specific):
 
 
 def _calculate_additional_hyperparameters(
-    dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
+    dataset_filename, dataset_cache_name, acceptable_error_mg_l, label_scale_factor_mmhg
 ):
     dataset_filepath = get_pkg_dataset_filepath(dataset_filename)
     dataset_hash = get_dataset_hash(dataset_filepath)
+
+    if dataset_cache_name is None:
+        dataset_cache_hash = None
+    else:
+        dataset_cache_filepath = get_dataset_cache_filepath(dataset_cache_name)
+        dataset_cache_hash = get_dataset_hash(dataset_cache_filepath)
 
     acceptable_error_mmhg = acceptable_error_mg_l * MG_L_TO_MMHG_AT_25_C_1_ATM
 
@@ -46,6 +53,7 @@ def _calculate_additional_hyperparameters(
     return {
         "dataset_filepath": dataset_filepath,
         "dataset_hash": dataset_hash,
+        "dataset_cache_hash": dataset_cache_hash,
         "acceptable_error_mmhg": acceptable_error_mmhg,
         "acceptable_error_normalized": acceptable_error_normalized,
         "metrics": [
@@ -79,6 +87,7 @@ def get_hyperparameters(
     training_set_column: str = DEFAULT_TRAINING_SET_COLUMN,
     dev_set_column: str = DEFAULT_DEV_SET_COLUMN,
     dryrun: bool = False,
+    dataset_cache_name: str = None,
     **model_specific_hyperparameters,
 ):
     """ This function:
@@ -105,7 +114,10 @@ def get_hyperparameters(
 
     """
     calculated_hyperparameters = _calculate_additional_hyperparameters(
-        dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
+        dataset_filename,
+        dataset_cache_name,
+        acceptable_error_mg_l,
+        label_scale_factor_mmhg,
     )
 
     _guard_no_overridden_calculated_hyperparameters(
