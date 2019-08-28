@@ -41,7 +41,7 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
             "the prepared dataset created during this run with the provided name.\n"
             "NOTE that if the named dataset cache does exist, all preprocessing and preparation will "
             "be skipped on this run. "
-            "Files are saved in ~/osmo/data-set-cache/ with a .pickle extension."
+            "Files are saved in ~/osmo/cosmobot-dataset-cache/ with a .pickle extension."
         ),
     )
 

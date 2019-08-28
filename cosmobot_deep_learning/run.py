@@ -8,7 +8,7 @@ from wandb.keras import WandbCallback
 
 from cosmobot_deep_learning.load_dataset import (
     get_dataset_cache_filepath,
-    get_local_image_files_and_attach_to_dataset,
+    get_dataset_with_local_filepaths,
 )
 
 from cosmobot_deep_learning.custom_metrics import (
@@ -120,7 +120,7 @@ def run(
         # Disable W&B syncing to the cloud since we don't care about the results
         os.environ["WANDB_MODE"] = "dryrun"
 
-    dataset_with_local_filepaths = get_local_image_files_and_attach_to_dataset(dataset)
+    dataset_with_local_filepaths = get_dataset_with_local_filepaths(dataset)
 
     x_train, y_train, x_test, y_test = _prepare_dataset_with_caching(
         raw_dataset=dataset_with_local_filepaths,

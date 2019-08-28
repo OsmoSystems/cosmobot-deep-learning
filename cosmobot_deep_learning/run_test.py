@@ -102,7 +102,7 @@ class TestDatasetCache:
 
         mock_dataset_cache_helpers[
             "_load_dataset_cache"
-        ].return_value = sentinel.mock_dataset
+        ].return_value = sentinel.mock_dataset_cache
 
         actual_dataset = module._prepare_dataset_with_caching(
             raw_dataset=sentinel.raw_datatset,
@@ -116,7 +116,7 @@ class TestDatasetCache:
             sentinel.cache_filepath
         )
         mock_dataset_cache_helpers["_save_dataset_cache"].assert_not_called()
-        assert actual_dataset == sentinel.mock_dataset
+        assert actual_dataset == sentinel.mock_dataset_cache
 
     def test_ignores_cache_when_no_name_specified(
         self, mocker, mock_get_dataset_cache_filepath, mock_dataset_cache_helpers
