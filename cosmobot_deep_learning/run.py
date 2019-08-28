@@ -8,7 +8,7 @@ from wandb.keras import WandbCallback
 
 from cosmobot_deep_learning.load_dataset import (
     get_dataset_cache_filepath,
-    get_dataset_with_local_filepaths,
+    download_images_and_attach_filepaths_to_dataset,
 )
 
 from cosmobot_deep_learning.custom_metrics import (
@@ -89,7 +89,7 @@ def _get_prepared_dataset(prepare_dataset, hyperparameters, dryrun):
     shuffled_dataset = _shuffle_dataframe(dataset)
 
     x_train, y_train, x_test, y_test = prepare_dataset(
-        raw_dataset=get_dataset_with_local_filepaths(shuffled_dataset),
+        raw_dataset=download_images_and_attach_filepaths_to_dataset(shuffled_dataset),
         hyperparameters=hyperparameters,
     )
 

@@ -51,7 +51,7 @@ class TestLoadMultiExperimentDatasetCsv:
             os.path.join(module.LOCAL_DATA_DIRECTORY, "experiment_2", "image_3.jpeg"),
         ]
 
-        actual_df = module.get_dataset_with_local_filepaths(test_df)
+        actual_df = module.download_images_and_attach_filepaths_to_dataset(test_df)
 
         pd.testing.assert_frame_equal(expected_df, actual_df)
 
@@ -71,7 +71,7 @@ class TestLoadMultiExperimentDatasetCsv:
 
         # Test is just that this doesn't blow up
         # Error looks like: "ValueError: Wrong number of items passed 2, placement implies 1"
-        module.get_dataset_with_local_filepaths(test_df)
+        module.download_images_and_attach_filepaths_to_dataset(test_df)
 
 
 class TestGetPkgDatasetFilepath:

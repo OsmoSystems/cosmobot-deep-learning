@@ -31,8 +31,10 @@ def _get_files_for_experiment_df(experiment_df_group):
     )
 
 
-def get_dataset_with_local_filepaths(dataset: pd.DataFrame) -> pd.DataFrame:
-    """ For a pre-prepared ML dataset, load the DataFrame with local image paths, optionally downloading said images
+def download_images_and_attach_filepaths_to_dataset(
+    dataset: pd.DataFrame
+) -> pd.DataFrame:
+    """For a pre-prepared ML dataset, ensure images are downloaded and add local image paths to the DataFrame
     Note that syncing tends to take a long time, though syncing for individual experiments will be skipped if all files
     are already downloaded.
 
@@ -43,7 +45,7 @@ def get_dataset_with_local_filepaths(dataset: pd.DataFrame) -> pd.DataFrame:
             All other columns are passed through.
 
     Returns:
-        The dataset provided with the additional column 'local_filepath' which will contain file paths of
+        A copy of the dataset provided with the additional column 'local_filepath' which will contain file paths of
         the locally stored images.
 
     Side-effects:
@@ -54,6 +56,8 @@ def get_dataset_with_local_filepaths(dataset: pd.DataFrame) -> pd.DataFrame:
     """
     # Side effect: patch pandas datatypes to have .progress_apply() methods
     tqdm.pandas()
+
+    dataset = dataset.copy()
 
     # Group by experiment so that we can download from each experiment folder on s3
     dataset_by_experiment = dataset.groupby(
