@@ -71,6 +71,46 @@ def prepare_dataset_numeric(raw_dataset: pd.DataFrame, hyperparameters):
     return (x_train, y_train, x_test, y_test)
 
 
+def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters):
+    """ Transform a dataset CSV into the appropriate inputs and labels for training and
+    validating a model, for a model that uses separate image and numeric inputs
+
+        Args:
+            raw_dataset: A DataFrame corresponding to a standard cosmobot dataset csv
+            hyperparameters: A dictionary that includes at least:
+                label_column: The column to use as the label (y) data values for a given dataset (x)
+                label_scale_factor_mmhg: The scaling factor to use to scale labels into the [0,1] range
+                image_size: The desired side length of the scaled (square) images
+        Returns:
+            A 4-tuple containing (x_train, y_train, x_test, y_test) data sets.
+    """
+    label_column = hyperparameters["label_column"]
+    label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
+    image_size = hyperparameters["image_size"]
+    training_set_column = hyperparameters["training_set_column"]
+    dev_set_column = hyperparameters["dev_set_column"]
+
+    train_samples = raw_dataset[raw_dataset[training_set_column]]
+    test_samples = raw_dataset[raw_dataset[dev_set_column]]
+
+    x_train_images = open_and_preprocess_images(
+        train_samples["local_filepath"].values, image_size
+    )
+    y_train = extract_labels(train_samples, label_column, label_scale_factor_mmhg)
+
+    x_test_images = open_and_preprocess_images(
+        test_samples["local_filepath"].values, image_size
+    )
+    y_test = extract_labels(test_samples, label_column, label_scale_factor_mmhg)
+
+    return (
+        x_train_images,
+        y_train,
+        x_test_images,
+        y_test,
+    )
+
+
 def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters):
     """ Transform a dataset CSV into the appropriate inputs and labels for training and
     validating a model, for a model that uses separate image and numeric inputs
