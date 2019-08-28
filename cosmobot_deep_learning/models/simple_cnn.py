@@ -19,6 +19,9 @@ from cosmobot_deep_learning.hyperparameters import get_hyperparameters
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_image_and_numeric
 from cosmobot_deep_learning.run import run
 
+# 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
+LEARNING_RATE = 0.0001
+
 
 def create_model(hyperparameters, x_train):
     """ Build a model
@@ -118,6 +121,8 @@ if __name__ == "__main__":
         numeric_input_columns=["PicoLog temperature (C)"],
         image_size=128,
         dataset_cache_name=args.dataset_cache,
+        optimizer=keras.optimizers.Adam(lr=LEARNING_RATE),
+        learning_rate=LEARNING_RATE,
     )
 
     run(

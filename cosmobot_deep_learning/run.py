@@ -14,6 +14,7 @@ from cosmobot_deep_learning.load_dataset import (
 from cosmobot_deep_learning.custom_metrics import (
     magical_incantation_to_make_custom_metric_work,
 )
+from cosmobot_deep_learning import visualizations
 
 
 def _loggable_hyperparameters(hyperparameters):
@@ -43,12 +44,56 @@ def _initialize_wandb(hyperparameters, y_train, y_test):
     )
 
 
+def _log_visualizations(
+    model, training_history, label_scale_factor_mmhg, x_train, y_train, x_test, y_test
+):
+    train_labels = y_train.flatten() * label_scale_factor_mmhg
+    train_predictions = model.predict(x_train).flatten() * label_scale_factor_mmhg
+
+    dev_labels = y_test.flatten() * label_scale_factor_mmhg
+    dev_predictions = model.predict(x_test).flatten() * label_scale_factor_mmhg
+
+    visualizations.log_loss_over_epochs(training_history)
+    visualizations.log_do_prediction_error(
+        train_labels, train_predictions, dev_labels, dev_predictions
+    )
+    visualizations.log_actual_vs_predicted_do(
+        train_labels, train_predictions, dev_labels, dev_predictions
+    )
+
+
 def _generate_tiny_dataset(dataset, hyperparameters):
     """ Grab the first two training and dev data points to create a tiny dataset.
     """
     training_sample = dataset[dataset[hyperparameters["training_set_column"]]][:2]
     test_sample = dataset[dataset[hyperparameters["dev_set_column"]]][:2]
     return training_sample.append(test_sample)
+
+
+def _shuffle_dataframe(dataframe):
+    return dataframe.sample(
+        n=len(dataframe),  # sample all rows, essentially shuffling
+        random_state=0,  # set a constant seed for consistent shuffling
+    ).reset_index(
+        drop=True
+    )  # reset index to match new order, and drop the old index values
+
+
+def _get_prepared_dataset(prepare_dataset, hyperparameters, dryrun):
+    dataset_filepath = hyperparameters["dataset_filepath"]
+    dataset = pd.read_csv(dataset_filepath)
+
+    if dryrun:
+        dataset = _generate_tiny_dataset(dataset, hyperparameters)
+
+    shuffled_dataset = _shuffle_dataframe(dataset)
+
+    x_train, y_train, x_test, y_test = prepare_dataset(
+        raw_dataset=get_dataset_with_local_filepaths(shuffled_dataset),
+        hyperparameters=hyperparameters,
+    )
+
+    return x_train, y_train, x_test, y_test
 
 
 def _load_dataset_cache(dataset_cache_filepath):
@@ -62,7 +107,7 @@ def _save_dataset_cache(dataset_cache_filepath, dataset):
 
 
 def _prepare_dataset_with_caching(
-    raw_dataset, prepare_dataset, hyperparameters, dataset_cache_name=None
+    prepare_dataset, hyperparameters, dryrun, dataset_cache_name=None
 ):
     dataset_cache_filepath = get_dataset_cache_filepath(dataset_cache_name)
 
@@ -75,8 +120,10 @@ def _prepare_dataset_with_caching(
     else:
         logging.info(f"Preparing dataset")
 
-        dataset = prepare_dataset(
-            raw_dataset=raw_dataset, hyperparameters=hyperparameters
+        dataset = _get_prepared_dataset(
+            prepare_dataset=prepare_dataset,
+            hyperparameters=hyperparameters,
+            dryrun=dryrun,
         )
 
         if dataset_cache_name is not None:
@@ -110,22 +157,16 @@ def run(
 
     epochs = hyperparameters["epochs"]
     batch_size = hyperparameters["batch_size"]
-    dataset_filepath = hyperparameters["dataset_filepath"]
-
-    dataset = pd.read_csv(dataset_filepath)
 
     if dryrun:
         epochs = 1
-        dataset = _generate_tiny_dataset(dataset, hyperparameters)
         # Disable W&B syncing to the cloud since we don't care about the results
         os.environ["WANDB_MODE"] = "dryrun"
 
-    dataset_with_local_filepaths = get_dataset_with_local_filepaths(dataset)
-
     x_train, y_train, x_test, y_test = _prepare_dataset_with_caching(
-        raw_dataset=dataset_with_local_filepaths,
         prepare_dataset=prepare_dataset,
         hyperparameters=hyperparameters,
+        dryrun=dryrun,
         dataset_cache_name=dataset_cache_name,
     )
 
@@ -143,6 +184,16 @@ def run(
         verbose=2,
         validation_data=(x_test, y_test),
         callbacks=[WandbCallback()],
+    )
+
+    _log_visualizations(
+        model,
+        history,
+        hyperparameters["label_scale_factor_mmhg"],
+        x_train,
+        y_train,
+        x_test,
+        y_test,
     )
 
     return x_train, y_train, x_test, y_test, model, history
