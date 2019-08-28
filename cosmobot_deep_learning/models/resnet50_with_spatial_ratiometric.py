@@ -20,6 +20,9 @@ from cosmobot_deep_learning.configure import (
 from cosmobot_deep_learning.hyperparameters import get_hyperparameters
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_image_and_numeric
 from cosmobot_deep_learning.run import run
+from cosmobot_deep_learning.preprocess_image import (
+    fix_multiprocessing_with_keras_on_macos,
+)
 
 
 def create_model(hyperparameters, x_train):
@@ -86,14 +89,7 @@ def create_model(hyperparameters, x_train):
 
 
 if __name__ == "__main__":
-    if sys.platform == "darwin":
-        # The concurrent futures process pool used to process images doesn't like something about keras on MacOS
-        # Learn more about python fork/spawn trickiness here
-        # https://codewithoutrules.com/2018/09/04/python-multiprocessing/
-        # With python 3.7 this can be set per-process pool, rather than globally
-        import multiprocessing
-
-        multiprocessing.set_start_method("spawn")
+    fix_multiprocessing_with_keras_on_macos()
 
     args = parse_model_run_args(sys.argv[1:])
 
