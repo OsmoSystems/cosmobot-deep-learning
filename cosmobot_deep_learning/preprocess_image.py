@@ -15,11 +15,12 @@ RAW_BIT_DEPTH = 2 ** 10  # used for normalizing DN to DNR
 
 
 def fix_multiprocessing_with_keras_on_macos():
+    """ The concurrent futures process pool used to process images doesn't like something about keras on MacOS
+        Learn more about python fork/spawn trickiness here
+        https://codewithoutrules.com/2018/09/04/python-multiprocessing/
+        With python 3.7 this can be set per-process pool, rather than globally
+    """
     if sys.platform == "darwin":
-        # The concurrent futures process pool used to process images doesn't like something about keras on MacOS
-        # Learn more about python fork/spawn trickiness here
-        # https://codewithoutrules.com/2018/09/04/python-multiprocessing/
-        # With python 3.7 this can be set per-process pool, rather than globally
         multiprocessing.set_start_method("spawn")
 
 
