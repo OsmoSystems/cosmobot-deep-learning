@@ -170,7 +170,7 @@ def mock_open_and_preprocess_image_ROIs(mocker):
     )
 
 
-class TestPrepareDatasetROIAndnumeric:
+class TestPrepareDatasetROIAndNumeric:
     def test_returns_expected_x_y_train_test(self, mock_open_and_preprocess_image_ROIs):
         scale_factor = 100
         test_ROIs = [sentinel.ROI_0, sentinel.ROI_1]
