@@ -103,12 +103,7 @@ def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters):
     )
     y_test = extract_labels(test_samples, label_column, label_scale_factor_mmhg)
 
-    return (
-        x_train_images,
-        y_train,
-        x_test_images,
-        y_test,
-    )
+    return (x_train_images, y_train, x_test_images, y_test)
 
 
 def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters):

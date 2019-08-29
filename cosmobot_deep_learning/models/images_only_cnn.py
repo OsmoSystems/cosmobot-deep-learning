@@ -63,7 +63,9 @@ def create_model(hyperparameters, x_train):
             ),
             keras.layers.advanced_activations.LeakyReLU(),
             # Final output layer with 1 neuron to regress a single value
-            keras.layers.Dense(1, kernel_initializer=kernel_initializer, name="early-DO"),
+            keras.layers.Dense(
+                1, kernel_initializer=kernel_initializer, name="early-DO"
+            ),
         ]
     )
 
@@ -80,16 +82,11 @@ def create_model(hyperparameters, x_train):
         64, activation="relu", kernel_initializer=kernel_initializer
     )(dense_1)
     do_output = keras.layers.Dense(
-        1,
-        activation="sigmoid",
-        kernel_initializer=kernel_initializer,
-
-        name="DO",
+        1, activation="sigmoid", kernel_initializer=kernel_initializer, name="DO"
     )(dense_2)
 
     full_model = keras.models.Model(
-        inputs=image_to_do_model.get_input_at(0),
-        outputs=do_output,
+        inputs=image_to_do_model.get_input_at(0), outputs=do_output
     )
 
     full_model.compile(
