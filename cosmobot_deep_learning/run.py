@@ -148,13 +148,7 @@ def _prepare_dataset_with_caching(
         return dataset
 
 
-def run(
-    hyperparameters,
-    prepare_dataset,
-    create_model,
-    dryrun=False,
-    dataset_cache_name=None,
-):
+def run(hyperparameters, prepare_dataset, create_model):
     """ Use the provided hyperparameters to train the model in this module.
 
     Args:
@@ -172,12 +166,14 @@ def run(
     epochs = hyperparameters["epochs"]
     batch_size = hyperparameters["batch_size"]
 
-    if dryrun:
-        pass
-        # epochs = 1
+    # TODO we could could just read these from called functions if we're ok with them being in hyperparameters...
+    dryrun = hyperparameters["dryrun"]
+    dataset_cache_name = hyperparameters["dataset_cache_name"]
+
+    if hyperparameters["dryrun"]:
+        epochs = 1
         # Disable W&B syncing to the cloud since we don't care about the results
-        # TODO uncomment
-        # os.environ["WANDB_MODE"] = "dryrun"
+        os.environ["WANDB_MODE"] = "dryrun"
 
     _initialize_wandb(hyperparameters=hyperparameters)
 

@@ -1,7 +1,9 @@
+from enum import Enum
 from typing import List
 
 import keras
 
+from cosmobot_deep_learning.configure import parse_model_run_args
 from cosmobot_deep_learning.constants import (
     ACCEPTABLE_ERROR_MG_L,
     ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
@@ -15,6 +17,11 @@ from cosmobot_deep_learning.load_dataset import (
 from cosmobot_deep_learning.custom_metrics import (
     get_fraction_outside_acceptable_error_fn,
 )
+
+
+class OptimizerName(Enum):
+    ADAM = "Adam"
+    ADADELTA = "AdaDelta"
 
 
 def _guard_no_overridden_calculated_hyperparameters(calculated, model_specific):
@@ -130,3 +137,34 @@ def get_hyperparameters(
         **calculated_hyperparameters,
         **model_specific_hyperparameters,
     }
+
+
+# TODO test
+def _remove_items_with_no_value(dictionary):
+    return {k: v for k, v in dictionary.items() if v is not None}
+
+
+def get_hyperparameters_from_args(command_line_args, model_default_hyperparameters):
+    args = parse_model_run_args(command_line_args)
+
+    # remove undefined arguments
+    hyperparameters_from_args = _remove_items_with_no_value(vars(args))
+    defaulted_hyperparameters = {
+        **model_default_hyperparameters,
+        **hyperparameters_from_args,
+    }
+    hyperparameters = get_hyperparameters(**defaulted_hyperparameters)
+
+    return hyperparameters
+
+
+def get_optimizer(hyperparameters):
+    learning_rate = hyperparameters["learning_rate"]
+    optimizer_name = hyperparameters["optimizer_name"]
+    if optimizer_name == OptimizerName.ADAM.value:
+        return keras.optimizers.Adam(lr=learning_rate)
+    if optimizer_name == OptimizerName.ADADELTA.value:
+        return keras.optimizers.AdaDelta(lr=learning_rate)
+    else:
+        # argument parser will catch this earlier, shouldn't get here
+        raise Exception("invalid optimizer_name")

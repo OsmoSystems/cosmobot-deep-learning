@@ -3,6 +3,8 @@ from pathlib import Path
 
 from typing import List
 
+from .hyperparameters import OptimizerName
+
 
 # TODO test
 def _string_to_bool(v):
@@ -18,9 +20,6 @@ def _string_to_bool(v):
 
 # TODO take additional arg parser with model-specific hyperparameter arguments
 def parse_model_run_args(args: List[str]) -> argparse.Namespace:
-    # TODO remove
-    print(f"args: {args}")
-
     arg_parser = argparse.ArgumentParser(
         description="", formatter_class=argparse.RawTextHelpFormatter
     )
@@ -66,10 +65,14 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
         ),
     )
 
+    # TODO do we want this? it might be silly to sweep over this, but useful for setting number of epochs for a single run
     arg_parser.add_argument("--epochs", type=int)
 
-    # TODO these aren't used yet:
-    arg_parser.add_argument("--optimizer-name", choices=["Adam", "AdaDelta"])
+    # TODO these aren't used in all models yet:
+    arg_parser.add_argument(
+        "--optimizer-name",
+        choices=[optimizer_name.value for optimizer_name in OptimizerName],
+    )
     arg_parser.add_argument("--learning-rate", type=float)
 
     arg_namespace = arg_parser.parse_args(args)

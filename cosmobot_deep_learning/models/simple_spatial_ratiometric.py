@@ -55,6 +55,26 @@ def create_model(hyperparameters, x_train):
     return sr_model
 
 
+def _set_cuda_visible_devices(hyperparameters):
+    gpu_arg = hyperparameters.get("gpu")
+
+    if gpu_arg is not None:
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_arg)
+    else:
+        # for sweeps, CUDA_VISIBLE_DEVICES should be set to the desired gpu when running each agent, example:
+        # CUDA_VISIBLE_DEVICES=0 wandb agent <sweep_id>
+        # CUDA_VISIBLE_DEVICES=1 wandb agent <sweep_id>
+
+        gpu = os.environ.get("CUDA_VISIBLE_DEVICES")
+        hyperparameters["gpu"] = gpu
+
+        if gpu is None:
+            # TODO use better exception class. should we also validate the value? scope creep?
+            raise Exception(
+                "Must specify --gpu or have CUDA_VISIBLE_DEVICES set in environment"
+            )
+
+
 def main(command_line_args):
     args = parse_model_run_args(command_line_args)
 
