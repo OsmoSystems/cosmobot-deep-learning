@@ -1,5 +1,6 @@
 from unittest.mock import sentinel
 
+import numpy as np
 import pytest
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
@@ -171,3 +172,16 @@ class TestShuffleDataframe:
         expected = expected.reset_index(drop=True)
 
         assert_frame_equal(module._shuffle_dataframe(dataframe), expected)
+
+
+class TestSliceArrays:
+    def test_slices_list_of_arrays(self):
+        actual = module._slice_all_arrays_in_list(
+            [np.zeros(5), np.ones(5)], slice_size=3
+        )
+        np.testing.assert_array_equal(actual[0], np.zeros(3))
+        np.testing.assert_array_equal(actual[1], np.ones(3))
+
+    def test_slices_single_array(self):
+        actual = module._slice_all_arrays_in_list(np.zeros(5), slice_size=3)
+        np.testing.assert_array_equal(actual, np.zeros(3))

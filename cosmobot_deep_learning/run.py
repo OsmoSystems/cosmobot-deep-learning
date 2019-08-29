@@ -152,6 +152,26 @@ def _prepare_dataset_with_caching(
         return dataset
 
 
+def _slice_all_arrays_in_list(maybe_list_of_arrays, slice_size):
+    # Sometimes x input is a list of arrays (e.g. [x_train_numeric, x_train_images])
+    # sometimes just one array (e.g. x_train_numeric)
+    if type(maybe_list_of_arrays) == list:
+        return [array[:slice_size] for array in maybe_list_of_arrays]
+
+    return maybe_list_of_arrays[:slice_size]
+
+
+def _downsample_training_dataset(loaded_dataset, train_sample_count):
+    x_train, y_train, x_test, y_test = loaded_dataset
+
+    return (
+        _slice_all_arrays_in_list(x_train, train_sample_count),
+        _slice_all_arrays_in_list(y_train, train_sample_count),
+        x_test,
+        y_test,
+    )
+
+
 def run(
     hyperparameters,
     prepare_dataset,
@@ -179,7 +199,7 @@ def run(
     if dryrun:
         epochs = 1
         # Disable W&B syncing to the cloud since we don't care about the results
-        os.environ["WANDB_MODE"] = "dryrun"
+        # os.environ["WANDB_MODE"] = "dryrun"
 
     _initialize_wandb(hyperparameters=hyperparameters)
 
@@ -190,9 +210,14 @@ def run(
         dataset_cache_name=dataset_cache_name,
     )
 
-    _update_wandb_with_loaded_dataset(loaded_dataset)
+    # Temporary: downsample training dataset to a desired size
+    downsampled_loaded_dataset = _downsample_training_dataset(
+        loaded_dataset, hyperparameters["train_sample_count"]
+    )
 
-    x_train, y_train, x_test, y_test = loaded_dataset
+    _update_wandb_with_loaded_dataset(downsampled_loaded_dataset)
+
+    x_train, y_train, x_test, y_test = downsampled_loaded_dataset
 
     model = create_model(hyperparameters, x_train)
 
