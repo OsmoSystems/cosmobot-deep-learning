@@ -9,6 +9,7 @@ from wandb.keras import WandbCallback
 from cosmobot_deep_learning.load_dataset import (
     get_dataset_cache_filepath,
     download_images_and_attach_filepaths_to_dataset,
+    get_loaded_dataset_hash,
 )
 
 from cosmobot_deep_learning.custom_metrics import (
@@ -32,15 +33,32 @@ def _loggable_hyperparameters(hyperparameters):
     }
 
 
-def _initialize_wandb(hyperparameters, y_train, y_test):
+def _initialize_wandb(hyperparameters):
     wandb.init(
         entity="osmo",
         project="cosmobot-do-measurement",
-        config={
-            **_loggable_hyperparameters(hyperparameters),
+        config={**_loggable_hyperparameters(hyperparameters)},
+    )
+
+
+def _update_wandb_with_loaded_dataset(loaded_dataset):
+    """ update wandb configuration hyperparameters with information about the dataset that's been loaded
+
+    Args:
+        loaded_dataset: (x_train, y_train, x_test, y_test) tuple of data being used for modeling
+
+    Returns:
+        None
+    """
+    loaded_dataset_hash = get_loaded_dataset_hash(loaded_dataset)
+
+    x_train, y_train, x_test, y_test = loaded_dataset
+    wandb.config.update(
+        {
+            "loaded_dataset_hash": loaded_dataset_hash,
             "train_sample_count": y_train.shape[0],
             "test_sample_count": y_test.shape[0],
-        },
+        }
     )
 
 
@@ -113,7 +131,7 @@ def _prepare_dataset_with_caching(
 
     # Early exit with the cached datatset if it exists
     if dataset_cache_name is not None and os.path.isfile(dataset_cache_filepath):
-        logging.info(f"Using dataset cache file {dataset_cache_name}")
+        logging.info(f"Using dataset cache file {dataset_cache_filepath}")
 
         return _load_dataset_cache(dataset_cache_filepath)
 
@@ -163,14 +181,18 @@ def run(
         # Disable W&B syncing to the cloud since we don't care about the results
         os.environ["WANDB_MODE"] = "dryrun"
 
-    x_train, y_train, x_test, y_test = _prepare_dataset_with_caching(
+    _initialize_wandb(hyperparameters=hyperparameters)
+
+    loaded_dataset = _prepare_dataset_with_caching(
         prepare_dataset=prepare_dataset,
         hyperparameters=hyperparameters,
         dryrun=dryrun,
         dataset_cache_name=dataset_cache_name,
     )
 
-    _initialize_wandb(hyperparameters, y_train, y_test)
+    _update_wandb_with_loaded_dataset(loaded_dataset)
+
+    x_train, y_train, x_test, y_test = loaded_dataset
 
     model = create_model(hyperparameters, x_train)
 

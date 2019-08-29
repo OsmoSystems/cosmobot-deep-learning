@@ -9,8 +9,7 @@ from cosmobot_deep_learning.constants import (
 )
 from cosmobot_deep_learning.load_dataset import (
     get_pkg_dataset_filepath,
-    get_dataset_cache_filepath,
-    get_dataset_hash,
+    get_dataset_csv_hash,
 )
 
 from cosmobot_deep_learning.custom_metrics import (
@@ -31,16 +30,10 @@ def _guard_no_overridden_calculated_hyperparameters(calculated, model_specific):
 
 
 def _calculate_additional_hyperparameters(
-    dataset_filename, dataset_cache_name, acceptable_error_mg_l, label_scale_factor_mmhg
+    dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
 ):
     dataset_filepath = get_pkg_dataset_filepath(dataset_filename)
-    dataset_hash = get_dataset_hash(dataset_filepath)
-
-    if dataset_cache_name is None:
-        dataset_cache_hash = None
-    else:
-        dataset_cache_filepath = get_dataset_cache_filepath(dataset_cache_name)
-        dataset_cache_hash = get_dataset_hash(dataset_cache_filepath)
+    dataset_hash = get_dataset_csv_hash(dataset_filepath)
 
     acceptable_error_mmhg = acceptable_error_mg_l * MG_L_TO_MMHG_AT_25_C_1_ATM
 
@@ -53,7 +46,6 @@ def _calculate_additional_hyperparameters(
     return {
         "dataset_filepath": dataset_filepath,
         "dataset_hash": dataset_hash,
-        "dataset_cache_hash": dataset_cache_hash,
         "acceptable_error_mmhg": acceptable_error_mmhg,
         "acceptable_error_normalized": acceptable_error_normalized,
         "metrics": [
@@ -86,7 +78,6 @@ def get_hyperparameters(
     acceptable_error_mg_l: float = ACCEPTABLE_ERROR_MG_L,
     training_set_column: str = DEFAULT_TRAINING_SET_COLUMN,
     dev_set_column: str = DEFAULT_DEV_SET_COLUMN,
-    dryrun: bool = False,
     dataset_cache_name: str = None,
     **model_specific_hyperparameters,
 ):
@@ -114,10 +105,7 @@ def get_hyperparameters(
 
     """
     calculated_hyperparameters = _calculate_additional_hyperparameters(
-        dataset_filename,
-        dataset_cache_name,
-        acceptable_error_mg_l,
-        label_scale_factor_mmhg,
+        dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
     )
 
     _guard_no_overridden_calculated_hyperparameters(
@@ -128,6 +116,7 @@ def get_hyperparameters(
         # Pass through defined/default hyperparameters
         "model_name": model_name,
         "dataset_filename": dataset_filename,
+        "dataset_cache_name": dataset_cache_name,
         "numeric_input_columns": numeric_input_columns,
         "label_column": label_column,
         "label_scale_factor_mmhg": label_scale_factor_mmhg,
