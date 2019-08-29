@@ -111,14 +111,9 @@ def open_crop_and_scale_image(raw_image_path: str, output_size: int):
 
 
 # Not quite COPY-PASTA from cosmobot-process-experiment (modified!)
-def _get_ROIs_for_image(rgb_image, ROI_definitions, ROI_names, crop_size):
-    return np.array(
-        [
-            crop_and_scale_image(
-                crop_image(rgb_image, ROI_definitions[ROI_name]), crop_size
-            )
-            for ROI_name in ROI_names  # Extract ROIs in same order listed in hyperparameter
-        ]
+def _get_ROI_for_image(rgb_image, ROI_definitions, ROI_name, crop_size):
+    return crop_and_scale_image(
+        crop_image(rgb_image, ROI_definitions[ROI_name]), crop_size
     )
 
 
@@ -136,7 +131,11 @@ def open_crop_and_scale_ROIs(image_and_ROIs, ROI_names, output_size):
     """
     rgb_image_filepath, ROI_definitions = image_and_ROIs
     rgb_image = open_as_rgb(rgb_image_filepath)
-    return _get_ROIs_for_image(rgb_image, ROI_definitions, ROI_names, output_size)
+    image_rois = [
+        _get_ROI_for_image(rgb_image, ROI_definitions, ROI_name, output_size)
+        for ROI_name in ROI_names  # Extract ROIs in same order provided
+    ]
+    return image_rois
 
 
 def open_and_preprocess_images(image_filepaths, image_size, max_workers=None):
