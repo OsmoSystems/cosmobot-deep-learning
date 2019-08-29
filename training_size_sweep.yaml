@@ -5,4 +5,4 @@ metric:
   goal: minimize
 parameters:
   desired-train-sample-count:
-    values: [30, 30, 30, 100, 100, 100, 300, 300, 300, 1000, 1000, 1000, 3000, 3000, 10000, 10000, 10000]
+    values: [30, 100, 300, 1000, 3000, 10000]
