@@ -1,0 +1,8 @@
+program: cosmobot_deep_learning/models/simple_cnn.py
+method: bayes
+metric:
+  name: val_loss
+  goal: minimize
+parameters:
+  desired-train-sample-count:
+    values: [1, 10]

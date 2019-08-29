@@ -111,24 +111,25 @@ def create_model(hyperparameters, x_train):
     return temperature_aware_model
 
 
-if __name__ == "__main__":
+def main(command_line_args):
     fix_multiprocessing_with_keras_on_macos()
 
-    args = parse_model_run_args(sys.argv[1:])
+    args = parse_model_run_args(command_line_args)
 
     # Note: we may eventually need to change how we set this to be compatible with
     # hyperparameter sweeps. See https://www.wandb.com/articles/multi-gpu-sweeps
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
+    # Skip since it gets set in the sweep
+    # os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
     hyperparameters = get_hyperparameters(
         model_name=get_model_name_from_filepath(__file__),
         dataset_filename="2019-08-09--14-33-26_osmo_ml_dataset.csv",
         numeric_input_columns=["PicoLog temperature (C)"],
         image_size=128,
-        dataset_cache_name=args.dataset_cache,
+        dataset_cache_name="simple_cnn_training_size_sweep",  # Hardcode so I don't have to pass in as cmd line param
         optimizer=keras.optimizers.Adam(lr=LEARNING_RATE),
         learning_rate=LEARNING_RATE,
-        desired_train_sample_count=10000,
+        desired_train_sample_count=args.desired_train_sample_count,
     )
 
     run(
@@ -136,5 +137,8 @@ if __name__ == "__main__":
         prepare_dataset_image_and_numeric,
         create_model,
         dryrun=args.dryrun,
-        dataset_cache_name=args.dataset_cache,
     )
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

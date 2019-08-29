@@ -11,7 +11,7 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
 
     arg_parser.add_argument(
         "--gpu",
-        required=True,
+        # required=True,
         type=int,
         help=(
             "Select GPU for training by CUDA Device ID number (e.g. 0 - 3).\n"
@@ -35,6 +35,7 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
         "--dataset-cache",
         required=False,
         type=str,
+        dest="dataset_cache_name",
         metavar="CACHED-DATASET-NAME",
         help=(
             "Name of cached dataset to load, or, if named dataset doesn't exist, save "
@@ -43,6 +44,10 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
             "be skipped on this run. "
             "Files are saved in ~/osmo/cosmobot-dataset-cache/ with a .pickle extension."
         ),
+    )
+
+    arg_parser.add_argument(
+        "--desired-train-sample-count", type=int, dest="desired_train_sample_count"
     )
 
     arg_namespace = arg_parser.parse_args(args)

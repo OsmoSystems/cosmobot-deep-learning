@@ -172,13 +172,7 @@ def _downsample_training_dataset(loaded_dataset, train_sample_count):
     )
 
 
-def run(
-    hyperparameters,
-    prepare_dataset,
-    create_model,
-    dryrun=False,
-    dataset_cache_name=None,
-):
+def run(hyperparameters, prepare_dataset, create_model, dryrun=False):
     """ Use the provided hyperparameters to train the model in this module.
 
     Args:
@@ -195,6 +189,7 @@ def run(
 
     epochs = hyperparameters["epochs"]
     batch_size = hyperparameters["batch_size"]
+    dataset_cache_name = hyperparameters["dataset_cache_name"]
 
     if dryrun:
         epochs = 1
