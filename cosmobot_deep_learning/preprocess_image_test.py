@@ -244,10 +244,37 @@ class TestOpenAndPreprocessROIs:
         # fmt: on
 
         actual_result = module.open_and_preprocess_image_ROIs(
-            images_and_ROIs=[("A", "definitions"), ("B", "definitions")],
+            images_and_ROI_definitions=[("A", "definitions"), ("B", "definitions")],
             ROI_names=["ROI 0", "ROI 1"],
             crop_size=64,
             max_workers=1,
         )
 
         np.testing.assert_equal(actual_result, expected_result)
+
+
+# COPY-PASTA from cosmobot-process-experiment
+class TestCropImage:
+    def test_crop_image(self):
+        image = np.array(
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12],
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24],
+            ]
+        )
+        # start_col, start_row, cols, rows
+        region = (1, 2, 2, 3)
+
+        # fmt: off
+        expected = [
+            [10, 11],
+            [14, 15],
+            [18, 19]
+        ]
+        # fmt: on
+
+        np.testing.assert_array_equal(module.crop_image(image, region), expected)

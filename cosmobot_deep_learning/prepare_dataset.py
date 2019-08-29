@@ -131,6 +131,7 @@ def prepare_dataset_ROIs_and_numeric(raw_dataset: pd.DataFrame, hyperparameters)
                 label_column: The column to use as the label (y) data values for a given dataset (x)
                 label_scale_factor_mmhg: The scaling factor to use to scale labels into the [0,1] range
                 image_size: The desired side length of the scaled (square) images
+                input_ROI_names: The names of ROIs to extract from images as model inputs
         Returns:
             A 4-tuple containing (x_train, y_train, x_test, y_test) data sets.
     """
@@ -140,7 +141,7 @@ def prepare_dataset_ROIs_and_numeric(raw_dataset: pd.DataFrame, hyperparameters)
     image_size = hyperparameters["image_size"]
     training_set_column = hyperparameters["training_set_column"]
     dev_set_column = hyperparameters["dev_set_column"]
-    image_input_ids = hyperparameters["image_input_ids"]
+    input_ROI_names = hyperparameters["input_ROI_names"]
 
     train_samples = raw_dataset[raw_dataset[training_set_column]]
     test_samples = raw_dataset[raw_dataset[dev_set_column]]
@@ -151,7 +152,7 @@ def prepare_dataset_ROIs_and_numeric(raw_dataset: pd.DataFrame, hyperparameters)
     x_train_numeric = extract_inputs(train_samples, numeric_input_columns)
     x_train_crops = open_and_preprocess_image_ROIs(
         list(zip(train_samples["local_filepath"], train_ROI_definitions)),
-        image_input_ids,
+        input_ROI_names,
         image_size,
     )
     y_train = extract_labels(train_samples, label_column, label_scale_factor_mmhg)
@@ -161,7 +162,7 @@ def prepare_dataset_ROIs_and_numeric(raw_dataset: pd.DataFrame, hyperparameters)
     x_test_numeric = extract_inputs(test_samples, numeric_input_columns)
     x_test_crops = open_and_preprocess_image_ROIs(
         list(zip(test_samples["local_filepath"], test_ROI_definitions)),
-        image_input_ids,
+        input_ROI_names,
         image_size,
     )
     y_test = extract_labels(test_samples, label_column, label_scale_factor_mmhg)

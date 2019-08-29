@@ -1,9 +1,9 @@
 """
 This model is an N-branch network that combines:
-1. A configurable number of hand-made CNNs with 3 convolutional layers each that train on distinct image inputs
-2. A dense network that trains on two numeric inputs:
+1. A configurable number of hand-made CNNs with 3 convolutional layers each that train on distinct ROI inputs
+2. A dense network that trains on numeric inputs:
     - temperature
-    - numeric output of the hand-made CNNs
+    - numeric output of each of the hand-made CNNs
 """
 
 import os
@@ -23,9 +23,9 @@ from cosmobot_deep_learning.preprocess_image import (
 )
 
 
-def get_convolutional_input(id, x_train_sample_image, kernel_initializer):
+def get_convolutional_input(branch_id, x_train_sample_image, kernel_initializer):
     # Layer names cannot have spaces
-    model_branch_id = id.replace(" ", "_")
+    model_branch_id = branch_id.replace(" ", "_")
 
     convolutional_sub_model = keras.models.Sequential(
         [
@@ -66,18 +66,18 @@ def create_model(hyperparameters, x_train):
         hyperparameters: See definition in `run()`
         x_train: The input training data (used to determine input layer shape)
     """
-    image_input_ids = hyperparameters["image_input_ids"]
+    input_ROI_names = hyperparameters["input_ROI_names"]
 
-    # x_train is a list of [numeric_inputs, image_input_1, ..., image_input_x]
-    assert len(image_input_ids) == len(x_train) - 1
+    # x_train is a list of [numeric_inputs, ROI_input_1, ..., ROI_input_x]
+    assert len(input_ROI_names) == len(x_train) - 1
     x_train_numeric = x_train[0]
     x_train_samples_count, numeric_inputs_count = x_train_numeric.shape
 
     kernel_initializer = keras.initializers.he_normal()
 
-    image_inputs = [
-        get_convolutional_input(image_input_id, x_train[i + 1][0], kernel_initializer)
-        for i, image_input_id in enumerate(image_input_ids)
+    ROI_inputs = [
+        get_convolutional_input(ROI_name, x_train[i + 1][0], kernel_initializer)
+        for i, ROI_name in enumerate(input_ROI_names)
     ]
 
     temperature_input = keras.layers.Input(
@@ -85,8 +85,7 @@ def create_model(hyperparameters, x_train):
     )
 
     temp_and_image_add = keras.layers.concatenate(
-        [temperature_input]
-        + [image_input.get_output_at(-1) for image_input in image_inputs]
+        [temperature_input] + [ROI_input.get_output_at(-1) for ROI_input in ROI_inputs]
     )
     dense_1_with_temperature = keras.layers.Dense(
         64, activation="relu", kernel_initializer=kernel_initializer
@@ -100,7 +99,7 @@ def create_model(hyperparameters, x_train):
 
     temperature_aware_model = keras.models.Model(
         inputs=[temperature_input]
-        + [image_input.get_input_at(0) for image_input in image_inputs],
+        + [ROI_input.get_input_at(0) for ROI_input in ROI_inputs],
         outputs=temperature_aware_do_output,
     )
 
@@ -131,7 +130,7 @@ if __name__ == "__main__":
         # ROI names to extract from `ROI definitions` column in the dataset.
         # WARNING: The order here is preserved through data processing and model creation / input
         # If you are using a cached dataset, make sure you have the correct order.
-        image_input_ids=["DO patch", "reference patch", "reflectance standard"],
+        input_ROI_names=["DO patch", "reference patch", "reflectance standard"],
     )
 
     run(

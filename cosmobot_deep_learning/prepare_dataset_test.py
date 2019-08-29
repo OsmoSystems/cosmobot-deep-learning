@@ -194,7 +194,7 @@ class TestPrepareDatasetROIAndnumeric:
                 "image_size": sentinel.image_size,
                 "training_set_column": "training_resampled",
                 "dev_set_column": "test",
-                "image_input_ids": test_ROIs,
+                "input_ROI_names": test_ROIs,
             },
         )
 

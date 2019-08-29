@@ -122,7 +122,7 @@ def open_crop_and_scale_ROIs(image_and_ROIs, ROI_names, output_size):
         square and resizes to the desired ouput_size.
 
         Args:
-            image_and_ROIs: A tuple of rgb_image_filepath, ROI_definitions)
+            image_and_ROIs: A tuple of (rgb_image_filepath, ROI_definitions)
             ROI_names: Names of ROIs in ROI_definitions to extract and return
             output_size: The desired width and height (in pixels) of the square output ROIs
 
@@ -173,13 +173,13 @@ def open_and_preprocess_images(image_filepaths, image_size, max_workers=None):
 
 
 def open_and_preprocess_image_ROIs(
-    images_and_ROIs, ROI_names, crop_size, max_workers=None
+    images_and_ROI_definitions, ROI_names, crop_size, max_workers=None
 ):
     """ Preprocess the input images and prepare them for direct use in training a model.
         NOTE: The progress bar will only update sporadically.
 
         Args:
-            images_and_ROIs: An iterable list of (filepath, ROI_definition) tuples of images to prepare
+            images_and_ROI_definitions: An iterable list of (filepath, ROI_definition) tuples of images to prepare
             ROI_names: A list of ROI names in the ROI_definitions to extract.
             crop_size: The desired side length of the output (square) ROI images
             max_workers: Optional. Number of parallel processes to use to prepare images.
@@ -201,10 +201,10 @@ def open_and_preprocess_image_ROIs(
                 tqdm(
                     executor.map(
                         open_crop_and_scale_ROIs_with_size,
-                        images_and_ROIs,
+                        images_and_ROI_definitions,
                         chunksize=100,  # SWAG value, but much faster than the default
                     ),
-                    total=len(images_and_ROIs),
+                    total=len(images_and_ROI_definitions),
                 )
             )
         )
