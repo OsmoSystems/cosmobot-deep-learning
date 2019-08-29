@@ -27,7 +27,7 @@ LEARNING_RATE = 0.0001
 
 
 def create_model(hyperparameters, x_train):
-    """ Build a model
+    """ Build a model which will an image data numeric predictions
 
     Args:
         hyperparameters: See definition in `run()`
@@ -37,7 +37,7 @@ def create_model(hyperparameters, x_train):
 
     kernel_initializer = keras.initializers.he_normal()
 
-    image_to_do_model = keras.models.Sequential(
+    model = keras.models.Sequential(
         [
             keras.layers.Conv2D(
                 16,
@@ -64,38 +64,21 @@ def create_model(hyperparameters, x_train):
             keras.layers.advanced_activations.LeakyReLU(),
             # Final output layer with 1 neuron to regress a single value
             keras.layers.Dense(
-                1, kernel_initializer=kernel_initializer, name="early-DO"
+                1,
+                activation="sigmoid",
+                kernel_initializer=kernel_initializer,
+                name="DO",
             ),
         ]
     )
 
-    image_to_do_model.compile(
+    model.compile(
         optimizer=hyperparameters["optimizer"],
         loss=hyperparameters["loss"],
         metrics=hyperparameters["metrics"],
     )
 
-    dense_1 = keras.layers.Dense(
-        64, activation="relu", kernel_initializer=kernel_initializer
-    )(image_to_do_model.get_layer(name="final_dense").output)
-    dense_2 = keras.layers.Dense(
-        64, activation="relu", kernel_initializer=kernel_initializer
-    )(dense_1)
-    do_output = keras.layers.Dense(
-        1, activation="sigmoid", kernel_initializer=kernel_initializer, name="DO"
-    )(dense_2)
-
-    full_model = keras.models.Model(
-        inputs=image_to_do_model.get_input_at(0), outputs=do_output
-    )
-
-    full_model.compile(
-        optimizer=hyperparameters["optimizer"],
-        loss=hyperparameters["loss"],
-        metrics=hyperparameters["metrics"],
-    )
-
-    return full_model
+    return model
 
 
 if __name__ == "__main__":
