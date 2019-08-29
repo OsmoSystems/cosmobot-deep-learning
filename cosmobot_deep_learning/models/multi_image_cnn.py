@@ -18,6 +18,9 @@ from cosmobot_deep_learning.configure import (
 from cosmobot_deep_learning.hyperparameters import get_hyperparameters
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_ROIs_and_numeric
 from cosmobot_deep_learning.run import run
+from cosmobot_deep_learning.preprocess_image import (
+    fix_multiprocessing_with_keras_on_macos,
+)
 
 
 def get_convolutional_input(id, x_train_sample_image, kernel_initializer):
@@ -111,6 +114,8 @@ def create_model(hyperparameters, x_train):
 
 
 if __name__ == "__main__":
+    fix_multiprocessing_with_keras_on_macos()
+
     args = parse_model_run_args(sys.argv[1:])
 
     # Note: we may eventually need to change how we set this to be compatible with
@@ -122,6 +127,7 @@ if __name__ == "__main__":
         dataset_filename="2019-08-27--12-24-59_osmo_ml_dataset.csv",
         numeric_input_columns=["PicoLog temperature (C)"],
         image_size=64,
+        dataset_cache_name=args.dataset_cache,
         # ROI names to extract from `ROI definitions` column in the dataset.
         # WARNING: The order here is preserved through data processing and model creation / input
         # If you are using a cached dataset, make sure you have the correct order.
@@ -133,4 +139,5 @@ if __name__ == "__main__":
         prepare_dataset_ROIs_and_numeric,
         create_model,
         dryrun=args.dryrun,
+        dataset_cache_name=args.dataset_cache,
     )
