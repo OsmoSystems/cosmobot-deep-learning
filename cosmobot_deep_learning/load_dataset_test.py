@@ -115,11 +115,11 @@ class TestGetDatasetHash:
         hash_2 = module.get_loaded_dataset_hash((np.array([1, 2, 3]), np.array([1])))
         assert hash_1 == hash_2
 
-    def test_returns_different_hash_for_the_different_data(self):
+    def test_returns_different_hash_for_different_data(self):
         hash_1 = module.get_loaded_dataset_hash(
             (np.array([1, 2, 3]), np.array([1, 1, 3]))
         )
         hash_2 = module.get_loaded_dataset_hash(
-            (np.array([1, 2, 3]), np.array([1, 2, 3]))
+            (np.array([4, 5, 6]), np.array([7, 8, 9]))
         )
         assert hash_1 != hash_2

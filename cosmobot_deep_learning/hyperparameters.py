@@ -78,6 +78,7 @@ def get_hyperparameters(
     acceptable_error_mg_l: float = ACCEPTABLE_ERROR_MG_L,
     training_set_column: str = DEFAULT_TRAINING_SET_COLUMN,
     dev_set_column: str = DEFAULT_DEV_SET_COLUMN,
+    dataset_cache_name: str = None,
     **model_specific_hyperparameters,
 ):
     """ This function:
@@ -115,6 +116,7 @@ def get_hyperparameters(
         # Pass through defined/default hyperparameters
         "model_name": model_name,
         "dataset_filename": dataset_filename,
+        "dataset_cache_name": dataset_cache_name,
         "numeric_input_columns": numeric_input_columns,
         "label_column": label_column,
         "label_scale_factor_mmhg": label_scale_factor_mmhg,
