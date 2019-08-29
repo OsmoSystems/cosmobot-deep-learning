@@ -1,0 +1,21 @@
+# TODO real description
+description: a hyperparameter sweep
+
+program: cosmobot_deep_learning/models/simple_cnn.py
+
+method: bayes
+
+# TODO what should we use here
+metric:
+  name: val_loss
+  goal: minimize
+
+# TODO understand early termination methods and decide whether we should try it out
+
+parameters:
+  dryrun:
+    value: True
+  dataset-cache:
+    value: sweep
+  epochs:
+    values: [10, 100]

@@ -4,27 +4,47 @@ from pathlib import Path
 from typing import List
 
 
+# TODO test
+def _string_to_bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() == "true":
+        return True
+    elif v.lower() == "false":
+        return False
+    else:
+        raise argparse.ArgumentTypeError("Boolean string expected.")
+
+
+# TODO take additional arg parser with model-specific hyperparameter arguments
 def parse_model_run_args(args: List[str]) -> argparse.Namespace:
+    # TODO remove
+    print(f"args: {args}")
+
     arg_parser = argparse.ArgumentParser(
         description="", formatter_class=argparse.RawTextHelpFormatter
     )
 
     arg_parser.add_argument(
         "--gpu",
-        required=True,
+        required=False,
         type=int,
         help=(
             "Select GPU for training by CUDA Device ID number (e.g. 0 - 3).\n"
             "Run `nvidia-smi` to see available devices and IDs.\n"
-            "Use -1 to disable GPU taining."
+            "Use -1 to disable GPU training."
         ),
         dest="gpu",
     )
 
+    # --dryrun=True is allowed so that hyperparameter sweeps can use it
+    # TODO test
     arg_parser.add_argument(
         "--dryrun",
         required=False,
-        action="store_true",
+        type=_string_to_bool,
+        nargs="?",
+        const=True,
         default=False,
         help=(
             "Perform a dry run with a tiny dataset to check that a model will compile."
@@ -35,6 +55,7 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
         "--dataset-cache",
         required=False,
         type=str,
+        dest="dataset_cache_name",
         metavar="CACHED-DATASET-NAME",
         help=(
             "Name of cached dataset to load, or, if named dataset doesn't exist, save "
@@ -44,6 +65,12 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
             "Files are saved in ~/osmo/cosmobot-dataset-cache/ with a .pickle extension."
         ),
     )
+
+    arg_parser.add_argument("--epochs", type=int)
+
+    # TODO these aren't used yet:
+    arg_parser.add_argument("--optimizer-name", choices=["Adam", "AdaDelta"])
+    arg_parser.add_argument("--learning-rate", type=float)
 
     arg_namespace = arg_parser.parse_args(args)
     return arg_namespace

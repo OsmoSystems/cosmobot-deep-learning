@@ -34,11 +34,7 @@ def _loggable_hyperparameters(hyperparameters):
 
 
 def _initialize_wandb(hyperparameters):
-    wandb.init(
-        entity="osmo",
-        project="cosmobot-do-measurement",
-        config={**_loggable_hyperparameters(hyperparameters)},
-    )
+    wandb.init(config={**_loggable_hyperparameters(hyperparameters)})
 
 
 def _update_wandb_with_loaded_dataset(loaded_dataset):
@@ -177,9 +173,11 @@ def run(
     batch_size = hyperparameters["batch_size"]
 
     if dryrun:
-        epochs = 1
+        pass
+        # epochs = 1
         # Disable W&B syncing to the cloud since we don't care about the results
-        os.environ["WANDB_MODE"] = "dryrun"
+        # TODO uncomment
+        # os.environ["WANDB_MODE"] = "dryrun"
 
     _initialize_wandb(hyperparameters=hyperparameters)
 

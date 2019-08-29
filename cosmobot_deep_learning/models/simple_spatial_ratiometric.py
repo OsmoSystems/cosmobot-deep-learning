@@ -18,6 +18,14 @@ from cosmobot_deep_learning.prepare_dataset import prepare_dataset_numeric
 from cosmobot_deep_learning.run import run
 
 
+DEFAULT_HYPERPARAMETERS = {
+    "model_name": get_model_name_from_filepath(__file__),
+    "dataset_filename": "2019-08-09--14-33-26_osmo_ml_dataset.csv",
+    "batch_size": 3000,
+    "numeric_input_columns": ["sr", "PicoLog temperature (C)"],
+}
+
+
 def create_model(hyperparameters, x_train):
     """ Build a model
 
@@ -47,20 +55,20 @@ def create_model(hyperparameters, x_train):
     return sr_model
 
 
-if __name__ == "__main__":
-    args = parse_model_run_args(sys.argv[1:])
+def main(command_line_args):
+    args = parse_model_run_args(command_line_args)
 
-    # Note: we may eventually need to change how we set this to be compatible with
-    # hyperparameter sweeps. See https://www.wandb.com/articles/multi-gpu-sweeps
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
+    # for sweeps, this should be set when running the agent(s), example:
+    # CUDA_VISIBLE_DEVICES=0 wandb agent mcg70107
+    # CUDA_VISIBLE_DEVICES=1 wandb agent mcg70107
+    if args.gpu is not None:
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
-    hyperparameters = get_hyperparameters(
-        model_name=get_model_name_from_filepath(__file__),
-        dataset_filename="2019-08-09--14-33-26_osmo_ml_dataset.csv",
-        batch_size=3000,
-        numeric_input_columns=["sr", "PicoLog temperature (C)"],
-        dataset_cache_name=args.dataset_cache,
-    )
+    # TODO hack (we might not want all args in hyperparameters)
+    hyperparameters = get_hyperparameters(**{**DEFAULT_HYPERPARAMETERS, **vars(args)})
+
+    # TODO remove
+    print(hyperparameters)
 
     run(
         hyperparameters,
@@ -69,3 +77,7 @@ if __name__ == "__main__":
         dryrun=args.dryrun,
         dataset_cache_name=args.dataset_cache,
     )
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
