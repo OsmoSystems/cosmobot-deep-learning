@@ -133,8 +133,13 @@ def main(command_line_args):
     if args.gpu is not None:
         os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
+    # HACK HACK HACK
+    hyperparameters_from_args = {k: v for k, v in vars(args).items() if v is not None}
+
     # TODO hack (we might not want all args in hyperparameters)
-    hyperparameters = get_hyperparameters(**{**DEFAULT_HYPERPARAMETERS, **vars(args)})
+    hyperparameters = get_hyperparameters(
+        **{**DEFAULT_HYPERPARAMETERS, **hyperparameters_from_args}
+    )
 
     # TODO remove
     print(hyperparameters)
