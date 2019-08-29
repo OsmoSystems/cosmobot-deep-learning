@@ -212,7 +212,7 @@ def run(
 
     # Temporary: downsample training dataset to a desired size
     downsampled_loaded_dataset = _downsample_training_dataset(
-        loaded_dataset, hyperparameters["train_sample_count"]
+        loaded_dataset, hyperparameters["desired_train_sample_count"]
     )
 
     _update_wandb_with_loaded_dataset(downsampled_loaded_dataset)

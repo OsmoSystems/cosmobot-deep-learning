@@ -128,7 +128,7 @@ if __name__ == "__main__":
         dataset_cache_name=args.dataset_cache,
         optimizer=keras.optimizers.Adam(lr=LEARNING_RATE),
         learning_rate=LEARNING_RATE,
-        # train_sample_count=2,
+        desired_train_sample_count=10000,
     )
 
     run(
