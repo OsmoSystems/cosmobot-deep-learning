@@ -54,7 +54,7 @@ def get_satisficing_mean_absolute_error_fn(acceptable_error, acceptable_error_fr
         )
 
         def satisficing_mean():
-            return tf.metrics.mean_absolute_error(y_true, y_pred)[0]
+            return keras.metrics.mean_absolute_error(y_true, y_pred)
 
         def unsatisficed_value():
             return tf.constant(float("Inf"))

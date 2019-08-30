@@ -140,6 +140,7 @@ def get_hyperparameters(
         "optimizer": optimizer,
         "loss": loss,
         "acceptable_error_mg_l": acceptable_error_mg_l,
+        "acceptable_error_fraction": acceptable_error_fraction,
         "training_set_column": training_set_column,
         "dev_set_column": dev_set_column,
         **calculated_hyperparameters,
