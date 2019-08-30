@@ -76,7 +76,9 @@ class FilterCustomMetricCallback(Callback):
                 metric_to_set,
                 metric_to_match,
             ) in self.custom_metric_mappings:
-                if set(metric_to_evaluate, metric_to_match).issubset(set(logs.keys())):
+                if set([metric_to_evaluate, metric_to_match]).issubset(
+                    set(logs.keys())
+                ):
                     if logs[metric_to_evaluate] < self.acceptable_error_fraction:
                         logs[metric_to_set] = logs[metric_to_match]
                     else:
