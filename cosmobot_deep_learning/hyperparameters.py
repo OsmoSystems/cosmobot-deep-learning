@@ -15,7 +15,6 @@ from cosmobot_deep_learning.load_dataset import (
 
 from cosmobot_deep_learning.custom_metrics import (
     get_fraction_outside_acceptable_error_fn,
-    get_satisficing_mean_absolute_error_fn,
 )
 
 
@@ -32,10 +31,7 @@ def _guard_no_overridden_calculated_hyperparameters(calculated, model_specific):
 
 
 def _calculate_additional_hyperparameters(
-    dataset_filename,
-    acceptable_error_mg_l,
-    acceptable_error_fraction,
-    label_scale_factor_mmhg,
+    dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
 ):
     dataset_filepath = get_pkg_dataset_filepath(dataset_filename)
     dataset_hash = get_dataset_csv_hash(dataset_filepath)
@@ -48,10 +44,6 @@ def _calculate_additional_hyperparameters(
         acceptable_error=acceptable_error_normalized
     )
 
-    satisficing_mean_absolute_error = get_satisficing_mean_absolute_error_fn(
-        acceptable_error_normalized, acceptable_error_fraction
-    )
-
     return {
         "dataset_filepath": dataset_filepath,
         "dataset_hash": dataset_hash,
@@ -61,7 +53,6 @@ def _calculate_additional_hyperparameters(
             "mean_squared_error",
             "mean_absolute_error",
             fraction_outside_acceptable_error,
-            satisficing_mean_absolute_error,
         ],
     }
 
@@ -117,10 +108,7 @@ def get_hyperparameters(
 
     """
     calculated_hyperparameters = _calculate_additional_hyperparameters(
-        dataset_filename,
-        acceptable_error_mg_l,
-        acceptable_error_fraction,
-        label_scale_factor_mmhg,
+        dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
     )
 
     _guard_no_overridden_calculated_hyperparameters(
