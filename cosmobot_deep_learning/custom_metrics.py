@@ -28,7 +28,6 @@ def get_fraction_outside_acceptable_error_fn(acceptable_error):
             tf.cast(count_outside_acceptable_error, tf.float32),
             tf.cast(count_total, tf.float32),
         )
-
         return fraction_outside
 
     return fraction_outside_acceptable_error
