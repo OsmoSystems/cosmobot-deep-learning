@@ -205,7 +205,9 @@ def run(
         epochs=epochs,
         verbose=2,
         validation_data=(x_test, y_test),
-        callbacks=[WandbCallback()],
+        callbacks=[
+            WandbCallback(verbose=1, monitor="val_satisficing_mean_absolute_error")
+        ],
     )
 
     _log_visualizations(

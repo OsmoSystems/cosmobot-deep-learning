@@ -3,6 +3,7 @@ from typing import List
 import keras
 
 from cosmobot_deep_learning.constants import (
+    ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
     ACCEPTABLE_ERROR_MG_L,
     ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
     MG_L_TO_MMHG_AT_25_C_1_ATM,
@@ -14,6 +15,7 @@ from cosmobot_deep_learning.load_dataset import (
 
 from cosmobot_deep_learning.custom_metrics import (
     get_fraction_outside_acceptable_error_fn,
+    get_satisficing_mean_absolute_error_fn,
 )
 
 
@@ -30,7 +32,10 @@ def _guard_no_overridden_calculated_hyperparameters(calculated, model_specific):
 
 
 def _calculate_additional_hyperparameters(
-    dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
+    dataset_filename,
+    acceptable_error_mg_l,
+    acceptable_error_fraction,
+    label_scale_factor_mmhg,
 ):
     dataset_filepath = get_pkg_dataset_filepath(dataset_filename)
     dataset_hash = get_dataset_csv_hash(dataset_filepath)
@@ -43,6 +48,10 @@ def _calculate_additional_hyperparameters(
         acceptable_error=acceptable_error_normalized
     )
 
+    satisficing_mean_absolute_error = get_satisficing_mean_absolute_error_fn(
+        acceptable_error_normalized, acceptable_error_fraction
+    )
+
     return {
         "dataset_filepath": dataset_filepath,
         "dataset_hash": dataset_hash,
@@ -52,6 +61,7 @@ def _calculate_additional_hyperparameters(
             "mean_squared_error",
             "mean_absolute_error",
             fraction_outside_acceptable_error,
+            satisficing_mean_absolute_error,
         ],
     }
 
@@ -76,6 +86,7 @@ def get_hyperparameters(
     optimizer=DEFAULT_OPTIMIZER,
     loss=DEFAULT_LOSS,
     acceptable_error_mg_l: float = ACCEPTABLE_ERROR_MG_L,
+    acceptable_error_fraction: float = ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
     training_set_column: str = DEFAULT_TRAINING_SET_COLUMN,
     dev_set_column: str = DEFAULT_DEV_SET_COLUMN,
     dataset_cache_name: str = None,
@@ -97,6 +108,7 @@ def get_hyperparameters(
         optimizer: Which optimizer function to use
         loss: Which loss function to use
         acceptable_error_mg_l: The threshold, in mg/L to use in our custom "fraction_outside_acceptable_error" metric
+        acceptable_error_fraction: The threshold fraction of predictions which can be outside the acceptable_error_mg_l
         training_set_column: The dataset column name of the training set flag.
         dev_set_column: The dataset column name of the dev set flag.
         **model_specific_hyperparameters: All other kwargs get slurped up here
@@ -105,7 +117,10 @@ def get_hyperparameters(
 
     """
     calculated_hyperparameters = _calculate_additional_hyperparameters(
-        dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
+        dataset_filename,
+        acceptable_error_mg_l,
+        acceptable_error_fraction,
+        label_scale_factor_mmhg,
     )
 
     _guard_no_overridden_calculated_hyperparameters(
