@@ -2,6 +2,21 @@ import keras
 import tensorflow as tf
 
 
+def calculate_fraction_outside_acceptable_error(y_true, y_pred, acceptable_error):
+    y_pred_error = tf.abs(y_pred - y_true)
+    is_outside_acceptable_error = tf.greater(y_pred_error, acceptable_error)
+
+    # count_nonzero counts Trues as not zero and Falses as zero
+    count_outside_acceptable_error = tf.count_nonzero(is_outside_acceptable_error)
+    count_total = tf.size(y_true)
+
+    # Cast to float so that the division calculation returns a float (tf uses Python 2 semantics)
+    return tf.div(
+        tf.cast(count_outside_acceptable_error, tf.float32),
+        tf.cast(count_total, tf.float32),
+    )
+
+
 # Normally I would use functools.partial for this, but keras needs the __name__ attribute, which partials don't have
 def get_fraction_outside_acceptable_error_fn(acceptable_error):
     """ Returns a function that can be used as a keras metric, populated with the appropriate threshold
@@ -14,18 +29,10 @@ def get_fraction_outside_acceptable_error_fn(acceptable_error):
             Aided by:
             https://stackoverflow.com/questions/45947351/how-to-use-tensorflow-metrics-in-keras
         """
-        y_pred_error = tf.abs(y_pred - y_true)
-        is_outside_acceptable_error = tf.greater(y_pred_error, acceptable_error)
-
-        # count_nonzero counts Trues as not zero and Falses as zero
-        count_outside_acceptable_error = tf.count_nonzero(is_outside_acceptable_error)
-        count_total = tf.size(y_true)
-
-        # Cast to float so that the division calculation returns a float (tf uses Python 2 semantics)
-        fraction_outside = tf.div(
-            tf.cast(count_outside_acceptable_error, tf.float32),
-            tf.cast(count_total, tf.float32),
+        fraction_outside = calculate_fraction_outside_acceptable_error(
+            y_true, y_pred, acceptable_error
         )
+
         return fraction_outside
 
     return fraction_outside_acceptable_error
@@ -42,24 +49,23 @@ def get_satisficing_mean_absolute_error_fn(acceptable_error, acceptable_error_fr
             Aided by:
             https://stackoverflow.com/questions/45947351/how-to-use-tensorflow-metrics-in-keras
         """
-        y_pred_error = tf.abs(y_pred - y_true)
-        is_outside_acceptable_error = tf.greater(y_pred_error, acceptable_error)
-
-        # count_nonzero counts Trues as not zero and Falses as zero
-        count_outside_acceptable_error = tf.count_nonzero(is_outside_acceptable_error)
-        count_total = tf.size(y_true)
-
-        # Cast to float so that the division calculation returns a float (tf uses Python 2 semantics)
-        fraction_outside = tf.div(
-            tf.cast(count_outside_acceptable_error, tf.float32),
-            tf.cast(count_total, tf.float32),
+        fraction_outside = calculate_fraction_outside_acceptable_error(
+            y_true, y_pred, acceptable_error
         )
 
+        def satisficing_mean():
+            return tf.metrics.mean_absolute_error(y_true, y_pred)[0]
+
+        def unsatisficed_value():
+            return tf.constant(float("Inf"))
+
         # If the satisficing metric is hit, return the mean absolute error
-        if fraction_outside < acceptable_error_fraction:
-            return tf.mean(y_pred_error)
-        # Otherwise return 1
-        return 1
+        # Otherwise return inf
+        return tf.cond(
+            tf.less(fraction_outside, tf.constant(acceptable_error_fraction)),
+            satisficing_mean,
+            unsatisficed_value,
+        )
 
     return satisficing_mean_absolute_error
 
