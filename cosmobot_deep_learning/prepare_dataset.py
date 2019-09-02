@@ -76,6 +76,20 @@ def prepare_dataset_numeric(raw_dataset: pd.DataFrame, hyperparameters):
     return (x_train, y_train, x_test, y_test)
 
 
+def _get_images_and_labels(
+    raw_dataset,
+    sample_selector_column,
+    image_size,
+    label_column,
+    label_scale_factor_mmhg,
+):
+    samples = raw_dataset[raw_dataset[sample_selector_column]]
+    images = open_and_preprocess_images(samples["local_filepath"].values, image_size)
+    labels = extract_labels(samples, label_column, label_scale_factor_mmhg)
+
+    return images, labels
+
+
 def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters):
     """ Transform a dataset CSV into the appropriate inputs and labels for training and
     validating a model, for a model that uses separate image and numeric inputs
@@ -89,26 +103,26 @@ def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters):
         Returns:
             A 4-tuple containing (x_train, y_train, x_test, y_test) data sets.
     """
+    image_size = hyperparameters["image_size"]
     label_column = hyperparameters["label_column"]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
-    image_size = hyperparameters["image_size"]
-    training_set_column = hyperparameters["training_set_column"]
-    dev_set_column = hyperparameters["dev_set_column"]
 
-    train_samples = raw_dataset[raw_dataset[training_set_column]]
-    test_samples = raw_dataset[raw_dataset[dev_set_column]]
-
-    x_train_images = open_and_preprocess_images(
-        train_samples["local_filepath"].values, image_size
+    x_train, y_train = _get_images_and_labels(
+        raw_dataset,
+        sample_selector_column=hyperparameters["training_set_column"],
+        image_size=image_size,
+        label_column=label_column,
+        label_scale_factor_mmhg=label_scale_factor_mmhg,
     )
-    y_train = extract_labels(train_samples, label_column, label_scale_factor_mmhg)
-
-    x_test_images = open_and_preprocess_images(
-        test_samples["local_filepath"].values, image_size
+    x_test, y_test = _get_images_and_labels(
+        raw_dataset,
+        sample_selector_column=hyperparameters["dev_set_column"],
+        image_size=image_size,
+        label_column=label_column,
+        label_scale_factor_mmhg=label_scale_factor_mmhg,
     )
-    y_test = extract_labels(test_samples, label_column, label_scale_factor_mmhg)
 
-    return (x_train_images, y_train, x_test_images, y_test)
+    return (x_train, y_train, x_test, y_test)
 
 
 def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters):
