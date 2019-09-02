@@ -15,7 +15,7 @@ from cosmobot_deep_learning.load_dataset import (
 
 from cosmobot_deep_learning.custom_metrics import (
     get_fraction_outside_acceptable_error_fn,
-    get_error_at_percentile_fn,
+    get_mmhg_error_at_acceptable_percentile_fn,
 )
 
 
@@ -32,7 +32,10 @@ def _guard_no_overridden_calculated_hyperparameters(calculated, model_specific):
 
 
 def _calculate_additional_hyperparameters(
-    dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
+    dataset_filename,
+    acceptable_error_mg_l,
+    acceptable_fraction_outside_error,
+    label_scale_factor_mmhg,
 ):
     dataset_filepath = get_pkg_dataset_filepath(dataset_filename)
     dataset_hash = get_dataset_csv_hash(dataset_filepath)
@@ -45,10 +48,9 @@ def _calculate_additional_hyperparameters(
         acceptable_error=acceptable_error_normalized
     )
 
-    mmhg_error_at_95_percentile = get_error_at_percentile_fn(
-        acceptable_fraction_outside_error=ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
-        # TODO: should this return in mmhg (as it does now) or mg/l?
-        label_scale_factor=label_scale_factor_mmhg,
+    mmhg_error_at_acceptable_percentile = get_mmhg_error_at_acceptable_percentile_fn(
+        acceptable_fraction_outside_error,
+        label_scale_factor_mmhg,  # TODO: should this return in mmhg (as it does now) or mg/l?
     )
 
     return {
@@ -60,7 +62,7 @@ def _calculate_additional_hyperparameters(
             "mean_squared_error",
             "mean_absolute_error",
             fraction_outside_acceptable_error,
-            mmhg_error_at_95_percentile,
+            mmhg_error_at_acceptable_percentile,
         ],
     }
 
@@ -85,6 +87,7 @@ def get_hyperparameters(
     optimizer=DEFAULT_OPTIMIZER,
     loss=DEFAULT_LOSS,
     acceptable_error_mg_l: float = ACCEPTABLE_ERROR_MG_L,
+    acceptable_fraction_outside_error: float = ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
     training_set_column: str = DEFAULT_TRAINING_SET_COLUMN,
     dev_set_column: str = DEFAULT_DEV_SET_COLUMN,
     dataset_cache_name: str = None,
@@ -106,6 +109,7 @@ def get_hyperparameters(
         optimizer: Which optimizer function to use
         loss: Which loss function to use
         acceptable_error_mg_l: The threshold, in mg/L to use in our custom "fraction_outside_acceptable_error" metric
+        acceptable_fraction_outside_error: The fraction of predictions acceptable to be outside our acceptable error
         training_set_column: The dataset column name of the training set flag.
         dev_set_column: The dataset column name of the dev set flag.
         **model_specific_hyperparameters: All other kwargs get slurped up here
@@ -114,7 +118,10 @@ def get_hyperparameters(
 
     """
     calculated_hyperparameters = _calculate_additional_hyperparameters(
-        dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
+        dataset_filename,
+        acceptable_error_mg_l,
+        acceptable_fraction_outside_error,
+        label_scale_factor_mmhg,
     )
 
     _guard_no_overridden_calculated_hyperparameters(
@@ -134,6 +141,7 @@ def get_hyperparameters(
         "optimizer": optimizer,
         "loss": loss,
         "acceptable_error_mg_l": acceptable_error_mg_l,
+        "acceptable_fraction_outside_error": acceptable_fraction_outside_error,
         "training_set_column": training_set_column,
         "dev_set_column": dev_set_column,
         **calculated_hyperparameters,
