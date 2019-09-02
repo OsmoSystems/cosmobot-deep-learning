@@ -44,11 +44,13 @@ def magical_incantation_to_make_custom_metric_work():
 
 
 class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
-    """ Keras model callback to two new metrics
+    """ Keras model callback to add two new metrics
         "val_satisficing_mean_absolute_error" is a filtered version of val_mean_absolute_error,
             only reported when our satisficing metric is hit.
         "val_adjusted_mean_absolute_error" is a modified version of val_mean_absolute_error,
-            multiplied by an ARBITRARILY_LARGE_MULTIPLIER when the satisficing metric is not hit.
+            multiplied by an ARBITRARILY_LARGE_MULTIPLIER when the satisficing metric is not hit
+            so that we can evaluate a "best" performing model, prefering the satisficing metric, and
+            falling back to the best mean absolute error if the satisficing metric is never reached.
 
         For epochs when the satisficing metric is not hit, sets this custom metric to Inf.
     """
@@ -73,7 +75,7 @@ class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
                     "val_mean_absolute_error"
                 ]
             else:
-                logs["val_satisficing_mean_absolute_error"] = float("Inf")
+                logs["val_satisficing_mean_absolute_error"] = None
                 logs["val_adjusted_mean_absolute_error"] = (
                     logs["val_mean_absolute_error"] * ARBITRARILY_LARGE_MULTIPLIER
                 )
