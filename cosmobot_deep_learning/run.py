@@ -71,7 +71,6 @@ def _log_visualizations(
     dev_labels = y_test.flatten() * label_scale_factor_mmhg
     dev_predictions = model.predict(x_test).flatten() * label_scale_factor_mmhg
 
-    visualizations.log_loss_over_epochs(training_history)
     visualizations.log_do_prediction_error(
         train_labels, train_predictions, dev_labels, dev_predictions
     )
