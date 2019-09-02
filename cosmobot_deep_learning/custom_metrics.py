@@ -52,7 +52,6 @@ class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
             so that we can evaluate a "best" performing model, prefering the satisficing metric, and
             falling back to the best mean absolute error if the satisficing metric is never reached.
 
-        For epochs when the satisficing metric is not hit, sets this custom metric to Inf.
     """
 
     def __init__(self, acceptable_fraction_outside_error):
