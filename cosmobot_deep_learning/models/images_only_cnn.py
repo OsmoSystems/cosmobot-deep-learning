@@ -1,9 +1,5 @@
 """
-This model is a 2-branch network that combines:
-1. A hand-made CNN with 3 convolutional layers that trains on full images
-2. A dense network that trains on two numeric inputs:
-    - temperature
-    - numeric output of the hand-made CNN
+This model is a hand-made CNN with 3 convolutional layers that trains on full images.
 """
 
 import os
