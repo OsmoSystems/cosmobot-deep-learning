@@ -174,7 +174,7 @@ class TestShuffleDataframe:
         assert_frame_equal(module._shuffle_dataframe(dataframe), expected)
 
 
-class TestSliceArrays:
+class TestSampleArrays:
     def test_samples_list_of_arrays(self):
         actual = module._sample_all_arrays_in_list(
             [np.zeros(5), np.ones(5)], sample_size=3
@@ -185,3 +185,12 @@ class TestSliceArrays:
     def test_samples_single_array(self):
         actual = module._sample_all_arrays_in_list(np.zeros(5), sample_size=3)
         np.testing.assert_array_equal(actual, np.zeros(3))
+
+
+class TestSampleArray:
+    def test_samples_ndarray(self):
+        # simulate an ndarray of 10 images
+        ndarray = np.reshape(np.array(range(3000)), (10, 10, 10, 3))
+        actual = module._sample_array(ndarray, sample_size=5)
+
+        assert actual.shape == (5, 10, 10, 3)
