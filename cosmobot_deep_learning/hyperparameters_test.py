@@ -35,6 +35,9 @@ REQUIRED_HYPERPARAMETERS = [
     "acceptable_error_mg_l",
     "acceptable_error_mmhg",
     "acceptable_error_normalized",
+    "ideal_error_mg_l",
+    "ideal_error_mmhg",
+    "ideal_error_normalized",
     "dataset_filepath",
     "dataset_hash",
 ]
@@ -77,6 +80,15 @@ class TestCalculateHyperparameters:
         )
         assert actual["acceptable_error_mmhg"] == 9.638554216867469
         assert actual["acceptable_error_normalized"] == 0.09638554216867469
+
+    def test_calculates_ideal_errors(self, mock_dataset_fns):
+        actual = module._calculate_additional_hyperparameters(
+            dataset_filename=sentinel.dataset_filename,
+            ideal_error_mg_l=0.3,
+            label_scale_factor_mmhg=100,
+        )
+        assert actual["ideal_error_mmhg"] == 9.638554216867469
+        assert actual["ideal_error_normalized"] == 0.09638554216867469
 
 
 class TestGuardNoOverriddenCalculatedHyperparameters:

@@ -16,3 +16,4 @@ MG_L_TO_MMHG_AT_25_C_1_ATM = (
 
 # Our current definition of acceptable error is that 95% of our predictions are within 0.5 mg/L
 ACCEPTABLE_ERROR_MG_L = 0.5
+IDEAL_ERROR_MG_L = 0.3
