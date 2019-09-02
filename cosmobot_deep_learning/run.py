@@ -13,6 +13,7 @@ from cosmobot_deep_learning.load_dataset import (
 )
 
 from cosmobot_deep_learning.custom_metrics import (
+    ThresholdValMeanAbsoluteErrorOnCustomMetric,
     magical_incantation_to_make_custom_metric_work,
 )
 from cosmobot_deep_learning import visualizations
@@ -175,6 +176,9 @@ def run(
 
     epochs = hyperparameters["epochs"]
     batch_size = hyperparameters["batch_size"]
+    acceptable_fraction_outside_error = hyperparameters[
+        "acceptable_fraction_outside_error"
+    ]
 
     if dryrun:
         epochs = 1
@@ -205,7 +209,12 @@ def run(
         epochs=epochs,
         verbose=2,
         validation_data=(x_test, y_test),
-        callbacks=[WandbCallback()],
+        callbacks=[
+            ThresholdValMeanAbsoluteErrorOnCustomMetric(
+                acceptable_fraction_outside_error=acceptable_fraction_outside_error
+            ),
+            WandbCallback(verbose=1, monitor="val_adjusted_mean_absolute_error"),
+        ],
     )
 
     _log_visualizations(

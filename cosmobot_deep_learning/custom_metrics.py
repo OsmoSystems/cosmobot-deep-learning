@@ -1,5 +1,8 @@
 import keras
+from keras.callbacks import Callback
 import tensorflow as tf
+
+ARBITRARILY_LARGE_MULTIPLIER = 10
 
 
 # Normally I would use functools.partial for this, but keras needs the __name__ attribute, which partials don't have
@@ -14,6 +17,7 @@ def get_fraction_outside_acceptable_error_fn(acceptable_error):
             Aided by:
             https://stackoverflow.com/questions/45947351/how-to-use-tensorflow-metrics-in-keras
         """
+
         y_pred_error = tf.abs(y_pred - y_true)
         is_outside_acceptable_error = tf.greater(y_pred_error, acceptable_error)
 
@@ -37,3 +41,40 @@ def magical_incantation_to_make_custom_metric_work():
         https://stackoverflow.com/questions/45947351/how-to-use-tensorflow-metrics-in-keras
     """
     keras.backend.get_session().run(tf.local_variables_initializer())
+
+
+class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
+    """ Keras model callback to add two new metrics
+        "val_satisficing_mean_absolute_error" is a filtered version of val_mean_absolute_error,
+            only reported when our satisficing metric is hit.
+        "val_adjusted_mean_absolute_error" is a modified version of val_mean_absolute_error,
+            multiplied by an ARBITRARILY_LARGE_MULTIPLIER when the satisficing metric is not hit
+            so that we can evaluate a "best" performing model, prefering the satisficing metric, and
+            falling back to the best mean absolute error if the satisficing metric is never reached.
+
+    """
+
+    def __init__(self, acceptable_fraction_outside_error):
+        self.acceptable_fraction_outside_error = acceptable_fraction_outside_error
+
+    def on_epoch_end(self, epoch, logs=None):
+        # Metrics are compiled and average over batches for an entire epoch by Keras
+        # in the built-in BaseLogger callback and stored by mutating `logs`, passed on to each subsequent callback.
+        # Here we access those epoch-level average metrics and check if the epoch as a whole hit the satisficing metric.
+        # Mutate the logs object here as well with this new metric to be picked up in the WandbCallback
+        if logs is not None:
+            if (
+                logs["val_fraction_outside_acceptable_error"]
+                < self.acceptable_fraction_outside_error
+            ):
+                logs["val_satisficing_mean_absolute_error"] = logs[
+                    "val_mean_absolute_error"
+                ]
+                logs["val_adjusted_mean_absolute_error"] = logs[
+                    "val_mean_absolute_error"
+                ]
+            else:
+                logs["val_satisficing_mean_absolute_error"] = None
+                logs["val_adjusted_mean_absolute_error"] = (
+                    logs["val_mean_absolute_error"] * ARBITRARILY_LARGE_MULTIPLIER
+                )

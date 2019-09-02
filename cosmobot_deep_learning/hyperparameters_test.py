@@ -35,6 +35,7 @@ REQUIRED_HYPERPARAMETERS = [
     "acceptable_error_mg_l",
     "acceptable_error_mmhg",
     "acceptable_error_normalized",
+    "acceptable_fraction_outside_error",
     "dataset_filepath",
     "dataset_hash",
 ]
