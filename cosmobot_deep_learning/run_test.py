@@ -175,13 +175,13 @@ class TestShuffleDataframe:
 
 
 class TestSliceArrays:
-    def test_slices_list_of_arrays(self):
-        actual = module._slice_all_arrays_in_list(
-            [np.zeros(5), np.ones(5)], slice_size=3
+    def test_samples_list_of_arrays(self):
+        actual = module._sample_all_arrays_in_list(
+            [np.zeros(5), np.ones(5)], sample_size=3
         )
         np.testing.assert_array_equal(actual[0], np.zeros(3))
         np.testing.assert_array_equal(actual[1], np.ones(3))
 
-    def test_slices_single_array(self):
-        actual = module._slice_all_arrays_in_list(np.zeros(5), slice_size=3)
+    def test_samples_single_array(self):
+        actual = module._sample_all_arrays_in_list(np.zeros(5), sample_size=3)
         np.testing.assert_array_equal(actual, np.zeros(3))

@@ -2,6 +2,7 @@ import os
 import logging
 import pickle
 
+import numpy as np
 import pandas as pd
 import wandb
 from wandb.keras import WandbCallback
@@ -152,21 +153,25 @@ def _prepare_dataset_with_caching(
         return dataset
 
 
-def _slice_all_arrays_in_list(maybe_list_of_arrays, slice_size):
+def _sample_array(array, sample_size):
+    return np.random.choice(array, size=sample_size, replace=False)
+
+
+def _sample_all_arrays_in_list(maybe_list_of_arrays, sample_size):
     # Sometimes x input is a list of arrays (e.g. [x_train_numeric, x_train_images])
     # sometimes just one array (e.g. x_train_numeric)
     if type(maybe_list_of_arrays) == list:
-        return [array[:slice_size] for array in maybe_list_of_arrays]
+        return [_sample_array(array, sample_size) for array in maybe_list_of_arrays]
 
-    return maybe_list_of_arrays[:slice_size]
+    return _sample_array(maybe_list_of_arrays, sample_size)
 
 
 def _downsample_training_dataset(loaded_dataset, train_sample_count):
     x_train, y_train, x_test, y_test = loaded_dataset
 
     return (
-        _slice_all_arrays_in_list(x_train, train_sample_count),
-        _slice_all_arrays_in_list(y_train, train_sample_count),
+        _sample_all_arrays_in_list(x_train, train_sample_count),
+        _sample_all_arrays_in_list(y_train, train_sample_count),
         x_test,
         y_test,
     )
