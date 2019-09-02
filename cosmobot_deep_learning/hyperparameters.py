@@ -102,7 +102,8 @@ def get_hyperparameters(
         optimizer: Which optimizer function to use
         loss: Which loss function to use
         acceptable_error_mg_l: The threshold, in mg/L to use in our custom "fraction_outside_acceptable_error" metric
-        acceptable_fraction_outside_error: The fraction of predictions acceptable to be outside our acceptable error
+        acceptable_fraction_outside_error: The threshold fraction of predictions which
+            can be outside the acceptable_error_mg_l
         training_set_column: The dataset column name of the training set flag.
         dev_set_column: The dataset column name of the dev set flag.
         **model_specific_hyperparameters: All other kwargs get slurped up here

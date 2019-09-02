@@ -13,6 +13,7 @@ from cosmobot_deep_learning.load_dataset import (
 )
 
 from cosmobot_deep_learning.custom_metrics import (
+    ThresholdValMeanAbsoluteErrorOnCustomMetric,
     magical_incantation_to_make_custom_metric_work,
     MmhgErrorAtAcceptablePercentile,
 )
@@ -216,7 +217,10 @@ def run(
                 label_scale_factor_mmhg,
                 loaded_dataset,
             ),
-            WandbCallback(),
+            ThresholdValMeanAbsoluteErrorOnCustomMetric(
+                acceptable_fraction_outside_error=acceptable_fraction_outside_error
+            ),
+            WandbCallback(verbose=1, monitor="val_adjusted_mean_absolute_error"),
         ],
     )
 
