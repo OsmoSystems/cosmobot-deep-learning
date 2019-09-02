@@ -1,4 +1,5 @@
 import ast
+from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -72,6 +73,55 @@ def prepare_dataset_numeric(raw_dataset: pd.DataFrame, hyperparameters):
 
     x_test = extract_inputs(test_samples, numeric_input_columns)
     y_test = extract_labels(test_samples, label_column, label_scale_factor_mmhg)
+
+    return (x_train, y_train, x_test, y_test)
+
+
+def _get_images_and_labels(
+    raw_dataset: pd.DataFrame,
+    sample_selector_column: str,
+    image_size: int,
+    label_column: str,
+    label_scale_factor_mmhg: str,
+):
+    samples = raw_dataset[raw_dataset[sample_selector_column]]
+    images = open_and_preprocess_images(samples["local_filepath"].values, image_size)
+    labels = extract_labels(samples, label_column, label_scale_factor_mmhg)
+
+    return images, labels
+
+
+def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters: Dict):
+    """ Transform a dataset CSV into the appropriate inputs and labels for training and
+    validating a model, for a model that uses separate image and numeric inputs
+
+        Args:
+            raw_dataset: A DataFrame corresponding to a standard cosmobot dataset csv
+            hyperparameters: A dictionary that includes at least:
+                label_column: The column to use as the label (y) data values for a given dataset (x)
+                label_scale_factor_mmhg: The scaling factor to use to scale labels into the [0,1] range
+                image_size: The desired side length of the scaled (square) images
+        Returns:
+            A 4-tuple containing (x_train, y_train, x_test, y_test) data sets.
+    """
+    image_size = hyperparameters["image_size"]
+    label_column = hyperparameters["label_column"]
+    label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
+
+    x_train, y_train = _get_images_and_labels(
+        raw_dataset,
+        sample_selector_column=hyperparameters["training_set_column"],
+        image_size=image_size,
+        label_column=label_column,
+        label_scale_factor_mmhg=label_scale_factor_mmhg,
+    )
+    x_test, y_test = _get_images_and_labels(
+        raw_dataset,
+        sample_selector_column=hyperparameters["dev_set_column"],
+        image_size=image_size,
+        label_column=label_column,
+        label_scale_factor_mmhg=label_scale_factor_mmhg,
+    )
 
     return (x_train, y_train, x_test, y_test)
 
