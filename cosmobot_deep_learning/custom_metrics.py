@@ -37,7 +37,8 @@ def get_error_at_percentile_fn(acceptable_fraction_outside_error, label_scale_fa
     Args:
         acceptable_fraction_outside_error: Set the percentile to calculate the error threshold that
             (1 - acceptable_fraction_outside_error) fraction of predictions fall within
-        label_scale_factor: The scaling factor to use to scale the returned error threshold by (to reverse the normalization effect)
+        label_scale_factor: The scaling factor to use to scale the returned error threshold by
+            (to reverse the normalization effect)
     """
     # Massage acceptable_fraction_outside_error into a percentile form, so that ultimately we are determining
     # the error bar that X% of our predictions fall within
