@@ -2,6 +2,8 @@ import keras
 from keras.callbacks import Callback
 import tensorflow as tf
 
+ARBITRARILY_LARGE_MULTIPLIER = 10
+
 
 # Normally I would use functools.partial for this, but keras needs the __name__ attribute, which partials don't have
 def get_fraction_outside_acceptable_error_fn(acceptable_error):
@@ -41,44 +43,37 @@ def magical_incantation_to_make_custom_metric_work():
     keras.backend.get_session().run(tf.local_variables_initializer())
 
 
-class FilterCustomMetricCallback(Callback):
-    """ Keras model callback to add a new metric which is a filtered version of mean_absolute_error,
-        only reported when our satisficing metric is hit.
+class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
+    """ Keras model callback to two new metrics
+        "val_satisficing_mean_absolute_error" is a filtered version of val_mean_absolute_error,
+            only reported when our satisficing metric is hit.
+        "val_adjusted_mean_absolute_error" is a modified version of val_mean_absolute_error,
+            multiplied by an ARBITRARILY_LARGE_MULTIPLIER when the satisficing metric is not hit.
 
-        For epoch when the satisficing metric is not hit, sets this custom metric to Inf.
+        For epochs when the satisficing metric is not hit, sets this custom metric to Inf.
     """
 
-    custom_metric_mappings = [
-        (
-            "fraction_outside_acceptable_error",
-            "satisficing_mean_absolute_error",
-            "mean_absolute_error",
-        ),
-        (
-            "val_fraction_outside_acceptable_error",
-            "val_satisficing_mean_absolute_error",
-            "val_mean_absolute_error",
-        ),
-    ]
-
-    def __init__(self, acceptable_error_fraction):
-        self.acceptable_error_fraction = acceptable_error_fraction
+    def __init__(self, acceptable_fraction_outside_error):
+        self.acceptable_fraction_outside_error = acceptable_fraction_outside_error
 
     def on_epoch_end(self, epoch, logs=None):
-        # Metrics are compiled and average over batchs for an entire epoch by Keras
+        # Metrics are compiled and average over batches for an entire epoch by Keras
         # in the built-in BaseLogger callback and stored by mutating `logs`, passed on to each subsequent callback.
         # Here we access those epoch-level average metrics and check if the epoch as a whole hit the satisficing metric.
         # Mutate the logs object here as well with this new metric to be picked up in the WandbCallback
         if logs is not None:
-            for (
-                metric_to_evaluate,
-                metric_to_set,
-                metric_to_match,
-            ) in self.custom_metric_mappings:
-                if set([metric_to_evaluate, metric_to_match]).issubset(
-                    set(logs.keys())
-                ):
-                    if logs[metric_to_evaluate] < self.acceptable_error_fraction:
-                        logs[metric_to_set] = logs[metric_to_match]
-                    else:
-                        logs[metric_to_set] = float("Inf")
+            if (
+                logs["val_fraction_outside_acceptable_error"]
+                < self.acceptable_fraction_outside_error
+            ):
+                logs["val_satisficing_mean_absolute_error"] = logs[
+                    "val_mean_absolute_error"
+                ]
+                logs["val_adjusted_mean_absolute_error"] = logs[
+                    "val_mean_absolute_error"
+                ]
+            else:
+                logs["val_satisficing_mean_absolute_error"] = float("Inf")
+                logs["val_adjusted_mean_absolute_error"] = (
+                    logs["val_mean_absolute_error"] * ARBITRARILY_LARGE_MULTIPLIER
+                )

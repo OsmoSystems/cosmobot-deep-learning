@@ -77,7 +77,7 @@ def get_hyperparameters(
     optimizer=DEFAULT_OPTIMIZER,
     loss=DEFAULT_LOSS,
     acceptable_error_mg_l: float = ACCEPTABLE_ERROR_MG_L,
-    acceptable_error_fraction: float = ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
+    acceptable_fraction_outside_error: float = ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
     training_set_column: str = DEFAULT_TRAINING_SET_COLUMN,
     dev_set_column: str = DEFAULT_DEV_SET_COLUMN,
     dataset_cache_name: str = None,
@@ -99,7 +99,8 @@ def get_hyperparameters(
         optimizer: Which optimizer function to use
         loss: Which loss function to use
         acceptable_error_mg_l: The threshold, in mg/L to use in our custom "fraction_outside_acceptable_error" metric
-        acceptable_error_fraction: The threshold fraction of predictions which can be outside the acceptable_error_mg_l
+        acceptable_fraction_outside_error: The threshold fraction of predictions which
+            can be outside the acceptable_error_mg_l
         training_set_column: The dataset column name of the training set flag.
         dev_set_column: The dataset column name of the dev set flag.
         **model_specific_hyperparameters: All other kwargs get slurped up here
@@ -128,7 +129,7 @@ def get_hyperparameters(
         "optimizer": optimizer,
         "loss": loss,
         "acceptable_error_mg_l": acceptable_error_mg_l,
-        "acceptable_error_fraction": acceptable_error_fraction,
+        "acceptable_fraction_outside_error": acceptable_fraction_outside_error,
         "training_set_column": training_set_column,
         "dev_set_column": dev_set_column,
         **calculated_hyperparameters,
