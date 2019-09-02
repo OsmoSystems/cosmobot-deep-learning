@@ -194,3 +194,11 @@ class TestSampleArray:
         actual = module._sample_array(ndarray, sample_size=5)
 
         assert actual.shape == (5, 10, 10, 3)
+
+    def test_samples_ndarray_at_max_len(self):
+        # simulate an ndarray of 10 images
+        ndarray = np.reshape(np.array(range(3000)), (10, 10, 10, 3))
+        actual = module._sample_array(ndarray, sample_size=20)
+
+        assert actual.shape == (10, 10, 10, 3)
+        np.testing.assert_array_equal(np.sort(ndarray, axis=0), np.sort(actual, axis=0))

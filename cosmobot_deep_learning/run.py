@@ -155,7 +155,13 @@ def _prepare_dataset_with_caching(
 
 def _sample_array(array, sample_size):
     # Select random indexes so that this function works on ndarrays (e.g. arrays of images)
-    random_indexes = np.random.choice(array.shape[0], size=sample_size, replace=False)
+    all_data_points = array.shape[0]
+    random_indexes = np.random.choice(
+        all_data_points,
+        # Don't let it sample more than the total number of data points
+        size=min(sample_size, all_data_points),
+        replace=False,
+    )
     return array[random_indexes]
 
 
