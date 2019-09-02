@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     hyperparameters = get_hyperparameters(
         model_name=get_model_name_from_filepath(__file__),
-        dataset_filename="2019-09-02--14-26-45_osmo_ml_dataset.csv",
+        dataset_filename="2019-09-02--15-42-17_osmo_ml_dataset.csv",
         dev_set_column="dev_resampled",
         batch_size=3000,
         numeric_input_columns=["sr", "PicoLog temperature (C)"],
