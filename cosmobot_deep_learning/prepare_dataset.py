@@ -1,4 +1,5 @@
 import ast
+from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -77,20 +78,20 @@ def prepare_dataset_numeric(raw_dataset: pd.DataFrame, hyperparameters):
 
 
 def _get_images_and_labels(
-    raw_dataset,
-    sample_selector_column_name,
-    image_size,
-    label_column,
-    label_scale_factor_mmhg,
+    raw_dataset: pd.DataFrame,
+    sample_selector_column: str,
+    image_size: int,
+    label_column: str,
+    label_scale_factor_mmhg: str,
 ):
-    samples = raw_dataset[raw_dataset[sample_selector_column_name]]
+    samples = raw_dataset[raw_dataset[sample_selector_column]]
     images = open_and_preprocess_images(samples["local_filepath"].values, image_size)
     labels = extract_labels(samples, label_column, label_scale_factor_mmhg)
 
     return images, labels
 
 
-def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters):
+def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters: Dict):
     """ Transform a dataset CSV into the appropriate inputs and labels for training and
     validating a model, for a model that uses separate image and numeric inputs
 
@@ -109,14 +110,14 @@ def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters):
 
     x_train, y_train = _get_images_and_labels(
         raw_dataset,
-        sample_selector_column_name=hyperparameters["training_set_column"],
+        sample_selector_column=hyperparameters["training_set_column"],
         image_size=image_size,
         label_column=label_column,
         label_scale_factor_mmhg=label_scale_factor_mmhg,
     )
     x_test, y_test = _get_images_and_labels(
         raw_dataset,
-        sample_selector_column_name=hyperparameters["dev_set_column"],
+        sample_selector_column=hyperparameters["dev_set_column"],
         image_size=image_size,
         label_column=label_column,
         label_scale_factor_mmhg=label_scale_factor_mmhg,
