@@ -31,6 +31,33 @@ def get_fraction_outside_acceptable_error_fn(acceptable_error):
     return fraction_outside_acceptable_error
 
 
+def get_error_at_percentile_fn(acceptable_fraction_outside_error, label_scale_factor):
+    """ Returns a function that can be used as a keras metric, populated with the appropriate percentile
+
+    Args:
+        acceptable_fraction_outside_error: Set the percentile to calculate the error threshold that
+            (1 - acceptable_fraction_outside_error) fraction of predictions fall within
+        label_scale_factor: The scaling factor to use to scale the returned error threshold by (to reverse the normalization effect)
+    """
+    # Massage acceptable_fraction_outside_error into a percentile form, so that ultimately we are determining
+    # the error bar that X% of our predictions fall within
+    acceptable_fraction_within_error = 1 - acceptable_fraction_outside_error
+    percentile = 100 * acceptable_fraction_within_error
+
+    def error_at_percentile(y_true, y_pred):
+        """ A custom "satisficing" metric that calculates the error that 95% of our predictions fall within.
+        """
+        y_pred_error = tf.abs(y_pred - y_true)
+
+        normalized_error_at_percentile = tf.contrib.distributions.percentile(
+            y_pred_error, q=percentile
+        )
+
+        return normalized_error_at_percentile * label_scale_factor
+
+    return error_at_percentile
+
+
 def magical_incantation_to_make_custom_metric_work():
     """ This magical incantation must be called before model.fit() to make our custom metric work
         I honestly have no idea why this makes our custom metric work... but it does.

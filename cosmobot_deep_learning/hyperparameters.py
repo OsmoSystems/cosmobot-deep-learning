@@ -3,6 +3,7 @@ from typing import List
 import keras
 
 from cosmobot_deep_learning.constants import (
+    ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
     ACCEPTABLE_ERROR_MG_L,
     ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
     MG_L_TO_MMHG_AT_25_C_1_ATM,
@@ -14,6 +15,7 @@ from cosmobot_deep_learning.load_dataset import (
 
 from cosmobot_deep_learning.custom_metrics import (
     get_fraction_outside_acceptable_error_fn,
+    get_error_at_percentile_fn,
 )
 
 
@@ -43,6 +45,12 @@ def _calculate_additional_hyperparameters(
         acceptable_error=acceptable_error_normalized
     )
 
+    mmhg_error_at_95_percentile = get_error_at_percentile_fn(
+        acceptable_fraction_outside_error=ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
+        # TODO: should this return in mmhg (as it does now) or mg/l?
+        label_scale_factor=label_scale_factor_mmhg,
+    )
+
     return {
         "dataset_filepath": dataset_filepath,
         "dataset_hash": dataset_hash,
@@ -52,6 +60,7 @@ def _calculate_additional_hyperparameters(
             "mean_squared_error",
             "mean_absolute_error",
             fraction_outside_acceptable_error,
+            mmhg_error_at_95_percentile,
         ],
     }
 
