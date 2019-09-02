@@ -14,6 +14,7 @@ from cosmobot_deep_learning.load_dataset import (
 
 from cosmobot_deep_learning.custom_metrics import (
     magical_incantation_to_make_custom_metric_work,
+    MmhgErrorAtAcceptablePercentile,
 )
 from cosmobot_deep_learning import visualizations
 
@@ -175,6 +176,10 @@ def run(
 
     epochs = hyperparameters["epochs"]
     batch_size = hyperparameters["batch_size"]
+    label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
+    acceptable_fraction_outside_error = hyperparameters[
+        "acceptable_fraction_outside_error"
+    ]
 
     if dryrun:
         epochs = 1
@@ -205,17 +210,18 @@ def run(
         epochs=epochs,
         verbose=2,
         validation_data=(x_test, y_test),
-        callbacks=[WandbCallback()],
+        callbacks=[
+            MmhgErrorAtAcceptablePercentile(
+                acceptable_fraction_outside_error,
+                label_scale_factor_mmhg,
+                loaded_dataset,
+            ),
+            WandbCallback(),
+        ],
     )
 
     _log_visualizations(
-        model,
-        history,
-        hyperparameters["label_scale_factor_mmhg"],
-        x_train,
-        y_train,
-        x_test,
-        y_test,
+        model, history, label_scale_factor_mmhg, x_train, y_train, x_test, y_test
     )
 
     return x_train, y_train, x_test, y_test, model, history

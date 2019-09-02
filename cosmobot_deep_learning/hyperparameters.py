@@ -15,7 +15,6 @@ from cosmobot_deep_learning.load_dataset import (
 
 from cosmobot_deep_learning.custom_metrics import (
     get_fraction_outside_acceptable_error_fn,
-    get_mmhg_error_at_acceptable_percentile_fn,
 )
 
 
@@ -48,11 +47,6 @@ def _calculate_additional_hyperparameters(
         acceptable_error=acceptable_error_normalized
     )
 
-    mmhg_error_at_acceptable_percentile = get_mmhg_error_at_acceptable_percentile_fn(
-        acceptable_fraction_outside_error,
-        label_scale_factor_mmhg,  # TODO: should this return in mmhg (as it does now) or mg/l?
-    )
-
     return {
         "dataset_filepath": dataset_filepath,
         "dataset_hash": dataset_hash,
@@ -62,7 +56,6 @@ def _calculate_additional_hyperparameters(
             "mean_squared_error",
             "mean_absolute_error",
             fraction_outside_acceptable_error,
-            mmhg_error_at_acceptable_percentile,
         ],
     }
 
