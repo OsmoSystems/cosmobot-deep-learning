@@ -6,7 +6,7 @@ from cosmobot_deep_learning.constants import (
     ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
     ACCEPTABLE_ERROR_MG_L,
     ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
-    MG_L_TO_MMHG_AT_25_C_1_ATM,
+    MG_L_PER_MMHG_AT_25_C_1_ATM,
 )
 from cosmobot_deep_learning.load_dataset import (
     get_pkg_dataset_filepath,
@@ -39,7 +39,7 @@ def _calculate_additional_hyperparameters(
     dataset_filepath = get_pkg_dataset_filepath(dataset_filename)
     dataset_hash = get_dataset_csv_hash(dataset_filepath)
 
-    acceptable_error_mmhg = acceptable_error_mg_l * MG_L_TO_MMHG_AT_25_C_1_ATM
+    acceptable_error_mmhg = acceptable_error_mg_l * MG_L_PER_MMHG_AT_25_C_1_ATM
 
     # Ensure that our custom metric uses the same normalizing factor we use to scale our labels
     acceptable_error_normalized = acceptable_error_mmhg / label_scale_factor_mmhg
