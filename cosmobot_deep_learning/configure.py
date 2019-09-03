@@ -78,7 +78,6 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
 
     arg_parser.add_argument("--epochs", type=int)
 
-    # TODO these aren't used in all models yet:
     arg_parser.add_argument(
         "--optimizer-name",
         choices=[optimizer_name.value for optimizer_name in OptimizerName],

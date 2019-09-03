@@ -13,7 +13,10 @@ import keras_resnet.models
 import tensorflow as tf
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
-from cosmobot_deep_learning.hyperparameters import get_hyperparameters_from_args
+from cosmobot_deep_learning.hyperparameters import (
+    get_hyperparameters_from_args,
+    get_optimizer,
+)
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_image_and_numeric
 from cosmobot_deep_learning.run import run
 from cosmobot_deep_learning.preprocess_image import (
@@ -39,6 +42,8 @@ def create_model(hyperparameters, x_train):
     # x_train is a list of two inputs: numeric and images
     x_train_numeric, x_train_images = x_train
     x_train_samples_count, numeric_inputs_count = x_train_numeric.shape
+
+    optimizer = get_optimizer(hyperparameters)
 
     image_size = hyperparameters["image_size"]
     input_layer = keras.layers.Input(shape=(image_size, image_size, 3))
@@ -84,7 +89,7 @@ def create_model(hyperparameters, x_train):
     )
 
     combined_residual_model.compile(
-        optimizer=hyperparameters["optimizer"],
+        optimizer=optimizer,
         loss=hyperparameters["loss"],
         metrics=hyperparameters["metrics"],
     )

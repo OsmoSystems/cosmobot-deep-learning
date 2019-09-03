@@ -9,7 +9,10 @@ import keras
 import tensorflow as tf
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
-from cosmobot_deep_learning.hyperparameters import get_hyperparameters_from_args
+from cosmobot_deep_learning.hyperparameters import (
+    get_hyperparameters_from_args,
+    get_optimizer,
+)
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_numeric
 from cosmobot_deep_learning.run import run
 
@@ -29,6 +32,8 @@ def create_model(hyperparameters, x_train):
         hyperparameters: See definition in `run()`
         x_train: The input training data (used to determine input layer shape)
     """
+    optimizer = get_optimizer(hyperparameters)
+
     x_train_samples_count, numeric_inputs_count = x_train.shape
 
     sr_model = keras.models.Sequential(
@@ -43,7 +48,7 @@ def create_model(hyperparameters, x_train):
     )
 
     sr_model.compile(
-        optimizer=hyperparameters["optimizer"],
+        optimizer=optimizer,
         loss=hyperparameters["loss"],
         metrics=hyperparameters["metrics"],
     )

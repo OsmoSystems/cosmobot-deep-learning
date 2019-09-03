@@ -159,13 +159,19 @@ def get_hyperparameters_from_args(command_line_args, model_default_hyperparamete
     return hyperparameters
 
 
+# TODO test
 def get_optimizer(hyperparameters):
-    learning_rate = hyperparameters["learning_rate"]
     optimizer_name = hyperparameters["optimizer_name"]
+    learning_rate = hyperparameters["learning_rate"]
+
+    optimizer_kwargs = {}
+    if learning_rate is not None:
+        optimizer_kwargs["lr"] = learning_rate
+
     if optimizer_name == OptimizerName.ADAM.value:
-        return keras.optimizers.Adam(lr=learning_rate)
+        return keras.optimizers.Adam(**optimizer_kwargs)
     if optimizer_name == OptimizerName.ADADELTA.value:
-        return keras.optimizers.AdaDelta(lr=learning_rate)
+        return keras.optimizers.AdaDelta(**optimizer_kwargs)
     else:
         # argument parser will catch this earlier, shouldn't get here
         raise Exception("invalid optimizer_name")
