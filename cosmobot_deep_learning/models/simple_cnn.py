@@ -23,7 +23,7 @@ from cosmobot_deep_learning.preprocess_image import (
 )
 
 # 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
-LEARNING_RATE = 0.0001
+LEARNING_RATE = 0.00003
 
 
 def create_model(hyperparameters, x_train):
@@ -45,25 +45,26 @@ def create_model(hyperparameters, x_train):
         [
             keras.layers.Conv2D(
                 16,
-                (5, 5),
+                (3, 3),
                 input_shape=(image_size, image_size, 3),
                 activation="relu",
                 kernel_initializer=kernel_initializer,
             ),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
-                32, (5, 5), activation="relu", kernel_initializer=kernel_initializer
+                32, (3, 3), activation="relu", kernel_initializer=kernel_initializer
             ),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
-                32, (5, 5), activation="relu", kernel_initializer=kernel_initializer
+                32, (3, 3), activation="relu", kernel_initializer=kernel_initializer
             ),
+            keras.layers.MaxPooling2D(2),
             keras.layers.Flatten(name="prep-for-dense"),
             keras.layers.Dense(
-                64, activation="relu", kernel_initializer=kernel_initializer
+                32, activation="relu", kernel_initializer=kernel_initializer
             ),
             keras.layers.Dense(
-                64, name="final_dense", kernel_initializer=kernel_initializer
+                32, name="final_dense", kernel_initializer=kernel_initializer
             ),
             keras.layers.advanced_activations.LeakyReLU(),
             # Final output layer with 1 neuron to regress a single value
