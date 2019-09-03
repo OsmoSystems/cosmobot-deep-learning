@@ -147,7 +147,8 @@ class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
         # Mutate the logs object here as well with this new metric to be picked up in the WandbCallback
         if logs is not None:
             if (
-                logs["val_fraction_outside_acceptable_error"]
+                # TODO: fix this hardcoding
+                logs["val_fraction_outside_0_5_mg_l_error"]
                 < self.acceptable_fraction_outside_error
             ):
                 logs["val_satisficing_mean_absolute_error"] = logs[
