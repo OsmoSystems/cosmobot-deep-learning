@@ -2,13 +2,27 @@ import keras
 from keras.callbacks import Callback
 import tensorflow as tf
 
+from cosmobot_deep_learning.constants import MG_L_TO_MMHG_AT_25_C_1_ATM
+
 ARBITRARILY_LARGE_MULTIPLIER = 10
 
 
-# Normally I would use functools.partial for this, but keras needs the __name__ attribute, which partials don't have
-def get_fraction_outside_acceptable_error_fn(acceptable_error):
-    """ Returns a function that can be used as a keras metric, populated with the appropriate threshold
+def _function_namify(_float):
+    """ Rounds float to 2 digits and replaces "." with "_"
     """
+    return str(round(_float, 2)).replace(".", "_")
+
+
+# Normally I would use functools.partial for this, but keras needs the __name__ attribute, which partials don't have
+def get_fraction_outside_acceptable_error_fn(
+    acceptable_error_mg_l, label_scale_factor_mmhg
+):
+    """ Returns a function that can be used as a keras metric, populated with the appropriate acceptable_error threshold
+    """
+
+    # Ensure that our custom metric uses the same normalizing factor we use to scale our labels
+    acceptable_error_mmhg = acceptable_error_mg_l * MG_L_TO_MMHG_AT_25_C_1_ATM
+    acceptable_error_normalized = acceptable_error_mmhg / label_scale_factor_mmhg
 
     def fraction_outside_acceptable_error(y_true, y_pred):
         """ Our custom "satisficing" metric that evaluates what fraction of predictions
@@ -19,7 +33,9 @@ def get_fraction_outside_acceptable_error_fn(acceptable_error):
         """
 
         y_pred_error = tf.abs(y_pred - y_true)
-        is_outside_acceptable_error = tf.greater(y_pred_error, acceptable_error)
+        is_outside_acceptable_error = tf.greater(
+            y_pred_error, acceptable_error_normalized
+        )
 
         # count_nonzero counts Trues as not zero and Falses as zero
         count_outside_acceptable_error = tf.count_nonzero(is_outside_acceptable_error)
@@ -31,6 +47,10 @@ def get_fraction_outside_acceptable_error_fn(acceptable_error):
             tf.cast(count_total, tf.float32),
         )
         return fraction_outside
+
+    fraction_outside_acceptable_error.__name__ = (
+        f"fraction_outside_{_function_namify(acceptable_error_mg_l)}_mg_l_error"
+    )
 
     return fraction_outside_acceptable_error
 

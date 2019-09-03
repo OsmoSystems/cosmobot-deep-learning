@@ -32,9 +32,9 @@ REQUIRED_HYPERPARAMETERS = [
     "batch_size",
     "optimizer",
     "loss",
-    "acceptable_error_mg_l",
-    "acceptable_error_mmhg",
-    "acceptable_error_normalized",
+    # "acceptable_error_mg_l",
+    # "acceptable_error_mmhg",
+    # "acceptable_error_normalized",
     "acceptable_fraction_outside_error",
     "dataset_filepath",
     "dataset_hash",
@@ -53,7 +53,7 @@ class TestCalculateHyperparameters:
     def test_calculates_dataset_attributes(self, mock_dataset_fns):
         actual = module._calculate_additional_hyperparameters(
             dataset_filename=sentinel.dataset_filename,
-            acceptable_error_mg_l=0.5,
+            error_thresholds_mg_l=[0.5],
             label_scale_factor_mmhg=100,
         )
         assert actual["dataset_filepath"] == sentinel.dataset_filepath
@@ -62,7 +62,7 @@ class TestCalculateHyperparameters:
     def test_calculates_dataset_cache_attributes(self, mock_dataset_fns):
         actual = module._calculate_additional_hyperparameters(
             dataset_filename=sentinel.dataset_filename,
-            acceptable_error_mg_l=0.5,
+            error_thresholds_mg_l=[0.5],
             label_scale_factor_mmhg=100,
         )
         assert actual["dataset_filepath"] == sentinel.dataset_filepath
@@ -73,11 +73,10 @@ class TestCalculateHyperparameters:
     def test_calculates_acceptable_errors(self, mock_dataset_fns):
         actual = module._calculate_additional_hyperparameters(
             dataset_filename=sentinel.dataset_filename,
-            acceptable_error_mg_l=0.5,
+            error_thresholds_mg_l=[0.1, 0.3, 0.5],
             label_scale_factor_mmhg=100,
         )
-        assert actual["acceptable_error_mmhg"] == 9.638554216867469
-        assert actual["acceptable_error_normalized"] == 0.09638554216867469
+        assert len(actual["metrics"]) == 5
 
 
 class TestGuardNoOverriddenCalculatedHyperparameters:

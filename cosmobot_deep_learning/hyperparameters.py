@@ -30,30 +30,32 @@ def _guard_no_overridden_calculated_hyperparameters(calculated, model_specific):
         )
 
 
-def _calculate_additional_hyperparameters(
-    dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
-):
-    dataset_filepath = get_pkg_dataset_filepath(dataset_filename)
-    dataset_hash = get_dataset_csv_hash(dataset_filepath)
-
+def _get_acceptable_error_normalized(acceptable_error_mg_l, label_scale_factor_mmhg):
     acceptable_error_mmhg = acceptable_error_mg_l * MG_L_TO_MMHG_AT_25_C_1_ATM
 
     # Ensure that our custom metric uses the same normalizing factor we use to scale our labels
     acceptable_error_normalized = acceptable_error_mmhg / label_scale_factor_mmhg
-    fraction_outside_acceptable_error = get_fraction_outside_acceptable_error_fn(
-        acceptable_error=acceptable_error_normalized
-    )
+    return acceptable_error_normalized
+
+
+def _calculate_additional_hyperparameters(
+    dataset_filename, error_thresholds_mg_l, label_scale_factor_mmhg
+):
+    dataset_filepath = get_pkg_dataset_filepath(dataset_filename)
+    dataset_hash = get_dataset_csv_hash(dataset_filepath)
+
+    fraction_outside_error_metric_fns = [
+        get_fraction_outside_acceptable_error_fn(
+            acceptable_error_mg_l, label_scale_factor_mmhg
+        )
+        for acceptable_error_mg_l in error_thresholds_mg_l
+    ]
 
     return {
         "dataset_filepath": dataset_filepath,
         "dataset_hash": dataset_hash,
-        "acceptable_error_mmhg": acceptable_error_mmhg,
-        "acceptable_error_normalized": acceptable_error_normalized,
-        "metrics": [
-            "mean_squared_error",
-            "mean_absolute_error",
-            fraction_outside_acceptable_error,
-        ],
+        "metrics": ["mean_squared_error", "mean_absolute_error"]
+        + fraction_outside_error_metric_fns,
     }
 
 
@@ -76,6 +78,7 @@ def get_hyperparameters(
     batch_size: int = DEFAULT_BATCH_SIZE,
     optimizer=DEFAULT_OPTIMIZER,
     loss=DEFAULT_LOSS,
+    error_thresholds_mg_l: List[float] = (0.1, 0.3, 0.5),
     acceptable_error_mg_l: float = ACCEPTABLE_ERROR_MG_L,
     acceptable_fraction_outside_error: float = ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
     training_set_column: str = DEFAULT_TRAINING_SET_COLUMN,
@@ -98,6 +101,7 @@ def get_hyperparameters(
         batch_size: Training batch size
         optimizer: Which optimizer function to use
         loss: Which loss function to use
+        error_thresholds_mg_l: For each error threshold, compute the fraction of predictions that fall outside of it
         acceptable_error_mg_l: The threshold, in mg/L to use in our custom "fraction_outside_acceptable_error" metric
         acceptable_fraction_outside_error: The threshold fraction of predictions which
             can be outside the acceptable_error_mg_l
@@ -109,7 +113,7 @@ def get_hyperparameters(
 
     """
     calculated_hyperparameters = _calculate_additional_hyperparameters(
-        dataset_filename, acceptable_error_mg_l, label_scale_factor_mmhg
+        dataset_filename, error_thresholds_mg_l, label_scale_factor_mmhg
     )
 
     _guard_no_overridden_calculated_hyperparameters(
