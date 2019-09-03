@@ -60,7 +60,7 @@ def _calculate_additional_hyperparameters(
     }
 
 
-DEFAULT_LABEL_COLUMN = "YSI DO (mmHg)"
+DEFAULT_LABEL_COLUMN = "setpoint O2 (mmHg)"
 DEFAULT_LOSS = "mean_squared_error"
 DEFAULT_OPTIMIZER = keras.optimizers.Adadelta()
 DEFAULT_EPOCHS = 1000
