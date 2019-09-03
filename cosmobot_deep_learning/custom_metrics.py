@@ -10,7 +10,7 @@ from cosmobot_deep_learning.constants import (
 ARBITRARILY_LARGE_MULTIPLIER = 10
 
 
-def _function_namify(_float):
+def _function_namify(_float: float) -> str:
     """ Rounds float to 2 digits and replaces "." with "_"
     e.g. 2.1235 -> 2_12
     """
