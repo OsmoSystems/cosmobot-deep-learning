@@ -6,7 +6,7 @@ from cosmobot_deep_learning.constants import (
     ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
     ACCEPTABLE_ERROR_MG_L,
     ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
-    MG_L_TO_MMHG_AT_25_C_1_ATM,
+    MG_L_PER_MMHG_AT_25_C_1_ATM,
 )
 from cosmobot_deep_learning.load_dataset import (
     get_pkg_dataset_filepath,
