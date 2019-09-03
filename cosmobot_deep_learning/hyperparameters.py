@@ -31,7 +31,7 @@ def _guard_no_overridden_calculated_hyperparameters(calculated, model_specific):
 
 def _calculate_additional_hyperparameters(
     dataset_filename,
-    error_thresholds_mg_l,
+    error_thresholds_mg_l: Set[float],
     acceptable_error_mg_l,
     label_scale_factor_mmhg,
 ):
