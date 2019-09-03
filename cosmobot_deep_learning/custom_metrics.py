@@ -58,7 +58,7 @@ def get_fraction_outside_acceptable_error_fn(
     return fraction_outside_acceptable_error
 
 
-class MmhgErrorAtPercentile(Callback):
+class ErrorAtPercentile(Callback):
     """ Keras model callback to add two new metrics
         "error_at_percentile_mmhg" is ... TODO
         "val_error_at_percentile_mmhg" is ... TODO

@@ -15,7 +15,7 @@ from cosmobot_deep_learning.load_dataset import (
 from cosmobot_deep_learning.custom_metrics import (
     ThresholdValMeanAbsoluteErrorOnCustomMetric,
     magical_incantation_to_make_custom_metric_work,
-    MmhgErrorAtPercentile,
+    ErrorAtPercentile,
 )
 from cosmobot_deep_learning import visualizations
 
@@ -212,7 +212,7 @@ def run(
         verbose=2,
         validation_data=(x_test, y_test),
         callbacks=[
-            MmhgErrorAtPercentile(
+            ErrorAtPercentile(
                 percentile=95,
                 label_scale_factor_mmhg=label_scale_factor_mmhg,
                 dataset=loaded_dataset,
