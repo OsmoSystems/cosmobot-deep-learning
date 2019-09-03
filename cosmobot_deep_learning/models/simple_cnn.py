@@ -23,7 +23,7 @@ from cosmobot_deep_learning.preprocess_image import (
 )
 
 # 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
-LEARNING_RATE = 0.00003
+LEARNING_RATE = 0.0001
 
 
 def create_model(hyperparameters, x_train):
@@ -88,6 +88,7 @@ def create_model(hyperparameters, x_train):
     x = keras.layers.Dense(
         64, activation="relu", kernel_initializer=kernel_initializer
     )(x)
+    x = keras.layers.Dropout()(x)
     x = keras.layers.Dense(
         64, activation="relu", kernel_initializer=kernel_initializer
     )(x)
