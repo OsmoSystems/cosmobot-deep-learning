@@ -116,5 +116,5 @@ def get_loaded_dataset_hash(dataset):
         hash which will be the same for identical datasets that have been loaded identically,
         and different for different datasets or different preprocessing
     """
-    serialized_dataset = pickle.dumps(dataset)
+    serialized_dataset = pickle.dumps(dataset, protocol=4)
     return hashlib.md5(serialized_dataset).hexdigest()

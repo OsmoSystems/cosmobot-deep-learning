@@ -122,7 +122,7 @@ def _load_dataset_cache(dataset_cache_filepath):
 
 def _save_dataset_cache(dataset_cache_filepath, dataset):
     with open(dataset_cache_filepath, "wb+") as cache_file:
-        pickle.dump(dataset, cache_file)
+        pickle.dump(dataset, cache_file, protocol=4)
 
 
 def _prepare_dataset_with_caching(
