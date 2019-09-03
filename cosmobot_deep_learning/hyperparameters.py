@@ -56,7 +56,7 @@ def _calculate_additional_hyperparameters(
     }
 
 
-LATEST_DATASET = "2019-09-02--15-42-17_osmo_ml_dataset.csv"
+LATEST_DATASET = "2019-09-02--20-46-35_osmo_ml_dataset.csv"
 DEFAULT_LABEL_COLUMN = "setpoint O2 (mmHg)"
 DEFAULT_LOSS = "mean_squared_error"
 DEFAULT_OPTIMIZER = keras.optimizers.Adadelta()
