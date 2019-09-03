@@ -178,6 +178,7 @@ def run(
     epochs = hyperparameters["epochs"]
     batch_size = hyperparameters["batch_size"]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
+    acceptable_error_mg_l = hyperparameters["acceptable_error_mg_l"]
     acceptable_fraction_outside_error = hyperparameters[
         "acceptable_fraction_outside_error"
     ]
@@ -218,7 +219,8 @@ def run(
                 dataset=loaded_dataset,
             ),
             ThresholdValMeanAbsoluteErrorOnCustomMetric(
-                acceptable_fraction_outside_error=acceptable_fraction_outside_error
+                acceptable_fraction_outside_error=acceptable_fraction_outside_error,
+                acceptable_error_mg_l=acceptable_error_mg_l,
             ),
             WandbCallback(verbose=1, monitor="val_adjusted_mean_absolute_error"),
         ],

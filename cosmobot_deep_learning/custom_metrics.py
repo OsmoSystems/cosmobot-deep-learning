@@ -16,18 +16,28 @@ def _function_namify(_float):
     return str(round(_float, 2)).replace(".", "_")
 
 
+def _get_fraction_outside_error_threshold_fn_name(error_threshold_mg_l):
+    """ Generates an appropriate function name for the "fraction outside error threshold" custom metric,
+    given the desired `error_threshold_mg_l`
+
+    Args:
+        error_threshold_mg_l: The error threshold, in mg/L
+    """
+    return f"fraction_outside_{_function_namify(error_threshold_mg_l)}_mg_l_error"
+
+
 # Normally I would use functools.partial for this, but keras needs the __name__ attribute, which partials don't have
-def get_fraction_outside_acceptable_error_fn(
-    acceptable_error_mg_l, label_scale_factor_mmhg
+def get_fraction_outside_error_threshold_fn(
+    error_threshold_mg_l, label_scale_factor_mmhg
 ):
-    """ Returns a function that can be used as a keras metric, populated with the appropriate acceptable_error threshold
+    """ Returns a function that can be used as a keras metric, populated with the appropriate error threshold
     """
 
     # Ensure that our custom metric uses the same normalizing factor we use to scale our labels
-    acceptable_error_mmhg = acceptable_error_mg_l * MG_L_PER_MMHG
-    acceptable_error_normalized = acceptable_error_mmhg / label_scale_factor_mmhg
+    error_threshold_mmhg = error_threshold_mg_l * MG_L_PER_MMHG
+    error_threshold_normalized = error_threshold_mmhg / label_scale_factor_mmhg
 
-    def fraction_outside_acceptable_error(y_true, y_pred):
+    def fraction_outside_error_threshold(y_true, y_pred):
         """ Our custom "satisficing" metric that evaluates what fraction of predictions
             are outside of our acceptable error threshold.
 
@@ -36,38 +46,39 @@ def get_fraction_outside_acceptable_error_fn(
         """
 
         y_pred_error = tf.abs(y_pred - y_true)
-        is_outside_acceptable_error = tf.greater(
-            y_pred_error, acceptable_error_normalized
+        is_outside_error_threshold = tf.greater(
+            y_pred_error, error_threshold_normalized
         )
 
         # count_nonzero counts Trues as not zero and Falses as zero
-        count_outside_acceptable_error = tf.count_nonzero(is_outside_acceptable_error)
+        count_outside_error_threshold = tf.count_nonzero(is_outside_error_threshold)
         count_total = tf.size(y_true)
 
         # Cast to float so that the division calculation returns a float (tf uses Python 2 semantics)
         fraction_outside = tf.div(
-            tf.cast(count_outside_acceptable_error, tf.float32),
+            tf.cast(count_outside_error_threshold, tf.float32),
             tf.cast(count_total, tf.float32),
         )
         return fraction_outside
 
-    fraction_outside_acceptable_error.__name__ = (
-        f"fraction_outside_{_function_namify(acceptable_error_mg_l)}_mg_l_error"
-    )
+    fn_name = _get_fraction_outside_error_threshold_fn_name(error_threshold_mg_l)
+    fraction_outside_error_threshold.__name__ = fn_name
 
-    return fraction_outside_acceptable_error
+    return fraction_outside_error_threshold
 
 
 class ErrorAtPercentile(Callback):
-    """ Keras model callback to add two new metrics
-        "error_at_percentile_mmhg" is ... TODO
-        "val_error_at_percentile_mmhg" is ... TODO
+    """ Keras model callback to add four new metrics:
+        "error_at_percentile_mmhg"
+        "val_error_at_percentile_mmhg"
+        "error_at_percentile_mg_l"
+        "val_error_at_percentile_mg_l"
 
     Args:
         percentile: Calculate the error threshold that percentile of predictions fall within
         label_scale_factor_mmhg: The scaling factor to use to scale the returned error threshold by
             (to reverse the normalization effect)
-        dataset: a tuple of (x_train, y_train, x_val, y_val)
+        dataset: a tuple of (x_train, y_train, x_dev, y_dev)
         epoch_interval: Only calculate this metric once every epoch_interval
     """
 
@@ -79,7 +90,7 @@ class ErrorAtPercentile(Callback):
         self.epoch_interval = epoch_interval
 
         # Save the training and validation datasets to use to generate predictions
-        self.x_train, self.y_train, self.x_val, self.y_val = dataset
+        self.x_train, self.y_train, self.x_dev, self.y_dev = dataset
 
     def error_at_percentile_mmhg(self, x_true, y_true):
         """ Calculate the error (in mmhg) that self.percentile of predictions fall within.
@@ -105,7 +116,7 @@ class ErrorAtPercentile(Callback):
             x_true=self.x_train, y_true=self.y_train
         )
         val_error_at_percentile_mmhg = self.error_at_percentile_mmhg(
-            x_true=self.x_val, y_true=self.y_val
+            x_true=self.x_dev, y_true=self.y_dev
         )
 
         p = int(self.percentile)
@@ -137,8 +148,18 @@ class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
 
     """
 
-    def __init__(self, acceptable_fraction_outside_error):
+    def __init__(self, acceptable_fraction_outside_error, acceptable_error_mg_l):
         self.acceptable_fraction_outside_error = acceptable_fraction_outside_error
+
+        # The "fraction outside acceptable error" metric depends on what the defined "acceptable error" is
+        fraction_outside_acceptable_error_metric = _get_fraction_outside_error_threshold_fn_name(
+            acceptable_error_mg_l
+        )
+
+        # Use the "val" version of the metric
+        self.val_fraction_outside_acceptable_error_metric = (
+            f"val_{fraction_outside_acceptable_error_metric}"
+        )
 
     def on_epoch_end(self, epoch, logs=None):
         # Metrics are compiled and average over batches for an entire epoch by Keras
@@ -147,8 +168,7 @@ class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
         # Mutate the logs object here as well with this new metric to be picked up in the WandbCallback
         if logs is not None:
             if (
-                # TODO: fix this hardcoding
-                logs["val_fraction_outside_0_5_mg_l_error"]
+                logs[self.val_fraction_outside_acceptable_error_metric]
                 < self.acceptable_fraction_outside_error
             ):
                 logs["val_satisficing_mean_absolute_error"] = logs[
