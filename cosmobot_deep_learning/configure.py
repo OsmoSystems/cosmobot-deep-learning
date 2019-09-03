@@ -8,6 +8,17 @@ from cosmobot_deep_learning.constants import OptimizerName
 
 # TODO test
 def _string_to_bool(v):
+    """This is used to allow an argument to be set to a true/false string value.
+    We are using this to support W&B's hyperparameter sweep agent, which will pass boolean values
+    in as --some-flag=True or --some-flag=False.
+
+    To use it on a boolean argument, set the following properties set in parser.add_argument():
+        required=False,
+        type=_string_to_bool,
+        nargs="?",
+        const=True,
+        default=False,
+    """
     if isinstance(v, bool):
         return v
     if v.lower() == "true":
@@ -65,7 +76,6 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
         ),
     )
 
-    # TODO do we want this? it might be silly to sweep over this, but useful for setting number of epochs for a single run
     arg_parser.add_argument("--epochs", type=int)
 
     # TODO these aren't used in all models yet:
