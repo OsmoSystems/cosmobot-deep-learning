@@ -46,22 +46,19 @@ def create_model(hyperparameters, x_train):
             keras.layers.Conv2D(
                 16,
                 (3, 3),
-                activation="relu",
                 input_shape=(image_size, image_size, 3),
                 kernel_initializer=kernel_initializer,
             ),
+            keras.layers.LeakyReLU(alpha=0.3),
             keras.layers.MaxPooling2D(2),
-            keras.layers.Conv2D(
-                32, (3, 3), activation="relu", kernel_initializer=kernel_initializer
-            ),
+            keras.layers.Conv2D(32, (3, 3), kernel_initializer=kernel_initializer),
+            keras.layers.LeakyReLU(alpha=0.3),
             keras.layers.MaxPooling2D(2),
-            keras.layers.Conv2D(
-                32, (3, 3), activation="relu", kernel_initializer=kernel_initializer
-            ),
+            keras.layers.Conv2D(32, (3, 3), kernel_initializer=kernel_initializer),
+            keras.layers.LeakyReLU(alpha=0.3),
             keras.layers.Flatten(name="prep-for-dense"),
-            keras.layers.Dense(
-                64, activation="relu", kernel_initializer=kernel_initializer
-            ),
+            keras.layers.Dense(64, kernel_initializer=kernel_initializer),
+            keras.layers.LeakyReLU(alpha=0.3),
             keras.layers.Dense(
                 64, name="final_dense", kernel_initializer=kernel_initializer
             ),
@@ -85,17 +82,19 @@ def create_model(hyperparameters, x_train):
         [temperature_input, image_to_do_model.get_layer(name="final_dense").output]
     )
     dense_1_with_temperature = keras.layers.Dense(
-        64, activation="relu", kernel_initializer=kernel_initializer
+        64, kernel_initializer=kernel_initializer
     )(temp_and_image_add)
+    dense_1_activation = keras.layers.LeakyReLU(alpha=0.3)(dense_1_with_temperature)
     dense_2_with_temperature = keras.layers.Dense(
-        64, activation="relu", kernel_initializer=kernel_initializer
-    )(dense_1_with_temperature)
+        64, kernel_initializer=kernel_initializer
+    )(dense_1_activation)
+    dense_2_activation = keras.layers.LeakyReLU(alpha=0.3)(dense_2_with_temperature)
     temperature_aware_do_output = keras.layers.Dense(
         1,
         activation="sigmoid",
         kernel_initializer=kernel_initializer,
         name="temp-aware-DO",
-    )(dense_2_with_temperature)
+    )(dense_2_activation)
 
     temperature_aware_model = keras.models.Model(
         inputs=[temperature_input, image_to_do_model.get_input_at(0)],
