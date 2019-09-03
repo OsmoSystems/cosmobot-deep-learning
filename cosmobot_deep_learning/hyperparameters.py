@@ -63,7 +63,7 @@ DEFAULT_OPTIMIZER = keras.optimizers.Adadelta()
 DEFAULT_EPOCHS = 1000
 DEFAULT_BATCH_SIZE = 128
 DEFAULT_TRAINING_SET_COLUMN = "training_resampled"
-DEFAULT_DEV_SET_COLUMN = "test"
+DEFAULT_DEV_SET_COLUMN = "dev"
 # Allow some breathing room when DO readings in mmHg go above atmospheric level
 LABEL_SCALE_FACTOR_MMHG_BUFFER = 10
 DEFAULT_LABEL_SCALE_FACTOR_MMHG = (
