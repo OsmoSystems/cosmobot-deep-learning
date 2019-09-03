@@ -6,6 +6,7 @@ import pandas as pd
 import wandb
 from wandb.keras import WandbCallback
 
+from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
 from cosmobot_deep_learning.load_dataset import (
     get_dataset_cache_filepath,
     download_images_and_attach_filepaths_to_dataset,
@@ -122,7 +123,7 @@ def _load_dataset_cache(dataset_cache_filepath):
 
 def _save_dataset_cache(dataset_cache_filepath, dataset):
     with open(dataset_cache_filepath, "wb+") as cache_file:
-        pickle.dump(dataset, cache_file)
+        pickle.dump(dataset, cache_file, protocol=LARGE_FILE_PICKLE_PROTOCOL)
 
 
 def _prepare_dataset_with_caching(
