@@ -63,7 +63,7 @@ def _calculate_additional_hyperparameters(
 DEFAULT_LABEL_COLUMN = "setpoint O2 (mmHg)"
 DEFAULT_LOSS = "mean_squared_error"
 DEFAULT_OPTIMIZER = keras.optimizers.Adadelta()
-DEFAULT_EPOCHS = 600
+DEFAULT_EPOCHS = 1000
 DEFAULT_BATCH_SIZE = 128
 DEFAULT_TRAINING_SET_COLUMN = "training_resampled"
 DEFAULT_DEV_SET_COLUMN = "test"
