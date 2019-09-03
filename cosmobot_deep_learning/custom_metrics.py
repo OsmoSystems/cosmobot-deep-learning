@@ -12,6 +12,7 @@ ARBITRARILY_LARGE_MULTIPLIER = 10
 
 def _function_namify(_float):
     """ Rounds float to 2 digits and replaces "." with "_"
+    e.g. 2.1235 -> 2_12
     """
     return str(round(_float, 2)).replace(".", "_")
 
