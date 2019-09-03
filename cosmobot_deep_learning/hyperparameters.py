@@ -30,14 +30,6 @@ def _guard_no_overridden_calculated_hyperparameters(calculated, model_specific):
         )
 
 
-def _get_acceptable_error_normalized(acceptable_error_mg_l, label_scale_factor_mmhg):
-    acceptable_error_mmhg = acceptable_error_mg_l * MG_L_TO_MMHG_AT_25_C_1_ATM
-
-    # Ensure that our custom metric uses the same normalizing factor we use to scale our labels
-    acceptable_error_normalized = acceptable_error_mmhg / label_scale_factor_mmhg
-    return acceptable_error_normalized
-
-
 def _calculate_additional_hyperparameters(
     dataset_filename, error_thresholds_mg_l, label_scale_factor_mmhg
 ):
