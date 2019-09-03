@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 
 import keras
 
@@ -6,7 +6,6 @@ from cosmobot_deep_learning.constants import (
     ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
     ACCEPTABLE_ERROR_MG_L,
     ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
-    MG_L_PER_MMHG_AT_25_C_1_ATM,
 )
 from cosmobot_deep_learning.load_dataset import (
     get_pkg_dataset_filepath,
@@ -14,7 +13,7 @@ from cosmobot_deep_learning.load_dataset import (
 )
 
 from cosmobot_deep_learning.custom_metrics import (
-    get_fraction_outside_acceptable_error_fn,
+    get_fraction_outside_error_threshold_fn,
 )
 
 
@@ -32,31 +31,28 @@ def _guard_no_overridden_calculated_hyperparameters(calculated, model_specific):
 
 def _calculate_additional_hyperparameters(
     dataset_filename,
+    error_thresholds_mg_l: Set[float],
     acceptable_error_mg_l,
-    acceptable_fraction_outside_error,
     label_scale_factor_mmhg,
 ):
     dataset_filepath = get_pkg_dataset_filepath(dataset_filename)
     dataset_hash = get_dataset_csv_hash(dataset_filepath)
 
-    acceptable_error_mmhg = acceptable_error_mg_l * MG_L_PER_MMHG_AT_25_C_1_ATM
+    # Ensure acceptable_error_mg_l is always included in error_thresholds
+    error_thresholds_mg_l = error_thresholds_mg_l.union({acceptable_error_mg_l})
 
-    # Ensure that our custom metric uses the same normalizing factor we use to scale our labels
-    acceptable_error_normalized = acceptable_error_mmhg / label_scale_factor_mmhg
-    fraction_outside_acceptable_error = get_fraction_outside_acceptable_error_fn(
-        acceptable_error=acceptable_error_normalized
-    )
+    fraction_outside_error_threshold_fns = [
+        get_fraction_outside_error_threshold_fn(
+            error_threshold_mg_l, label_scale_factor_mmhg
+        )
+        for error_threshold_mg_l in error_thresholds_mg_l
+    ]
 
     return {
         "dataset_filepath": dataset_filepath,
         "dataset_hash": dataset_hash,
-        "acceptable_error_mmhg": acceptable_error_mmhg,
-        "acceptable_error_normalized": acceptable_error_normalized,
-        "metrics": [
-            "mean_squared_error",
-            "mean_absolute_error",
-            fraction_outside_acceptable_error,
-        ],
+        "metrics": ["mean_squared_error", "mean_absolute_error"]
+        + fraction_outside_error_threshold_fns,
     }
 
 
@@ -67,6 +63,7 @@ DEFAULT_EPOCHS = 600
 DEFAULT_BATCH_SIZE = 128
 DEFAULT_TRAINING_SET_COLUMN = "training_resampled"
 DEFAULT_DEV_SET_COLUMN = "test"
+DEFAULT_ERROR_THRESHOLDS = {0.1, 0.3, 0.5}
 
 
 def get_hyperparameters(
@@ -79,6 +76,7 @@ def get_hyperparameters(
     batch_size: int = DEFAULT_BATCH_SIZE,
     optimizer=DEFAULT_OPTIMIZER,
     loss=DEFAULT_LOSS,
+    error_thresholds_mg_l: Set[float] = DEFAULT_ERROR_THRESHOLDS,
     acceptable_error_mg_l: float = ACCEPTABLE_ERROR_MG_L,
     acceptable_fraction_outside_error: float = ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
     training_set_column: str = DEFAULT_TRAINING_SET_COLUMN,
@@ -101,7 +99,8 @@ def get_hyperparameters(
         batch_size: Training batch size
         optimizer: Which optimizer function to use
         loss: Which loss function to use
-        acceptable_error_mg_l: The threshold, in mg/L to use in our custom "fraction_outside_acceptable_error" metric
+        error_thresholds_mg_l: For each error threshold, compute the fraction of predictions that fall outside of it
+        acceptable_error_mg_l: The threshold, in mg/L to use in our custom ThresholdValMeanAbsoluteErrorOnCustomMetric
         acceptable_fraction_outside_error: The threshold fraction of predictions which
             can be outside the acceptable_error_mg_l
         training_set_column: The dataset column name of the training set flag.
@@ -109,12 +108,11 @@ def get_hyperparameters(
         **model_specific_hyperparameters: All other kwargs get slurped up here
 
     Returns: A dict of hyperparameters
-
     """
     calculated_hyperparameters = _calculate_additional_hyperparameters(
         dataset_filename,
+        error_thresholds_mg_l,
         acceptable_error_mg_l,
-        acceptable_fraction_outside_error,
         label_scale_factor_mmhg,
     )
 

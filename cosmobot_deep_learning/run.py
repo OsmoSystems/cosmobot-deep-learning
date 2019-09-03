@@ -16,7 +16,7 @@ from cosmobot_deep_learning.load_dataset import (
 from cosmobot_deep_learning.custom_metrics import (
     ThresholdValMeanAbsoluteErrorOnCustomMetric,
     magical_incantation_to_make_custom_metric_work,
-    MmhgErrorAtPercentile,
+    ErrorAtPercentile,
 )
 from cosmobot_deep_learning import visualizations
 
@@ -178,6 +178,7 @@ def run(
     epochs = hyperparameters["epochs"]
     batch_size = hyperparameters["batch_size"]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
+    acceptable_error_mg_l = hyperparameters["acceptable_error_mg_l"]
     acceptable_fraction_outside_error = hyperparameters[
         "acceptable_fraction_outside_error"
     ]
@@ -212,13 +213,14 @@ def run(
         verbose=2,
         validation_data=(x_test, y_test),
         callbacks=[
-            MmhgErrorAtPercentile(
+            ErrorAtPercentile(
                 percentile=95,
                 label_scale_factor_mmhg=label_scale_factor_mmhg,
                 dataset=loaded_dataset,
             ),
             ThresholdValMeanAbsoluteErrorOnCustomMetric(
-                acceptable_fraction_outside_error=acceptable_fraction_outside_error
+                acceptable_fraction_outside_error=acceptable_fraction_outside_error,
+                acceptable_error_mg_l=acceptable_error_mg_l,
             ),
             WandbCallback(verbose=1, monitor="val_adjusted_mean_absolute_error"),
         ],
