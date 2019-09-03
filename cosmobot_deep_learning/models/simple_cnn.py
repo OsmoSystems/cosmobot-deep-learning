@@ -45,18 +45,18 @@ def create_model(hyperparameters, x_train):
         [
             keras.layers.Conv2D(
                 16,
-                (3, 3),
+                (5, 5),
                 input_shape=(image_size, image_size, 3),
                 activation="relu",
                 kernel_initializer=kernel_initializer,
             ),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
-                32, (3, 3), activation="relu", kernel_initializer=kernel_initializer
+                32, (5, 5), activation="relu", kernel_initializer=kernel_initializer
             ),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
-                32, (3, 3), activation="relu", kernel_initializer=kernel_initializer
+                32, (5, 5), activation="relu", kernel_initializer=kernel_initializer
             ),
             keras.layers.MaxPooling2D(2),
             keras.layers.Flatten(name="prep-for-dense"),
