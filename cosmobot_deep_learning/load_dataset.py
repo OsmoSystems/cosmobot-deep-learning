@@ -6,6 +6,7 @@ import pkg_resources
 import pandas as pd
 from tqdm.auto import tqdm
 
+from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
 from .s3 import naive_sync_from_s3
 
 
@@ -116,5 +117,5 @@ def get_loaded_dataset_hash(dataset):
         hash which will be the same for identical datasets that have been loaded identically,
         and different for different datasets or different preprocessing
     """
-    serialized_dataset = pickle.dumps(dataset, protocol=4)
+    serialized_dataset = pickle.dumps(dataset, protocol=LARGE_FILE_PICKLE_PROTOCOL)
     return hashlib.md5(serialized_dataset).hexdigest()
