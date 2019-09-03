@@ -93,11 +93,11 @@ def _shuffle_dataframe(dataframe):
     )  # reset index to match new order, and drop the old index values
 
 
-def _get_prepared_dataset(prepare_dataset, hyperparameters, dryrun):
+def _get_prepared_dataset(prepare_dataset, hyperparameters):
     dataset_filepath = hyperparameters["dataset_filepath"]
     dataset = pd.read_csv(dataset_filepath)
 
-    if dryrun:
+    if hyperparameters["dryrun"]:
         dataset = _generate_tiny_dataset(dataset, hyperparameters)
 
     shuffled_dataset = _shuffle_dataframe(dataset)
@@ -120,9 +120,8 @@ def _save_dataset_cache(dataset_cache_filepath, dataset):
         pickle.dump(dataset, cache_file)
 
 
-def _prepare_dataset_with_caching(
-    prepare_dataset, hyperparameters, dryrun, dataset_cache_name=None
-):
+def _prepare_dataset_with_caching(prepare_dataset, hyperparameters):
+    dataset_cache_name = hyperparameters["dataset_cache_name"]
     dataset_cache_filepath = get_dataset_cache_filepath(dataset_cache_name)
 
     # Early exit with the cached datatset if it exists
@@ -135,9 +134,7 @@ def _prepare_dataset_with_caching(
         logging.info(f"Preparing dataset")
 
         dataset = _get_prepared_dataset(
-            prepare_dataset=prepare_dataset,
-            hyperparameters=hyperparameters,
-            dryrun=dryrun,
+            prepare_dataset=prepare_dataset, hyperparameters=hyperparameters
         )
 
         if dataset_cache_name is not None:
@@ -146,6 +143,25 @@ def _prepare_dataset_with_caching(
             _save_dataset_cache(dataset_cache_filepath, dataset)
 
         return dataset
+
+
+def _set_or_check_cuda_visible_devices(gpu):
+    """Set the CUDA_VISIBLE_DEVICES to the passed in GPU.
+    If passed in GPU is None and CUDA_VISIBLE_DEVICES is not set, print a warning
+    """
+
+    if gpu is not None:
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
+    else:
+        # for sweeps, CUDA_VISIBLE_DEVICES should be set to the desired gpu when running each agent, example:
+        # CUDA_VISIBLE_DEVICES=0 wandb agent <sweep_id>
+        # CUDA_VISIBLE_DEVICES=1 wandb agent <sweep_id>
+
+        cuda_visible_devices = os.environ.get("CUDA_VISIBLE_DEVICES")
+        if cuda_visible_devices in {None, "-1"}:
+            logging.warning(
+                "--gpu not received and CUDA_VISIBLE_DEVICES not set to a GPU id, running on CPU"
+            )
 
 
 def run(hyperparameters, prepare_dataset, create_model):
@@ -166,9 +182,7 @@ def run(hyperparameters, prepare_dataset, create_model):
     epochs = hyperparameters["epochs"]
     batch_size = hyperparameters["batch_size"]
 
-    # TODO we could could just read these from called functions if we're ok with them being in hyperparameters...
-    dryrun = hyperparameters["dryrun"]
-    dataset_cache_name = hyperparameters["dataset_cache_name"]
+    _set_or_check_cuda_visible_devices(hyperparameters.get("gpu"))
 
     if hyperparameters["dryrun"]:
         epochs = 1
@@ -178,10 +192,7 @@ def run(hyperparameters, prepare_dataset, create_model):
     _initialize_wandb(hyperparameters=hyperparameters)
 
     loaded_dataset = _prepare_dataset_with_caching(
-        prepare_dataset=prepare_dataset,
-        hyperparameters=hyperparameters,
-        dryrun=dryrun,
-        dataset_cache_name=dataset_cache_name,
+        prepare_dataset=prepare_dataset, hyperparameters=hyperparameters
     )
 
     _update_wandb_with_loaded_dataset(loaded_dataset)

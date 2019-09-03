@@ -1,3 +1,6 @@
+from enum import Enum
+
+
 # OXYGEN_FRACTION_IN_ATMOSPHERE = 0.2096
 # ATMOSPHERIC_PRESSURE_MMHG = 760
 # ATMOSPHERIC_OXYGEN_PRESSURE_MMHG = (
@@ -16,3 +19,8 @@ MG_L_TO_MMHG_AT_25_C_1_ATM = (
 
 # Our current definition of acceptable error is that 95% of our predictions are within 0.5 mg/L
 ACCEPTABLE_ERROR_MG_L = 0.5
+
+
+class OptimizerName(Enum):
+    ADAM = "Adam"
+    ADADELTA = "AdaDelta"

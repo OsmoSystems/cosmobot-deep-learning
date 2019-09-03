@@ -3,7 +3,7 @@ from pathlib import Path
 
 from typing import List
 
-from .hyperparameters import OptimizerName
+from cosmobot_deep_learning.constants import OptimizerName
 
 
 # TODO test

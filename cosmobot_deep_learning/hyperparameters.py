@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import List
 
 import keras
@@ -8,6 +7,7 @@ from cosmobot_deep_learning.constants import (
     ACCEPTABLE_ERROR_MG_L,
     ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
     MG_L_TO_MMHG_AT_25_C_1_ATM,
+    OptimizerName,
 )
 from cosmobot_deep_learning.load_dataset import (
     get_pkg_dataset_filepath,
@@ -17,11 +17,6 @@ from cosmobot_deep_learning.load_dataset import (
 from cosmobot_deep_learning.custom_metrics import (
     get_fraction_outside_acceptable_error_fn,
 )
-
-
-class OptimizerName(Enum):
-    ADAM = "Adam"
-    ADADELTA = "AdaDelta"
 
 
 def _guard_no_overridden_calculated_hyperparameters(calculated, model_specific):
@@ -86,6 +81,7 @@ def get_hyperparameters(
     training_set_column: str = DEFAULT_TRAINING_SET_COLUMN,
     dev_set_column: str = DEFAULT_DEV_SET_COLUMN,
     dataset_cache_name: str = None,
+    dryrun: bool = False,
     **model_specific_hyperparameters,
 ):
     """ This function:
@@ -106,6 +102,7 @@ def get_hyperparameters(
         acceptable_error_mg_l: The threshold, in mg/L to use in our custom "fraction_outside_acceptable_error" metric
         training_set_column: The dataset column name of the training set flag.
         dev_set_column: The dataset column name of the dev set flag.
+        dryrun: Run on a tiny dataset for a single epoch and don't log to wandb.
         **model_specific_hyperparameters: All other kwargs get slurped up here
 
     Returns: A dict of hyperparameters
@@ -134,6 +131,7 @@ def get_hyperparameters(
         "acceptable_error_mg_l": acceptable_error_mg_l,
         "training_set_column": training_set_column,
         "dev_set_column": dev_set_column,
+        "dryrun": dryrun,
         **calculated_hyperparameters,
         **model_specific_hyperparameters,
     }
@@ -154,6 +152,9 @@ def get_hyperparameters_from_args(command_line_args, model_default_hyperparamete
         **hyperparameters_from_args,
     }
     hyperparameters = get_hyperparameters(**defaulted_hyperparameters)
+
+    # TODO remove
+    print(hyperparameters)
 
     return hyperparameters
 

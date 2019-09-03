@@ -22,16 +22,14 @@ from cosmobot_deep_learning.preprocess_image import (
     fix_multiprocessing_with_keras_on_macos,
 )
 
-# 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
-DEFAULT_LEARNING_RATE = 0.0001
-
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
     "dataset_filename": "2019-08-09--14-33-26_osmo_ml_dataset.csv",
     "numeric_input_columns": ["PicoLog temperature (C)"],
     "image_size": 128,
     "optimizer_name": "Adam",
-    "learning_rate": DEFAULT_LEARNING_RATE,
+    # 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
+    "learning_rate": 0.0001,
 }
 
 
@@ -122,35 +120,12 @@ def create_model(hyperparameters, x_train):
     return temperature_aware_model
 
 
-# TODO try to refactor and DRY with other models. name isn't great and it's doing more than one thing and mutating hyperparameters
-def _set_cuda_visible_devices(hyperparameters):
-    gpu_arg = hyperparameters.get("gpu")
-
-    if gpu_arg is not None:
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_arg)
-    else:
-        # for sweeps, CUDA_VISIBLE_DEVICES should be set to the desired gpu when running each agent, example:
-        # CUDA_VISIBLE_DEVICES=0 wandb agent <sweep_id>
-        # CUDA_VISIBLE_DEVICES=1 wandb agent <sweep_id>
-
-        gpu = os.environ.get("CUDA_VISIBLE_DEVICES")
-        hyperparameters["gpu"] = gpu
-
-        if gpu is None:
-            # TODO use better exception class. should we also validate the value? scope creep?
-            raise Exception(
-                "Must specify --gpu or have CUDA_VISIBLE_DEVICES set in environment"
-            )
-
-
 def main(command_line_args):
     fix_multiprocessing_with_keras_on_macos()
 
     hyperparameters = get_hyperparameters_from_args(
         command_line_args, DEFAULT_HYPERPARAMETERS
     )
-
-    _set_cuda_visible_devices(hyperparameters)
 
     run(hyperparameters, prepare_dataset_image_and_numeric, create_model)
 
