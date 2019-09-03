@@ -58,13 +58,12 @@ def create_model(hyperparameters, x_train):
             keras.layers.Conv2D(
                 32, (5, 5), activation="relu", kernel_initializer=kernel_initializer
             ),
-            keras.layers.MaxPooling2D(2),
             keras.layers.Flatten(name="prep-for-dense"),
             keras.layers.Dense(
-                32, activation="relu", kernel_initializer=kernel_initializer
+                64, activation="relu", kernel_initializer=kernel_initializer
             ),
             keras.layers.Dense(
-                32, name="final_dense", kernel_initializer=kernel_initializer
+                64, name="final_dense", kernel_initializer=kernel_initializer
             ),
             keras.layers.advanced_activations.LeakyReLU(),
             # Final output layer with 1 neuron to regress a single value
