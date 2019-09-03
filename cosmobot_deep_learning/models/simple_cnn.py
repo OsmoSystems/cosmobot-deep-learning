@@ -58,6 +58,7 @@ def create_model(hyperparameters, x_train):
             keras.layers.Conv2D(
                 32, (3, 3), activation="relu", kernel_initializer=kernel_initializer
             ),
+            keras.layers.MaxPooling2D(2),
             keras.layers.Flatten(name="prep-for-dense"),
             keras.layers.Dense(
                 64, activation="relu", kernel_initializer=kernel_initializer
@@ -91,7 +92,10 @@ def create_model(hyperparameters, x_train):
         64, activation="relu", kernel_initializer=kernel_initializer
     )(dense_1_with_temperature)
     temperature_aware_do_output = keras.layers.Dense(
-        1, kernel_initializer=kernel_initializer, name="temp-aware-DO"
+        1,
+        activation="sigmoid",
+        kernel_initializer=kernel_initializer,
+        name="temp-aware-DO",
     )(dense_2_with_temperature)
 
     temperature_aware_model = keras.models.Model(
