@@ -6,21 +6,30 @@ This model is an N-branch network that combines:
     - numeric output of each of the hand-made CNNs
 """
 
-import os
 import sys
 
 import keras
 
-from cosmobot_deep_learning.configure import (
-    parse_model_run_args,
-    get_model_name_from_filepath,
+from cosmobot_deep_learning.configure import get_model_name_from_filepath
+from cosmobot_deep_learning.hyperparameters import (
+    get_hyperparameters_from_args,
+    get_optimizer,
 )
-from cosmobot_deep_learning.hyperparameters import get_hyperparameters
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_ROIs_and_numeric
 from cosmobot_deep_learning.run import run
 from cosmobot_deep_learning.preprocess_image import (
     fix_multiprocessing_with_keras_on_macos,
 )
+
+DEFAULT_HYPERPARAMETERS = {
+    "model_name": get_model_name_from_filepath(__file__),
+    "numeric_input_columns": ["PicoLog temperature (C)"],
+    "image_size": 64,
+    # ROI names to extract from `ROI definitions` column in the dataset.
+    # WARNING: The order here is preserved through data processing and model creation / input
+    # If you are using a cached dataset, make sure you have the correct order.
+    "input_ROI_names": ["DO patch", "reference patch", "reflectance standard"],
+}
 
 
 def get_convolutional_input(branch_id, x_train_sample_image, kernel_initializer):
@@ -67,6 +76,7 @@ def create_model(hyperparameters, x_train):
         x_train: The input training data (used to determine input layer shape)
     """
     input_ROI_names = hyperparameters["input_ROI_names"]
+    optimizer = get_optimizer(hyperparameters)
 
     # x_train is a list of [numeric_inputs, ROI_input_1, ..., ROI_input_x]
     assert len(input_ROI_names) == len(x_train) - 1
@@ -104,7 +114,7 @@ def create_model(hyperparameters, x_train):
     )
 
     temperature_aware_model.compile(
-        optimizer=hyperparameters["optimizer"],
+        optimizer=optimizer,
         loss=hyperparameters["loss"],
         metrics=hyperparameters["metrics"],
     )
@@ -112,30 +122,15 @@ def create_model(hyperparameters, x_train):
     return temperature_aware_model
 
 
-if __name__ == "__main__":
+def main(command_line_args):
     fix_multiprocessing_with_keras_on_macos()
 
-    args = parse_model_run_args(sys.argv[1:])
-
-    # Note: we may eventually need to change how we set this to be compatible with
-    # hyperparameter sweeps. See https://www.wandb.com/articles/multi-gpu-sweeps
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
-
-    hyperparameters = get_hyperparameters(
-        model_name=get_model_name_from_filepath(__file__),
-        numeric_input_columns=["PicoLog temperature (C)"],
-        image_size=64,
-        dataset_cache_name=args.dataset_cache,
-        # ROI names to extract from `ROI definitions` column in the dataset.
-        # WARNING: The order here is preserved through data processing and model creation / input
-        # If you are using a cached dataset, make sure you have the correct order.
-        input_ROI_names=["DO patch", "reference patch", "reflectance standard"],
+    hyperparameters = get_hyperparameters_from_args(
+        command_line_args, DEFAULT_HYPERPARAMETERS
     )
 
-    run(
-        hyperparameters,
-        prepare_dataset_ROIs_and_numeric,
-        create_model,
-        dryrun=args.dryrun,
-        dataset_cache_name=args.dataset_cache,
-    )
+    run(hyperparameters, prepare_dataset_ROIs_and_numeric, create_model)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

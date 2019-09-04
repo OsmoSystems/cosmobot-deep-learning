@@ -1,4 +1,4 @@
-from unittest.mock import call, sentinel
+from unittest.mock import call, Mock, sentinel
 
 import pytest
 
@@ -30,7 +30,7 @@ REQUIRED_HYPERPARAMETERS = [
     "label_scale_factor_mmhg",
     "epochs",
     "batch_size",
-    "optimizer",
+    "optimizer_name",
     "loss",
     "acceptable_error_mg_l",
     "acceptable_fraction_outside_error",
@@ -113,3 +113,46 @@ class TestGuardNoOverriddenCalculatedHyperparameters:
             },
             model_specific={"model_specific": sentinel.model_specific},
         )
+
+
+@pytest.mark.parametrize(
+    "dictionary,expected_output",
+    (
+        ({}, {}),
+        ({"key1": None}, {}),
+        ({"key1": False}, {"key1": False}),
+        ({"key1": "value", "key2": None}, {"key1": "value"}),
+    ),
+)
+def test_remove_items_with_no_value(dictionary, expected_output):
+    assert module._remove_items_with_no_value(dictionary) == expected_output
+
+
+@pytest.fixture
+def mock_optimizer(mocker):
+    mock_optimizer_class = Mock()
+
+    mock_optimizer_classes_by_name = {"mock_optimizer_name": mock_optimizer_class}
+
+    mocker.patch.object(
+        module, "OPTIMIZER_CLASSES_BY_NAME", mock_optimizer_classes_by_name
+    )
+
+    return mock_optimizer_class
+
+
+class TestGetOptimizer:
+    def test_gets_correct_optimizer(self, mock_optimizer):
+        hyperparameters = {"optimizer_name": "mock_optimizer_name"}
+
+        module.get_optimizer(hyperparameters)
+        mock_optimizer.assert_called_with()
+
+    def test_specifies_learning_rate(self, mock_optimizer):
+        hyperparameters = {
+            "optimizer_name": "mock_optimizer_name",
+            "learning_rate": sentinel.learning_rate,
+        }
+
+        module.get_optimizer(hyperparameters)
+        mock_optimizer.assert_called_with(lr=sentinel.learning_rate)

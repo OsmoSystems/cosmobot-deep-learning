@@ -6,24 +6,32 @@ This model is a 2-branch network that combines:
     - numeric output of the hand-made CNN
 """
 
-import os
+import argparse
 import sys
 
 import keras
 
-from cosmobot_deep_learning.configure import (
-    parse_model_run_args,
-    get_model_name_from_filepath,
+from cosmobot_deep_learning.configure import get_model_name_from_filepath
+from cosmobot_deep_learning.hyperparameters import (
+    get_hyperparameters_from_args,
+    get_optimizer,
 )
-from cosmobot_deep_learning.hyperparameters import get_hyperparameters
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_image_and_numeric
 from cosmobot_deep_learning.run import run
 from cosmobot_deep_learning.preprocess_image import (
     fix_multiprocessing_with_keras_on_macos,
 )
 
-# 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
-LEARNING_RATE = 0.0001
+DEFAULT_HYPERPARAMETERS = {
+    "model_name": get_model_name_from_filepath(__file__),
+    "numeric_input_columns": ["PicoLog temperature (C)"],
+    "image_size": 128,
+    "convolutional_kernel_size": 3,
+    "dense_layer_units": 64,
+    "optimizer_name": "adam",
+    # 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
+    "learning_rate": 0.0001,
+}
 
 
 def create_model(hyperparameters, x_train):
@@ -37,7 +45,12 @@ def create_model(hyperparameters, x_train):
     x_train_numeric, x_train_images = x_train
     x_train_samples_count, numeric_inputs_count = x_train_numeric.shape
 
+    optimizer = get_optimizer(hyperparameters)
+
     image_size = hyperparameters["image_size"]
+    convolutional_kernel_size = hyperparameters["convolutional_kernel_size"]
+    convolutional_kernel_shape = (convolutional_kernel_size, convolutional_kernel_size)
+    dense_layer_units = hyperparameters["dense_layer_units"]
 
     kernel_initializer = keras.initializers.he_normal()
 
@@ -45,25 +58,35 @@ def create_model(hyperparameters, x_train):
         [
             keras.layers.Conv2D(
                 16,
-                (3, 3),
+                convolutional_kernel_shape,
                 activation="relu",
                 input_shape=(image_size, image_size, 3),
                 kernel_initializer=kernel_initializer,
             ),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
-                32, (3, 3), activation="relu", kernel_initializer=kernel_initializer
+                32,
+                convolutional_kernel_shape,
+                activation="relu",
+                kernel_initializer=kernel_initializer,
             ),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
-                32, (3, 3), activation="relu", kernel_initializer=kernel_initializer
+                32,
+                convolutional_kernel_shape,
+                activation="relu",
+                kernel_initializer=kernel_initializer,
             ),
             keras.layers.Flatten(name="prep-for-dense"),
             keras.layers.Dense(
-                64, activation="relu", kernel_initializer=kernel_initializer
+                dense_layer_units,
+                activation="relu",
+                kernel_initializer=kernel_initializer,
             ),
             keras.layers.Dense(
-                64, name="final_dense", kernel_initializer=kernel_initializer
+                dense_layer_units,
+                name="final_dense",
+                kernel_initializer=kernel_initializer,
             ),
             keras.layers.advanced_activations.LeakyReLU(),
             # Final output layer with 1 neuron to regress a single value
@@ -72,7 +95,7 @@ def create_model(hyperparameters, x_train):
     )
 
     image_to_do_model.compile(
-        optimizer=hyperparameters["optimizer"],
+        optimizer=optimizer,
         loss=hyperparameters["loss"],
         metrics=hyperparameters["metrics"],
     )
@@ -103,7 +126,7 @@ def create_model(hyperparameters, x_train):
     )
 
     temperature_aware_model.compile(
-        optimizer=hyperparameters["optimizer"],
+        optimizer=optimizer,
         loss=hyperparameters["loss"],
         metrics=hyperparameters["metrics"],
     )
@@ -111,28 +134,25 @@ def create_model(hyperparameters, x_train):
     return temperature_aware_model
 
 
-if __name__ == "__main__":
+def get_hyperparameter_parser():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--image-size", type=int)
+    parser.add_argument("--convolutional-kernel-size", type=int)
+    parser.add_argument("--dense-layer-units", type=int)
+    return parser
+
+
+def main(command_line_args):
     fix_multiprocessing_with_keras_on_macos()
 
-    args = parse_model_run_args(sys.argv[1:])
+    simple_cnn_hyperparameter_parser = get_hyperparameter_parser()
 
-    # Note: we may eventually need to change how we set this to be compatible with
-    # hyperparameter sweeps. See https://www.wandb.com/articles/multi-gpu-sweeps
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
-
-    hyperparameters = get_hyperparameters(
-        model_name=get_model_name_from_filepath(__file__),
-        numeric_input_columns=["PicoLog temperature (C)"],
-        image_size=128,
-        dataset_cache_name=args.dataset_cache,
-        optimizer=keras.optimizers.Adam(lr=LEARNING_RATE),
-        learning_rate=LEARNING_RATE,
+    hyperparameters = get_hyperparameters_from_args(
+        command_line_args, DEFAULT_HYPERPARAMETERS, simple_cnn_hyperparameter_parser
     )
 
-    run(
-        hyperparameters,
-        prepare_dataset_image_and_numeric,
-        create_model,
-        dryrun=args.dryrun,
-        dataset_cache_name=args.dataset_cache,
-    )
+    run(hyperparameters, prepare_dataset_image_and_numeric, create_model)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

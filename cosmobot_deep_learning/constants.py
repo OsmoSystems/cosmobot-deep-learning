@@ -1,3 +1,5 @@
+import keras
+
 # OXYGEN_FRACTION_IN_ATMOSPHERE = 0.2096
 # ATMOSPHERIC_PRESSURE_MMHG = 760
 # ATMOSPHERIC_OXYGEN_PRESSURE_MMHG = (
@@ -20,3 +22,9 @@ ACCEPTABLE_ERROR_MG_L = 0.5
 
 # Protocol 4 supports large datasets, unlike 3 which is the default
 LARGE_FILE_PICKLE_PROTOCOL = 4
+
+
+OPTIMIZER_CLASSES_BY_NAME = {
+    "adam": keras.optimizers.Adam,
+    "adadelta": keras.optimizers.Adadelta,
+}

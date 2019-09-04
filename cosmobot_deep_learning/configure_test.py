@@ -7,32 +7,54 @@ from . import configure as module
 
 class TestParseArgs:
     def test_all_args_parsed_appropriately(self):
-        args_in = ["--gpu", "-1", "--dryrun", "--dataset-cache", "10k-images-and-temp"]
+        args_in = [
+            "--gpu",
+            "-1",
+            "--dryrun",
+            "--dataset-cache",
+            "10k-images-and-temp",
+            "--epochs",
+            "100",
+            "--optimizer-name",
+            "adam",
+            "--learning-rate",
+            "0.001",
+        ]
 
         expected_args_out = {
             "gpu": -1,
             "dryrun": True,
-            "dataset_cache": "10k-images-and-temp",
+            "dataset_cache_name": "10k-images-and-temp",
+            "epochs": 100,
+            "optimizer_name": "adam",
+            "learning_rate": 0.001,
         }
 
         assert vars(module.parse_model_run_args(args_in)) == expected_args_out
 
     def test_optional_args_take_default_value(self):
-        args_in = ["--gpu", "-1"]
-
-        expected_args_out = {"gpu": -1, "dryrun": False, "dataset_cache": None}
-
-        assert vars(module.parse_model_run_args(args_in)) == expected_args_out
-
-    def test_missing_required_args_throws(self):
-        args_in: List = []
-        with pytest.raises(SystemExit):
-            module.parse_model_run_args(args_in)
+        args_in: List[str] = []
+        assert vars(module.parse_model_run_args(args_in))["dataset_cache_name"] is None
 
     def test_unrecognized_args_throws(self):
         args_in = ["--extra"]
         with pytest.raises(SystemExit):
             module.parse_model_run_args(args_in)
+
+    @pytest.mark.parametrize(
+        "args_in,expected_dryrun_value",
+        (
+            ([], False),
+            (["--dryrun"], True),
+            (["--dryrun=True"], True),
+            (["--dryrun=False"], False),
+            (["--dryrun", "True"], True),
+            (["--dryrun", "False"], False),
+        ),
+    )
+    def test_dryrun_formats(self, args_in, expected_dryrun_value):
+        args_out = vars(module.parse_model_run_args(args_in))
+        assert args_out["dryrun"] == expected_dryrun_value
 
 
 class TestGetModelNameFromFilepath:
@@ -49,3 +71,18 @@ class TestGetModelNameFromFilepath:
     def test_get_model_name_from_filepath(self, filepath, expected_name):
         actual = module.get_model_name_from_filepath(filepath)
         assert actual == expected_name
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("False", False),
+        ("True", True),
+        ("false", False),
+        ("true", True),
+        (False, False),
+        (True, True),
+    ],
+)
+def test_str_to_bool(value, expected):
+    assert module._string_to_bool(value) == expected

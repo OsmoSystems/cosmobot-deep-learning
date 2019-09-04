@@ -3,19 +3,25 @@ This model is a dense-layer network that trains only on two numeric inputs:
  - temperature
  - spatial ratiometric ("OO DO patch Wet r_msorm" / "Type 1 Chemistry Hand Applied Dry r_msorm")
 """
-import os
 import sys
 
 import keras
 import tensorflow as tf
 
-from cosmobot_deep_learning.configure import (
-    parse_model_run_args,
-    get_model_name_from_filepath,
+from cosmobot_deep_learning.configure import get_model_name_from_filepath
+from cosmobot_deep_learning.hyperparameters import (
+    get_hyperparameters_from_args,
+    get_optimizer,
 )
-from cosmobot_deep_learning.hyperparameters import get_hyperparameters
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_numeric
 from cosmobot_deep_learning.run import run
+
+
+DEFAULT_HYPERPARAMETERS = {
+    "model_name": get_model_name_from_filepath(__file__),
+    "batch_size": 3000,
+    "numeric_input_columns": ["sr", "PicoLog temperature (C)"],
+}
 
 
 def create_model(hyperparameters, x_train):
@@ -25,6 +31,8 @@ def create_model(hyperparameters, x_train):
         hyperparameters: See definition in `run()`
         x_train: The input training data (used to determine input layer shape)
     """
+    optimizer = get_optimizer(hyperparameters)
+
     x_train_samples_count, numeric_inputs_count = x_train.shape
 
     sr_model = keras.models.Sequential(
@@ -39,7 +47,7 @@ def create_model(hyperparameters, x_train):
     )
 
     sr_model.compile(
-        optimizer=hyperparameters["optimizer"],
+        optimizer=optimizer,
         loss=hyperparameters["loss"],
         metrics=hyperparameters["metrics"],
     )
@@ -47,24 +55,13 @@ def create_model(hyperparameters, x_train):
     return sr_model
 
 
+def main(command_line_args):
+    hyperparameters = get_hyperparameters_from_args(
+        command_line_args, DEFAULT_HYPERPARAMETERS
+    )
+
+    run(hyperparameters, prepare_dataset_numeric, create_model)
+
+
 if __name__ == "__main__":
-    args = parse_model_run_args(sys.argv[1:])
-
-    # Note: we may eventually need to change how we set this to be compatible with
-    # hyperparameter sweeps. See https://www.wandb.com/articles/multi-gpu-sweeps
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
-
-    hyperparameters = get_hyperparameters(
-        model_name=get_model_name_from_filepath(__file__),
-        batch_size=3000,
-        numeric_input_columns=["sr", "PicoLog temperature (C)"],
-        dataset_cache_name=args.dataset_cache,
-    )
-
-    run(
-        hyperparameters,
-        prepare_dataset_numeric,
-        create_model,
-        dryrun=args.dryrun,
-        dataset_cache_name=args.dataset_cache,
-    )
+    main(sys.argv[1:])
