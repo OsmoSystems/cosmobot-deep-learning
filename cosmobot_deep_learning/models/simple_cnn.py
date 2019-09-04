@@ -6,7 +6,6 @@ This model is a 2-branch network that combines:
     - numeric output of the hand-made CNN
 """
 
-import os
 import sys
 
 import keras

@@ -126,7 +126,7 @@ if __name__ == "__main__":
         dataset_filename="2019-08-27--12-24-59_osmo_ml_dataset.csv",
         numeric_input_columns=["PicoLog temperature (C)"],
         image_size=64,
-        dataset_cache_name=args.dataset_cache,
+        dataset_cache_name=args.dataset_cache_name,
         # ROI names to extract from `ROI definitions` column in the dataset.
         # WARNING: The order here is preserved through data processing and model creation / input
         # If you are using a cached dataset, make sure you have the correct order.
@@ -138,5 +138,4 @@ if __name__ == "__main__":
         prepare_dataset_ROIs_and_numeric,
         create_model,
         dryrun=args.dryrun,
-        dataset_cache_name=args.dataset_cache,
     )

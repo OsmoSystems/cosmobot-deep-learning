@@ -34,6 +34,7 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
     arg_parser.add_argument(
         "--dataset-cache",
         required=False,
+        default=None,
         type=str,
         dest="dataset_cache_name",
         metavar="CACHED-DATASET-NAME",

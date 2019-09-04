@@ -91,15 +91,9 @@ if __name__ == "__main__":
         dataset_filename="2019-08-09--14-33-26_osmo_ml_dataset.csv",
         numeric_input_columns=[],
         image_size=128,
-        dataset_cache_name=args.dataset_cache,
+        dataset_cache_name=args.dataset_cache_name,
         optimizer=keras.optimizers.Adam(lr=LEARNING_RATE),
         learning_rate=LEARNING_RATE,
     )
 
-    run(
-        hyperparameters,
-        prepare_dataset_image_only,
-        create_model,
-        dryrun=args.dryrun,
-        dataset_cache_name=args.dataset_cache,
-    )
+    run(hyperparameters, prepare_dataset_image_only, create_model, dryrun=args.dryrun)
