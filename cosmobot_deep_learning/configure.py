@@ -3,10 +3,9 @@ from pathlib import Path
 
 from typing import List
 
-from cosmobot_deep_learning.constants import OptimizerName
+from cosmobot_deep_learning.constants import Optimizer
 
 
-# TODO test
 def _string_to_bool(v):
     """This is used to allow an argument to be set to a true/false string value.
     We are using this to support W&B's hyperparameter sweep agent, which will pass boolean values
@@ -18,6 +17,8 @@ def _string_to_bool(v):
         nargs="?",
         const=True,
         default=False,
+
+    This function copied and modified from https://stackoverflow.com/a/43357954
     """
     if isinstance(v, bool):
         return v
@@ -26,13 +27,16 @@ def _string_to_bool(v):
     elif v.lower() == "false":
         return False
     else:
-        raise argparse.ArgumentTypeError("Boolean string expected.")
+        raise argparse.ArgumentTypeError("Boolean string or boolean expected.")
 
 
-# TODO take additional arg parser with model-specific hyperparameter arguments
-def parse_model_run_args(args: List[str]) -> argparse.Namespace:
+def parse_model_run_args(
+    args: List[str], model_hyperparameter_parser: argparse.ArgumentParser = None
+) -> argparse.Namespace:
     arg_parser = argparse.ArgumentParser(
-        description="", formatter_class=argparse.RawTextHelpFormatter
+        description="",
+        formatter_class=argparse.RawTextHelpFormatter,
+        parents=[model_hyperparameter_parser] if model_hyperparameter_parser else [],
     )
 
     arg_parser.add_argument(
@@ -42,13 +46,13 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
         help=(
             "Select GPU for training by CUDA Device ID number (e.g. 0 - 3).\n"
             "Run `nvidia-smi` to see available devices and IDs.\n"
-            "Use -1 to disable GPU training."
+            "Use -1 to disable GPU training.\n"
+            "Default: CUDA_VISIBLE_DEVICES environment variable value"
         ),
         dest="gpu",
     )
 
     # --dryrun=True is allowed so that hyperparameter sweeps can use it
-    # TODO test
     arg_parser.add_argument(
         "--dryrun",
         required=False,
@@ -79,8 +83,7 @@ def parse_model_run_args(args: List[str]) -> argparse.Namespace:
     arg_parser.add_argument("--epochs", type=int)
 
     arg_parser.add_argument(
-        "--optimizer-name",
-        choices=[optimizer_name.value for optimizer_name in OptimizerName],
+        "--optimizer-name", choices=[optimizer.name.lower() for optimizer in Optimizer]
     )
     arg_parser.add_argument("--learning-rate", type=float)
 

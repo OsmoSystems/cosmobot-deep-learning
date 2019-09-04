@@ -81,17 +81,14 @@ class TestDatasetCache:
 
         mock_get_dataset_cache_filepath.return_value = sentinel.cache_filepath
 
+        hyperparameters = {"dataset_cache_name": "test"}
+
         actual_dataset = module._prepare_dataset_with_caching(
-            prepare_dataset=sentinel.prepare_dataset,
-            hyperparameters=sentinel.hyperparameters,
-            dryrun=sentinel.dryrun,
-            dataset_cache_name="test",
+            prepare_dataset=sentinel.prepare_dataset, hyperparameters=hyperparameters
         )
 
         mock_dataset_cache_helpers["_get_prepared_dataset"].assert_called_once_with(
-            prepare_dataset=sentinel.prepare_dataset,
-            hyperparameters=sentinel.hyperparameters,
-            dryrun=sentinel.dryrun,
+            prepare_dataset=sentinel.prepare_dataset, hyperparameters=hyperparameters
         )
         assert actual_dataset == sentinel.test_dataset
         mock_dataset_cache_helpers["_load_dataset_cache"].assert_not_called()
@@ -112,11 +109,10 @@ class TestDatasetCache:
             "_load_dataset_cache"
         ].return_value = sentinel.mock_dataset_cache
 
+        hyperparameters = {"dataset_cache_name": "test"}
+
         actual_dataset = module._prepare_dataset_with_caching(
-            prepare_dataset=sentinel.prepare_dataset,
-            hyperparameters=sentinel.hyperparameters,
-            dryrun=sentinel.dryrun,
-            dataset_cache_name="test",
+            prepare_dataset=sentinel.prepare_dataset, hyperparameters=hyperparameters
         )
 
         mock_dataset_cache_helpers["_get_prepared_dataset"].assert_not_called()
@@ -133,17 +129,14 @@ class TestDatasetCache:
             "_get_prepared_dataset"
         ].return_value = sentinel.test_dataset
 
+        hyperparameters = {"dataset_cache_name": None}
+
         actual_dataset = module._prepare_dataset_with_caching(
-            prepare_dataset=sentinel.prepare_dataset,
-            hyperparameters=sentinel.hyperparameters,
-            dryrun=sentinel.dryrun,
-            dataset_cache_name=None,
+            prepare_dataset=sentinel.prepare_dataset, hyperparameters=hyperparameters
         )
 
         mock_dataset_cache_helpers["_get_prepared_dataset"].assert_called_once_with(
-            prepare_dataset=sentinel.prepare_dataset,
-            hyperparameters=sentinel.hyperparameters,
-            dryrun=sentinel.dryrun,
+            prepare_dataset=sentinel.prepare_dataset, hyperparameters=hyperparameters
         )
         mock_dataset_cache_helpers["_load_dataset_cache"].assert_not_called()
         mock_dataset_cache_helpers["_save_dataset_cache"].assert_not_called()

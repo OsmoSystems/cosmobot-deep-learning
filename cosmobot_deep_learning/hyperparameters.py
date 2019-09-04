@@ -1,13 +1,11 @@
 from typing import List
 
-import keras
-
 from cosmobot_deep_learning.configure import parse_model_run_args
 from cosmobot_deep_learning.constants import (
     ACCEPTABLE_ERROR_MG_L,
     ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
     MG_L_TO_MMHG_AT_25_C_1_ATM,
-    OptimizerName,
+    Optimizer,
 )
 from cosmobot_deep_learning.load_dataset import (
     get_pkg_dataset_filepath,
@@ -60,8 +58,8 @@ def _calculate_additional_hyperparameters(
 
 DEFAULT_LABEL_COLUMN = "YSI DO (mmHg)"
 DEFAULT_LOSS = "mean_squared_error"
-DEFAULT_OPTIMIZER = keras.optimizers.Adadelta()
-DEFAULT_EPOCHS = 1000
+DEFAULT_OPTIMIZER_NAME = "adadelta"
+DEFAULT_EPOCHS = 600
 DEFAULT_BATCH_SIZE = 128
 DEFAULT_TRAINING_SET_COLUMN = "training_resampled"
 DEFAULT_DEV_SET_COLUMN = "test"
@@ -75,7 +73,7 @@ def get_hyperparameters(
     label_scale_factor_mmhg: float = ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
     epochs: int = DEFAULT_EPOCHS,
     batch_size: int = DEFAULT_BATCH_SIZE,
-    optimizer=DEFAULT_OPTIMIZER,
+    optimizer_name=DEFAULT_OPTIMIZER_NAME,
     loss=DEFAULT_LOSS,
     acceptable_error_mg_l: float = ACCEPTABLE_ERROR_MG_L,
     training_set_column: str = DEFAULT_TRAINING_SET_COLUMN,
@@ -126,7 +124,7 @@ def get_hyperparameters(
         "label_scale_factor_mmhg": label_scale_factor_mmhg,
         "epochs": epochs,
         "batch_size": batch_size,
-        "optimizer": optimizer,
+        "optimizer_name": optimizer_name,
         "loss": loss,
         "acceptable_error_mg_l": acceptable_error_mg_l,
         "training_set_column": training_set_column,
@@ -137,13 +135,16 @@ def get_hyperparameters(
     }
 
 
-# TODO test
 def _remove_items_with_no_value(dictionary):
     return {k: v for k, v in dictionary.items() if v is not None}
 
 
-def get_hyperparameters_from_args(command_line_args, model_default_hyperparameters):
-    args = parse_model_run_args(command_line_args)
+def get_hyperparameters_from_args(
+    command_line_args, model_default_hyperparameters, model_hyperparameter_parser=None
+):
+    # TODO log command line args? (wandb only shows the agent command)
+
+    args = parse_model_run_args(command_line_args, model_hyperparameter_parser)
 
     # remove undefined arguments
     hyperparameters_from_args = _remove_items_with_no_value(vars(args))
@@ -153,25 +154,24 @@ def get_hyperparameters_from_args(command_line_args, model_default_hyperparamete
     }
     hyperparameters = get_hyperparameters(**defaulted_hyperparameters)
 
-    # TODO remove
-    print(hyperparameters)
-
     return hyperparameters
 
 
-# TODO test
+class UnknownOptimizerName(Exception):
+    pass
+
+
 def get_optimizer(hyperparameters):
     optimizer_name = hyperparameters["optimizer_name"]
-    learning_rate = hyperparameters["learning_rate"]
+    learning_rate = hyperparameters.get("learning_rate")
 
     optimizer_kwargs = {}
     if learning_rate is not None:
         optimizer_kwargs["lr"] = learning_rate
 
-    if optimizer_name == OptimizerName.ADAM.value:
-        return keras.optimizers.Adam(**optimizer_kwargs)
-    if optimizer_name == OptimizerName.ADADELTA.value:
-        return keras.optimizers.AdaDelta(**optimizer_kwargs)
-    else:
-        # argument parser will catch this earlier, shouldn't get here
-        raise Exception("invalid optimizer_name")
+    for optimizer in Optimizer:
+        if optimizer_name == optimizer.name.lower():
+            return optimizer.value(**optimizer_kwargs)
+
+    # argument parser will catch this earlier, shouldn't get here
+    raise UnknownOptimizerName("unknown optimizer_name")

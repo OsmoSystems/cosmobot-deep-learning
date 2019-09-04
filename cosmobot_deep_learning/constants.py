@@ -1,5 +1,6 @@
 from enum import Enum
 
+import keras
 
 # OXYGEN_FRACTION_IN_ATMOSPHERE = 0.2096
 # ATMOSPHERIC_PRESSURE_MMHG = 760
@@ -21,6 +22,6 @@ MG_L_TO_MMHG_AT_25_C_1_ATM = (
 ACCEPTABLE_ERROR_MG_L = 0.5
 
 
-class OptimizerName(Enum):
-    ADAM = "Adam"
-    ADADELTA = "AdaDelta"
+class Optimizer(Enum):
+    ADAM = keras.optimizers.Adam
+    ADADELTA = keras.optimizers.Adadelta
