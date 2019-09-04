@@ -6,6 +6,7 @@ import pandas as pd
 import wandb
 from wandb.keras import WandbCallback
 
+from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
 from cosmobot_deep_learning.load_dataset import (
     get_dataset_cache_filepath,
     download_images_and_attach_filepaths_to_dataset,
@@ -13,7 +14,9 @@ from cosmobot_deep_learning.load_dataset import (
 )
 
 from cosmobot_deep_learning.custom_metrics import (
+    ThresholdValMeanAbsoluteErrorOnCustomMetric,
     magical_incantation_to_make_custom_metric_work,
+    ErrorAtPercentile,
 )
 from cosmobot_deep_learning import visualizations
 
@@ -67,7 +70,6 @@ def _log_visualizations(
     dev_labels = y_test.flatten() * label_scale_factor_mmhg
     dev_predictions = model.predict(x_test).flatten() * label_scale_factor_mmhg
 
-    visualizations.log_loss_over_epochs(training_history)
     visualizations.log_do_prediction_error(
         train_labels, train_predictions, dev_labels, dev_predictions
     )
@@ -117,7 +119,7 @@ def _load_dataset_cache(dataset_cache_filepath):
 
 def _save_dataset_cache(dataset_cache_filepath, dataset):
     with open(dataset_cache_filepath, "wb+") as cache_file:
-        pickle.dump(dataset, cache_file)
+        pickle.dump(dataset, cache_file, protocol=LARGE_FILE_PICKLE_PROTOCOL)
 
 
 def _prepare_dataset_with_caching(prepare_dataset, hyperparameters):
@@ -181,6 +183,11 @@ def run(hyperparameters, prepare_dataset, create_model):
 
     epochs = hyperparameters["epochs"]
     batch_size = hyperparameters["batch_size"]
+    label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
+    acceptable_error_mg_l = hyperparameters["acceptable_error_mg_l"]
+    acceptable_fraction_outside_error = hyperparameters[
+        "acceptable_fraction_outside_error"
+    ]
 
     _set_or_check_cuda_visible_devices(hyperparameters.get("gpu"))
 
@@ -210,17 +217,22 @@ def run(hyperparameters, prepare_dataset, create_model):
         epochs=epochs,
         verbose=2,
         validation_data=(x_test, y_test),
-        callbacks=[WandbCallback()],
+        callbacks=[
+            ErrorAtPercentile(
+                percentile=95,
+                label_scale_factor_mmhg=label_scale_factor_mmhg,
+                dataset=loaded_dataset,
+            ),
+            ThresholdValMeanAbsoluteErrorOnCustomMetric(
+                acceptable_fraction_outside_error=acceptable_fraction_outside_error,
+                acceptable_error_mg_l=acceptable_error_mg_l,
+            ),
+            WandbCallback(verbose=1, monitor="val_adjusted_mean_absolute_error"),
+        ],
     )
 
     _log_visualizations(
-        model,
-        history,
-        hyperparameters["label_scale_factor_mmhg"],
-        x_train,
-        y_train,
-        x_test,
-        y_test,
+        model, history, label_scale_factor_mmhg, x_train, y_train, x_test, y_test
     )
 
     return x_train, y_train, x_test, y_test, model, history

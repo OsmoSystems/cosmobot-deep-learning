@@ -34,8 +34,7 @@ REQUIRED_HYPERPARAMETERS = [
     "optimizer_name",
     "loss",
     "acceptable_error_mg_l",
-    "acceptable_error_mmhg",
-    "acceptable_error_normalized",
+    "acceptable_fraction_outside_error",
     "dataset_filepath",
     "dataset_hash",
 ]
@@ -53,6 +52,7 @@ class TestCalculateHyperparameters:
     def test_calculates_dataset_attributes(self, mock_dataset_fns):
         actual = module._calculate_additional_hyperparameters(
             dataset_filename=sentinel.dataset_filename,
+            error_thresholds_mg_l={0.5},
             acceptable_error_mg_l=0.5,
             label_scale_factor_mmhg=100,
         )
@@ -62,6 +62,7 @@ class TestCalculateHyperparameters:
     def test_calculates_dataset_cache_attributes(self, mock_dataset_fns):
         actual = module._calculate_additional_hyperparameters(
             dataset_filename=sentinel.dataset_filename,
+            error_thresholds_mg_l={0.5},
             acceptable_error_mg_l=0.5,
             label_scale_factor_mmhg=100,
         )
@@ -70,14 +71,25 @@ class TestCalculateHyperparameters:
             [call(sentinel.dataset_filepath)]
         )
 
-    def test_calculates_acceptable_errors(self, mock_dataset_fns):
+    def test_calculates_metrics(self, mock_dataset_fns):
         actual = module._calculate_additional_hyperparameters(
             dataset_filename=sentinel.dataset_filename,
+            error_thresholds_mg_l={0.1, 0.3},
             acceptable_error_mg_l=0.5,
             label_scale_factor_mmhg=100,
         )
-        assert actual["acceptable_error_mmhg"] == 9.638554216867469
-        assert actual["acceptable_error_normalized"] == 0.09638554216867469
+        actual_metric_names = {
+            metric.__name__ if hasattr(metric, "__name__") else metric
+            for metric in actual["metrics"]
+        }
+        expected_metric_names = {
+            "mean_squared_error",
+            "mean_absolute_error",
+            "fraction_outside_0_1_mg_l_error",
+            "fraction_outside_0_3_mg_l_error",
+            "fraction_outside_0_5_mg_l_error",
+        }
+        assert actual_metric_names == expected_metric_names
 
 
 class TestGuardNoOverriddenCalculatedHyperparameters:
