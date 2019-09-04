@@ -1,3 +1,4 @@
+import argparse
 from typing import List, Set
 
 from cosmobot_deep_learning.configure import parse_model_run_args
@@ -149,8 +150,22 @@ def _remove_items_with_no_value(dictionary):
 
 
 def get_hyperparameters_from_args(
-    command_line_args, model_default_hyperparameters, model_hyperparameter_parser=None
+    command_line_args: List[str],
+    model_default_hyperparameters: dict,
+    model_hyperparameter_parser: argparse.ArgumentParser = None,
 ):
+    """Takes command line arguments, default hyperparameters for the model, and an optional
+    command line parser for model-specific hyperparameters and returns a dict of
+    hyperparameters with defaults overridden in the proper order.
+
+    Args:
+        command_line_args: list of command line args in the format returned by sys.argv[1:]
+        model_default_hyperparameters: dict of model-specific hyperparameter defaults
+        model_hyperparameter_parser: argparse.ArgumentParser with options for model-specific
+        hyperparameters. add_help should be set to False.
+
+    Returns: dict of hyperparameters
+    """
     args = parse_model_run_args(command_line_args, model_hyperparameter_parser)
 
     # remove undefined arguments so that Nones don't override default values
@@ -172,7 +187,6 @@ def get_optimizer(hyperparameters):
     if learning_rate is not None:
         optimizer_kwargs["lr"] = learning_rate
 
-    print(OPTIMIZER_CLASSES_BY_NAME)
     optimizer_class = OPTIMIZER_CLASSES_BY_NAME[optimizer_name.lower()]
 
     return optimizer_class(**optimizer_kwargs)
