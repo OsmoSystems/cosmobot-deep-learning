@@ -153,33 +153,31 @@ def _prepare_dataset_with_caching(
         return dataset
 
 
-def _sample_array(array, sample_size):
-    # Select random indexes so that this function works on ndarrays (e.g. arrays of images)
-    all_data_points = array.shape[0]
-    random_indexes = np.random.choice(
-        all_data_points,
-        # Don't let it sample more than the total number of data points
-        size=min(sample_size, all_data_points),
-        replace=False,
-    )
-    return array[random_indexes]
-
-
-def _sample_all_arrays_in_list(maybe_list_of_arrays, sample_size):
+def _sample_all_arrays_in_list(maybe_list_of_arrays, random_indexes):
     # Sometimes x input is a list of arrays (e.g. [x_train_numeric, x_train_images])
     # sometimes just one array (e.g. x_train_numeric)
     if type(maybe_list_of_arrays) == list:
-        return [_sample_array(array, sample_size) for array in maybe_list_of_arrays]
+        return [array[random_indexes] for array in maybe_list_of_arrays]
 
-    return _sample_array(maybe_list_of_arrays, sample_size)
+    return maybe_list_of_arrays[random_indexes]
 
 
 def _downsample_training_dataset(loaded_dataset, train_sample_count):
     x_train, y_train, x_test, y_test = loaded_dataset
 
+    # Select random indexes so that this function works on ndarrays (e.g. arrays of images)
+    # Generate this only once so that it is used for both x and y values!
+    all_data_points = y_train.shape[0]
+    random_indexes = np.random.choice(
+        all_data_points,
+        # Don't let it sample more than the total number of data points
+        size=min(train_sample_count, all_data_points),
+        replace=False,
+    )
+
     return (
-        _sample_all_arrays_in_list(x_train, train_sample_count),
-        _sample_all_arrays_in_list(y_train, train_sample_count),
+        _sample_all_arrays_in_list(x_train, random_indexes),
+        _sample_all_arrays_in_list(y_train, random_indexes),
         x_test,
         y_test,
     )

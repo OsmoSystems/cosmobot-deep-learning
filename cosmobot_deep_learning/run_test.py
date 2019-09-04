@@ -177,28 +177,67 @@ class TestShuffleDataframe:
 class TestSampleArrays:
     def test_samples_list_of_arrays(self):
         actual = module._sample_all_arrays_in_list(
-            [np.zeros(5), np.ones(5)], sample_size=3
+            [np.zeros(5), np.ones(5)], random_indexes=[0, 1, 4]
         )
         np.testing.assert_array_equal(actual[0], np.zeros(3))
         np.testing.assert_array_equal(actual[1], np.ones(3))
 
     def test_samples_single_array(self):
-        actual = module._sample_all_arrays_in_list(np.zeros(5), sample_size=3)
+        actual = module._sample_all_arrays_in_list(
+            np.zeros(5), random_indexes=[0, 1, 4]
+        )
         np.testing.assert_array_equal(actual, np.zeros(3))
 
 
-class TestSampleArray:
-    def test_samples_ndarray(self):
-        # simulate an ndarray of 10 images
-        ndarray = np.reshape(np.array(range(3000)), (10, 10, 10, 3))
-        actual = module._sample_array(ndarray, sample_size=5)
+# class TestSampleArray:
+#     def test_samples_ndarray(self):
+#         # simulate an ndarray of 10 images
+#         ndarray = np.reshape(np.array(range(3000)), (10, 10, 10, 3))
+#         actual = module._sample_array(ndarray, sample_size=5)
+#
+#         assert actual.shape == (5, 10, 10, 3)
+#
+#     def test_samples_ndarray_at_max_len(self):
+#         # simulate an ndarray of 10 images
+#         ndarray = np.reshape(np.array(range(3000)), (10, 10, 10, 3))
+#         actual = module._sample_array(ndarray, sample_size=20)
+#
+#         assert actual.shape == (10, 10, 10, 3)
+#         np.testing.assert_array_equal(np.sort(ndarray, axis=0), np.sort(actual, axis=0))
 
-        assert actual.shape == (5, 10, 10, 3)
 
-    def test_samples_ndarray_at_max_len(self):
-        # simulate an ndarray of 10 images
-        ndarray = np.reshape(np.array(range(3000)), (10, 10, 10, 3))
-        actual = module._sample_array(ndarray, sample_size=20)
+class TestDownsampleTrainingDataset:
+    # simulate a set of 10 data points
+    original_sample_set = np.array(range(10))
+    dataset = (
+        original_sample_set,  # x_train
+        original_sample_set,  # y_train
+        original_sample_set,  # x_test
+        original_sample_set,  # y_test
+    )
 
-        assert actual.shape == (10, 10, 10, 3)
-        np.testing.assert_array_equal(np.sort(ndarray, axis=0), np.sort(actual, axis=0))
+    def test_downsamples_train_sets(self):
+        sampled_x_train, sampled_y_train, sampled_x_test, sampled_y_test = module._downsample_training_dataset(
+            loaded_dataset=self.dataset, train_sample_count=5
+        )
+
+        assert len(sampled_x_train) == len(sampled_y_train) == 5
+
+    def test_samples_x_and_y_the_same(self):
+        sampled_x_train, sampled_y_train, sampled_x_test, sampled_y_test = module._downsample_training_dataset(
+            loaded_dataset=self.dataset, train_sample_count=5
+        )
+
+        # ensure x_train and y_train still match up
+        np.testing.assert_array_equal(sampled_x_train, sampled_y_train)
+
+    def test_doesnt_downsample_dev_sets(self):
+        actual = module._downsample_training_dataset(
+            loaded_dataset=self.dataset, train_sample_count=5
+        )
+        downsampled_x_train, downsampled_y_train, downsampled_x_test, downsampled_y_test = (
+            actual
+        )
+        # dev sets should not have been downsampled
+        np.testing.assert_array_equal(downsampled_x_test, self.original_sample_set)
+        np.testing.assert_array_equal(downsampled_y_test, self.original_sample_set)
