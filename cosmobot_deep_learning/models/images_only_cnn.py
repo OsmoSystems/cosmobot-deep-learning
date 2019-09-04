@@ -7,7 +7,10 @@ import sys
 import keras
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
-from cosmobot_deep_learning.hyperparameters import get_hyperparameters_from_args
+from cosmobot_deep_learning.hyperparameters import (
+    get_hyperparameters_from_args,
+    get_optimizer,
+)
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_image_only
 from cosmobot_deep_learning.run import run
 from cosmobot_deep_learning.preprocess_image import (
@@ -33,6 +36,7 @@ def create_model(hyperparameters, x_train):
         x_train: The input training data (unused)
     """
     image_size = hyperparameters["image_size"]
+    optimizer = get_optimizer(hyperparameters)
 
     kernel_initializer = keras.initializers.he_normal()
 
@@ -72,7 +76,7 @@ def create_model(hyperparameters, x_train):
     )
 
     model.compile(
-        optimizer=hyperparameters["optimizer"],
+        optimizer=optimizer,
         loss=hyperparameters["loss"],
         metrics=hyperparameters["metrics"],
     )

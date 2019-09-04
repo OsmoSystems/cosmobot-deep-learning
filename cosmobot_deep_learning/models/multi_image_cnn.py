@@ -11,7 +11,10 @@ import sys
 import keras
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
-from cosmobot_deep_learning.hyperparameters import get_hyperparameters_from_args
+from cosmobot_deep_learning.hyperparameters import (
+    get_hyperparameters_from_args,
+    get_optimizer,
+)
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_ROIs_and_numeric
 from cosmobot_deep_learning.run import run
 from cosmobot_deep_learning.preprocess_image import (
@@ -74,6 +77,7 @@ def create_model(hyperparameters, x_train):
         x_train: The input training data (used to determine input layer shape)
     """
     input_ROI_names = hyperparameters["input_ROI_names"]
+    optimizer = get_optimizer(hyperparameters)
 
     # x_train is a list of [numeric_inputs, ROI_input_1, ..., ROI_input_x]
     assert len(input_ROI_names) == len(x_train) - 1
@@ -111,7 +115,7 @@ def create_model(hyperparameters, x_train):
     )
 
     temperature_aware_model.compile(
-        optimizer=hyperparameters["optimizer"],
+        optimizer=optimizer,
         loss=hyperparameters["loss"],
         metrics=hyperparameters["metrics"],
     )
