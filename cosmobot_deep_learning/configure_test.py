@@ -49,6 +49,7 @@ class TestParseArgs:
             (["--dryrun=True"], True),
             (["--dryrun=False"], False),
             (["--dryrun", "True"], True),
+            (["--dryrun", "False"], False),
         ),
     )
     def test_dryrun_formats(self, args_in, expected_dryrun_value):

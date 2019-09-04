@@ -151,11 +151,9 @@ def _remove_items_with_no_value(dictionary):
 def get_hyperparameters_from_args(
     command_line_args, model_default_hyperparameters, model_hyperparameter_parser=None
 ):
-    # TODO log command line args? (wandb only shows the agent command)
-
     args = parse_model_run_args(command_line_args, model_hyperparameter_parser)
 
-    # remove undefined arguments
+    # remove undefined arguments so that Nones don't override default values
     hyperparameters_from_args = _remove_items_with_no_value(vars(args))
     defaulted_hyperparameters = {
         **model_default_hyperparameters,

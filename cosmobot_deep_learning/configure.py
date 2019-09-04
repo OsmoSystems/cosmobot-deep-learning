@@ -27,7 +27,9 @@ def _string_to_bool(v):
     elif v.lower() == "false":
         return False
     else:
-        raise argparse.ArgumentTypeError("Boolean string or boolean expected.")
+        raise argparse.ArgumentTypeError(
+            f"Boolean string or boolean expected; received {v}."
+        )
 
 
 def parse_model_run_args(
