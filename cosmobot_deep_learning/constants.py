@@ -10,9 +10,13 @@ ATMOSPHERIC_OXYGEN_PRESSURE_MMHG = 160
 # In fresh water at 25 degC and 1 ATM, saturated DO is 8.3 mg/L
 # (https://www.engineeringtoolbox.com/oxygen-solubility-water-d_841.html)
 DO_CONCENTRATION_25_C_1_ATM_MG_L = 8.3
-MG_L_TO_MMHG_AT_25_C_1_ATM = (
+MG_L_PER_MMHG_AT_25_C_1_ATM = (
     ATMOSPHERIC_OXYGEN_PRESSURE_MMHG / DO_CONCENTRATION_25_C_1_ATM_MG_L
 )
 
 # Our current definition of acceptable error is that 95% of our predictions are within 0.5 mg/L
+ACCEPTABLE_FRACTION_OUTSIDE_ERROR = 0.05
 ACCEPTABLE_ERROR_MG_L = 0.5
+
+# Protocol 4 supports large datasets, unlike 3 which is the default
+LARGE_FILE_PICKLE_PROTOCOL = 4

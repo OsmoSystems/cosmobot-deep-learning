@@ -1,4 +1,6 @@
 import numpy as np
+from unittest.mock import sentinel
+
 import pytest
 
 from . import preprocess_image as module
@@ -126,6 +128,29 @@ class TestCropAndScaleImage:
         np.testing.assert_array_equal(actual, expected)
 
 
+class TestOpenCropAndScaleROIs:
+    def test_ROI_order_is_preserved(self, mocker):
+        test_roi_names = ["ROI 2", "ROI 0", "ROI 1"]
+        test_roi_definitions = {
+            "ROI 0": sentinel.ROI_0,
+            "ROI 1": sentinel.ROI_1,
+            "ROI 2": sentinel.ROI_2,
+        }
+        mocker.patch.object(
+            module,
+            "_get_ROI_for_image",
+            side_effect=lambda image, definitions, name, _: test_roi_definitions[name],
+        )
+        mocker.patch.object(module, "open_as_rgb", return_value=sentinel.rgb_image)
+
+        expected_result = [sentinel.ROI_2, sentinel.ROI_0, sentinel.ROI_1]
+        actual_result = module.open_crop_and_scale_ROIs(
+            (sentinel.image_path, test_roi_definitions), test_roi_names, 64
+        )
+
+        assert actual_result == expected_result
+
+
 class TestOpenAndPreprocessImages:
     def test_parallel_map_preserves_order(self, mocker):
         # Mostly a smoke test, but also a valuable regression test if
@@ -194,3 +219,62 @@ class TestOpenAndPreprocessImages:
         )
 
         np.testing.assert_array_equal(actual[0], expected)
+
+
+class TestOpenAndPreprocessROIs:
+    def test_results_grouped_by_ROI(self, mocker):
+        mock_image_0_ROIs = ["image_A_ROI_0", "image_A_ROI_1"]
+        mock_image_1_ROIs = ["image_B_ROI_0", "image_B_ROI_1"]
+        # Return ROIs grouped by image
+        mocker.patch.object(
+            module,
+            "_get_ROI_for_image",
+            side_effect=mock_image_0_ROIs + mock_image_1_ROIs,
+        )
+        mocker.patch.object(module, "open_as_rgb")
+
+        # fmt: off
+        # Expect ROIs grouped by ROI
+        expected_result = np.array(
+            [
+                ["image_A_ROI_0", "image_B_ROI_0"],
+                ["image_A_ROI_1", "image_B_ROI_1"]
+            ]
+        )
+        # fmt: on
+
+        actual_result = module.open_and_preprocess_image_ROIs(
+            images_and_ROI_definitions=[("A", "definitions"), ("B", "definitions")],
+            ROI_names=["ROI 0", "ROI 1"],
+            crop_size=64,
+            max_workers=1,
+        )
+
+        np.testing.assert_equal(actual_result, expected_result)
+
+
+# COPY-PASTA from cosmobot-process-experiment
+class TestCropImage:
+    def test_crop_image(self):
+        image = np.array(
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12],
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24],
+            ]
+        )
+        # start_col, start_row, cols, rows
+        region = (1, 2, 2, 3)
+
+        # fmt: off
+        expected = [
+            [10, 11],
+            [14, 15],
+            [18, 19]
+        ]
+        # fmt: on
+
+        np.testing.assert_array_equal(module.crop_image(image, region), expected)

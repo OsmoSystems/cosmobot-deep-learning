@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import plotly.graph_objs as go
 import wandb
 
@@ -23,71 +22,6 @@ def _downsample(array: np.ndarray, max_samples: int):
         int
     )
     return array[downsampled_indexes]
-
-
-def _get_loss_over_epochs_figure(training_history):
-    """
-    Generates a figure that shows loss over epochs for both the dev and training data,
-    with their rolling median for the last 200 epochs.
-    """
-    history_dict = training_history.history
-
-    loss_over_epochs = np.array(history_dict["loss"])
-    val_loss_over_epochs = np.array(history_dict["val_loss"])
-    epochs = np.array(list(range(1, len(loss_over_epochs) + 1)))
-    rolling_median_n_epochs = 200
-
-    val_loss_over_epochs_rolling_median = (
-        pd.Series(val_loss_over_epochs).rolling(rolling_median_n_epochs).median()
-    )
-    loss_over_epochs_rolling_median = (
-        pd.Series(loss_over_epochs).rolling(rolling_median_n_epochs).median()
-    )
-
-    # downsample for plotly performance
-    num_traces = 4  # number of traces on this figure
-    max_samples_per_trace = int(_PLOTLY_WANDB_MAX_POINTS / num_traces)
-    downsampled_val_loss_over_epochs = _downsample(
-        val_loss_over_epochs, max_samples_per_trace
-    )
-    downsampled_loss_over_epochs = _downsample(loss_over_epochs, max_samples_per_trace)
-    downsampled_val_loss_over_epochs_rolling_median = _downsample(
-        val_loss_over_epochs_rolling_median, max_samples_per_trace
-    )
-    downsampled_loss_over_epochs_rolling_median = _downsample(
-        loss_over_epochs_rolling_median, max_samples_per_trace
-    )
-    downsampled_epochs = list(_downsample(epochs, max_samples_per_trace))
-
-    return go.Figure(
-        [
-            {
-                "x": downsampled_epochs,
-                "y": list(downsampled_val_loss_over_epochs),
-                "name": "Dev loss",
-            },
-            {
-                "x": downsampled_epochs,
-                "y": list(downsampled_loss_over_epochs),
-                "name": "Training loss",
-            },
-            {
-                "x": downsampled_epochs,
-                "y": list(downsampled_val_loss_over_epochs_rolling_median),
-                "name": "Dev loss trailing median",
-            },
-            {
-                "x": downsampled_epochs,
-                "y": list(downsampled_loss_over_epochs_rolling_median),
-                "name": "Training loss trailing median",
-            },
-        ],
-        layout={
-            "title": _TRAINING_LOSS_OVER_EPOCHS_TITLE,
-            "xaxis": {"title": "Epoch"},
-            "yaxis": {"title": "Loss (log scale)", "type": "log"},
-        },
-    )
 
 
 def _get_actual_vs_predicted_do_figure(
@@ -157,17 +91,6 @@ def _get_do_prediction_error_figure(
 
 def _log_figure_to_wandb(name, figure):
     wandb.log({name: figure})
-
-
-def log_loss_over_epochs(history):
-    """
-    Logs a visualization of "Training loss over epochs" to W&B
-
-    Args:
-        history: History object from model.fit()
-    """
-    figure = _get_loss_over_epochs_figure(history)
-    _log_figure_to_wandb(_TRAINING_LOSS_OVER_EPOCHS_TITLE, figure)
 
 
 def log_do_prediction_error(
