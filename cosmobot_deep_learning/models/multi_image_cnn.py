@@ -6,16 +6,12 @@ This model is an N-branch network that combines:
     - numeric output of each of the hand-made CNNs
 """
 
-import os
 import sys
 
 import keras
 
-from cosmobot_deep_learning.configure import (
-    parse_model_run_args,
-    get_model_name_from_filepath,
-)
-from cosmobot_deep_learning.hyperparameters import get_hyperparameters
+from cosmobot_deep_learning.configure import get_model_name_from_filepath
+from cosmobot_deep_learning.hyperparameters import get_hyperparameters_from_args
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_ROIs_and_numeric
 from cosmobot_deep_learning.run import run
 from cosmobot_deep_learning.preprocess_image import (
