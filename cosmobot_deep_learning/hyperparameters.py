@@ -178,9 +178,10 @@ def get_optimizer(hyperparameters):
     if learning_rate is not None:
         optimizer_kwargs["lr"] = learning_rate
 
-    for optimizer in Optimizer:
-        if optimizer_name == optimizer.name.lower():
-            return optimizer.value(**optimizer_kwargs)
+    optimizer = Optimizer.__members__.get(optimizer_name.upper())
 
-    # argument parser will catch this earlier, shouldn't get here
-    raise UnknownOptimizerName("unknown optimizer_name")
+    if optimizer is None:
+        # argument parser will catch this earlier, shouldn't get here
+        raise UnknownOptimizerName("unknown optimizer_name")
+
+    return optimizer.value(**optimizer_kwargs)
