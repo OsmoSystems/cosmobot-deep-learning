@@ -1,5 +1,3 @@
-from enum import Enum
-
 import keras
 
 # OXYGEN_FRACTION_IN_ATMOSPHERE = 0.2096
@@ -26,6 +24,7 @@ ACCEPTABLE_ERROR_MG_L = 0.5
 LARGE_FILE_PICKLE_PROTOCOL = 4
 
 
-class Optimizer(Enum):
-    ADAM = keras.optimizers.Adam
-    ADADELTA = keras.optimizers.Adadelta
+OPTIMIZER_CLASSES_BY_NAME = {
+    "adam": keras.optimizers.Adam,
+    "adadelta": keras.optimizers.Adadelta,
+}

@@ -1,4 +1,3 @@
-from enum import Enum
 from unittest.mock import call, Mock, sentinel
 
 import pytest
@@ -133,32 +132,27 @@ def test_remove_items_with_no_value(dictionary, expected_output):
 def mock_optimizer(mocker):
     mock_optimizer_class = Mock()
 
-    class MockOptimizer(Enum):
-        MOCK_OPTIMIZER = mock_optimizer_class
+    mock_optimizer_classes_by_name = {"mock_optimizer_name": mock_optimizer_class}
 
-    mocker.patch.object(module, "Optimizer", MockOptimizer)
+    mocker.patch.object(
+        module, "OPTIMIZER_CLASSES_BY_NAME", mock_optimizer_classes_by_name
+    )
 
     return mock_optimizer_class
 
 
 class TestGetOptimizer:
     def test_gets_correct_optimizer(self, mock_optimizer):
-        hyperparameters = {"optimizer_name": "mock_optimizer"}
+        hyperparameters = {"optimizer_name": "mock_optimizer_name"}
 
         module.get_optimizer(hyperparameters)
         mock_optimizer.assert_called_with()
 
     def test_specifies_learning_rate(self, mock_optimizer):
         hyperparameters = {
-            "optimizer_name": "mock_optimizer",
+            "optimizer_name": "mock_optimizer_name",
             "learning_rate": sentinel.learning_rate,
         }
 
         module.get_optimizer(hyperparameters)
         mock_optimizer.assert_called_with(lr=sentinel.learning_rate)
-
-    def test_raises_on_unknown_optimizer_name(self, mocker):
-        hyperparameters = {"optimizer_name": "daniel day lewis"}
-
-        with pytest.raises(module.UnknownOptimizerName):
-            module.get_optimizer(hyperparameters)

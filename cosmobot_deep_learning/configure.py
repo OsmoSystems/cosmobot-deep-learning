@@ -3,7 +3,7 @@ from pathlib import Path
 
 from typing import List
 
-from cosmobot_deep_learning.constants import Optimizer
+from cosmobot_deep_learning.constants import OPTIMIZER_CLASSES_BY_NAME
 
 
 def _string_to_bool(v):
@@ -83,7 +83,7 @@ def parse_model_run_args(
     arg_parser.add_argument("--epochs", type=int)
 
     arg_parser.add_argument(
-        "--optimizer-name", choices=[optimizer.name.lower() for optimizer in Optimizer]
+        "--optimizer-name", choices=list(OPTIMIZER_CLASSES_BY_NAME.keys())
     )
     arg_parser.add_argument("--learning-rate", type=float)
 

@@ -5,7 +5,7 @@ from cosmobot_deep_learning.constants import (
     ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
     ACCEPTABLE_ERROR_MG_L,
     ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
-    Optimizer,
+    OPTIMIZER_CLASSES_BY_NAME,
 )
 from cosmobot_deep_learning.load_dataset import (
     get_pkg_dataset_filepath,
@@ -166,10 +166,6 @@ def get_hyperparameters_from_args(
     return hyperparameters
 
 
-class UnknownOptimizerName(Exception):
-    pass
-
-
 def get_optimizer(hyperparameters):
     optimizer_name = hyperparameters["optimizer_name"]
     learning_rate = hyperparameters.get("learning_rate")
@@ -178,10 +174,7 @@ def get_optimizer(hyperparameters):
     if learning_rate is not None:
         optimizer_kwargs["lr"] = learning_rate
 
-    optimizer = Optimizer.__members__.get(optimizer_name.upper())
+    print(OPTIMIZER_CLASSES_BY_NAME)
+    optimizer_class = OPTIMIZER_CLASSES_BY_NAME[optimizer_name.lower()]
 
-    if optimizer is None:
-        # argument parser will catch this earlier, shouldn't get here
-        raise UnknownOptimizerName("unknown optimizer_name")
-
-    return optimizer.value(**optimizer_kwargs)
+    return optimizer_class(**optimizer_kwargs)
