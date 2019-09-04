@@ -19,7 +19,6 @@ from cosmobot_deep_learning.run import run
 
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
-    "dataset_filename": "2019-08-09--14-33-26_osmo_ml_dataset.csv",
     "batch_size": 3000,
     "numeric_input_columns": ["sr", "PicoLog temperature (C)"],
 }

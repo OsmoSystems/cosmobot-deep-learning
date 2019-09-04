@@ -26,7 +26,6 @@ from cosmobot_deep_learning.preprocess_image import (
 
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
-    "dataset_filename": "2019-08-09--14-33-26_osmo_ml_dataset.csv",
     "numeric_input_columns": ["sr", "PicoLog temperature (C)"],
     "image_size": 128,
 }

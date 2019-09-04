@@ -23,7 +23,6 @@ from cosmobot_deep_learning.preprocess_image import (
 
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
-    "dataset_filename": "2019-08-27--12-24-59_osmo_ml_dataset.csv",
     "numeric_input_columns": ["PicoLog temperature (C)"],
     "image_size": 64,
     # ROI names to extract from `ROI definitions` column in the dataset.
