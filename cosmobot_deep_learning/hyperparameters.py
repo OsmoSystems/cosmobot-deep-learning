@@ -56,22 +56,28 @@ def _calculate_additional_hyperparameters(
     }
 
 
+LATEST_DATASET = "2019-09-04--17-21-54_osmo_ml_dataset.csv"
 DEFAULT_LABEL_COLUMN = "setpoint O2 (mmHg)"
 DEFAULT_LOSS = "mean_squared_error"
 DEFAULT_OPTIMIZER = keras.optimizers.Adadelta()
 DEFAULT_EPOCHS = 600
 DEFAULT_BATCH_SIZE = 128
 DEFAULT_TRAINING_SET_COLUMN = "training_resampled"
-DEFAULT_DEV_SET_COLUMN = "test"
+DEFAULT_DEV_SET_COLUMN = "dev_resampled"
+# Allow some breathing room when DO readings in mmHg go above atmospheric level
+LABEL_SCALE_FACTOR_MMHG_BUFFER = 30
+DEFAULT_LABEL_SCALE_FACTOR_MMHG = (
+    ATMOSPHERIC_OXYGEN_PRESSURE_MMHG + LABEL_SCALE_FACTOR_MMHG_BUFFER
+)
 DEFAULT_ERROR_THRESHOLDS = {0.1, 0.3, 0.5}
 
 
 def get_hyperparameters(
     model_name: str,
-    dataset_filename: str,
     numeric_input_columns: List[str],
+    dataset_filename: str = LATEST_DATASET,
     label_column: str = DEFAULT_LABEL_COLUMN,
-    label_scale_factor_mmhg: float = ATMOSPHERIC_OXYGEN_PRESSURE_MMHG,
+    label_scale_factor_mmhg: float = DEFAULT_LABEL_SCALE_FACTOR_MMHG,
     epochs: int = DEFAULT_EPOCHS,
     batch_size: int = DEFAULT_BATCH_SIZE,
     optimizer=DEFAULT_OPTIMIZER,
