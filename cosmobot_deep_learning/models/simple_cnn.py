@@ -31,6 +31,7 @@ DEFAULT_HYPERPARAMETERS = {
     "optimizer_name": "adam",
     # 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
     "learning_rate": 0.0001,
+    "dropout_rate": 0.05,
 }
 
 
@@ -51,6 +52,7 @@ def create_model(hyperparameters, x_train):
     convolutional_kernel_size = hyperparameters["convolutional_kernel_size"]
     convolutional_kernel_shape = (convolutional_kernel_size, convolutional_kernel_size)
     dense_layer_units = hyperparameters["dense_layer_units"]
+    dropout_rate = hyperparameters["dropout_rate"]
 
     kernel_initializer = keras.initializers.he_normal()
 
@@ -107,6 +109,7 @@ def create_model(hyperparameters, x_train):
         [temperature_input, image_to_do_model.get_layer(name="final_dense").output]
     )
     x = keras.layers.Dense(64, kernel_initializer=kernel_initializer)(x)
+    x = keras.layers.Dropout(dropout_rate)(x)
     x = keras.layers.LeakyReLU()(x)
     x = keras.layers.Dense(64, kernel_initializer=kernel_initializer)(x)
     x = keras.layers.LeakyReLU()(x)
@@ -135,6 +138,7 @@ def get_hyperparameter_parser():
     parser.add_argument("--image-size", type=int)
     parser.add_argument("--convolutional-kernel-size", type=int)
     parser.add_argument("--dense-layer-units", type=int)
+    parser.add_argument("--dropout-rate", type=float)
     return parser
 
 
