@@ -42,6 +42,8 @@ DEFAULT_HYPERPARAMETERS = {
     "dense_layer_units": 128,
     "dropblock_size": 5,
     "dropblock_keep_prob": 0.9,
+    "layer_activation": "relu",
+    "output_layer_activation": "relu",
 }
 
 
@@ -53,9 +55,10 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
     keep_prob = hyperparameters["dropblock_keep_prob"]
     convolutional_kernel_size = hyperparameters["convolutional_kernel_size"]
     kernel_initializer = hyperparameters["kernel_initializer"]
+    layer_activation = hyperparameters["layer_activation"]
     conv_layer_kwargs = {
         "kernel_size": (convolutional_kernel_size, convolutional_kernel_size),
-        "activation": "relu",
+        "activation": layer_activation,
         "kernel_initializer": kernel_initializer,
     }
 
@@ -80,7 +83,7 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
             keras.layers.Conv2D(32, **conv_layer_kwargs),
             keras.layers.Flatten(name=f"{model_branch_id}-prep-for-dense"),
             keras.layers.Dense(
-                64, activation="relu", kernel_initializer=kernel_initializer
+                64, activation=layer_activation, kernel_initializer=kernel_initializer
             ),
             keras.layers.Dense(
                 64,
@@ -102,6 +105,10 @@ def create_model(hyperparameters, x_train):
     """
     input_ROI_names = hyperparameters["input_ROI_names"]
     optimizer = get_optimizer(hyperparameters)
+    kernel_initializer = hyperparameters["kernel_initializer"]
+    dense_layer_units = hyperparameters["dense_layer_units"]
+    layer_activation = hyperparameters["layer_activation"]
+    output_layer_activation = hyperparameters["output_layer_activation"]
 
     # x_train is a list of [numeric_inputs, ROI_input_1, ..., ROI_input_x]
     assert len(input_ROI_names) == len(x_train) - 1
@@ -117,11 +124,9 @@ def create_model(hyperparameters, x_train):
         shape=(numeric_inputs_count,), name="temperature"
     )
 
-    kernel_initializer = hyperparameters["kernel_initializer"]
-    dense_layer_units = hyperparameters["dense_layer_units"]
     dense_layer_kwargs = {
         "units": dense_layer_units,
-        "activation": "relu",
+        "activation": layer_activation,
         "kernel_initializer": kernel_initializer,
         "kernel_regularizer": regularizers.l2(0.01),
     }
@@ -136,7 +141,7 @@ def create_model(hyperparameters, x_train):
         dense_1_with_temperature
     )
     temperature_aware_do_output = keras.layers.Dense(
-        1, activation="relu", kernel_initializer=kernel_initializer
+        1, activation=output_layer_activation, kernel_initializer=kernel_initializer
     )(dense_2_with_temperature)
 
     temperature_aware_model = keras.models.Model(
@@ -161,6 +166,9 @@ def get_hyperparameter_parser():
     parser.add_argument("--dense-layer-units", type=int)
     parser.add_argument("--dropblock-size", type=int),
     parser.add_argument("--dropblock-keep-prob", type=int),
+    parser.add_argument("--dropblock-keep-prob", type=int),
+    parser.add_argument("--layer-activation", type=int),
+    parser.add_argument("--output-layer-activation", type=int),
     return parser
 
 
