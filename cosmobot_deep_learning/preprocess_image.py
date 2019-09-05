@@ -102,7 +102,7 @@ def crop_and_scale_image(rgb_image: np.ndarray, output_size: int):
     return np.array(cv2_image)
 
 
-def open_crop_and_scale_image(raw_image_path: str, output_size: int):
+def open_crop_and_scale_image(raw_image_path: str, augment: bool, output_size: int):
     """ Opens a JPEG+RAW file as an `RGB Image`, then crops to a square and resizes
         to the desired ouput_size.
 
@@ -115,11 +115,13 @@ def open_crop_and_scale_image(raw_image_path: str, output_size: int):
     """
     rgb_image = open_as_rgb(raw_image_path)
     cropped_image = crop_and_scale_image(rgb_image, output_size)
-    # Generate a random number between 0.95 0 1.05 to adjust the image brightness
-    random_brightness_adjustment = 0.95 + random.random() * 0.1
-    return change_brightness(
-        cropped_image.astype("float32"), random_brightness_adjustment
-    )
+    if augment:
+        # Generate a random number between 0.95 0 1.05 to adjust the image brightness
+        random_brightness_adjustment = 0.95 + random.random() * 0.1
+        return change_brightness(
+            cropped_image.astype("float32"), random_brightness_adjustment
+        )
+    return cropped_image
 
 
 # Not quite COPY-PASTA from cosmobot-process-experiment (modified!)
@@ -150,7 +152,9 @@ def open_crop_and_scale_ROIs(image_and_ROIs, ROI_names, output_size):
     return image_rois
 
 
-def open_and_preprocess_images(image_filepaths, image_size, max_workers=None):
+def open_and_preprocess_images(
+    image_filepaths, image_size, augment=False, max_workers=None
+):
     """ Preprocess the input images and prepare them for direct use in training a model.
         NOTE: The progress bar will only update sporadically.
 
@@ -167,7 +171,7 @@ def open_and_preprocess_images(image_filepaths, image_size, max_workers=None):
 
         # Use partial function to pass desired image_size through to new process
         open_crop_and_scale_image_with_size = functools.partial(
-            open_crop_and_scale_image, output_size=image_size
+            open_crop_and_scale_image, augment, output_size=image_size
         )
 
         return np.array(
