@@ -42,28 +42,29 @@ def get_convolutional_input(branch_id, x_train_sample_image, kernel_initializer)
     # Layer names cannot have spaces
     model_branch_id = branch_id.replace(" ", "_")
 
-    layer_kwargs = {
+    shared_layer_kwargs = {
         "activation": "relu",
         "kernel_initializer": kernel_initializer,
-        "kernel_regularizer": regularizers.l2(0.01),
     }
 
     convolutional_sub_model = keras.models.Sequential(
         [
             keras.layers.Conv2D(
-                16, (3, 3), input_shape=x_train_sample_image.shape, **layer_kwargs
+                16,
+                (3, 3),
+                input_shape=x_train_sample_image.shape,
+                **shared_layer_kwargs,
             ),
             keras.layers.MaxPooling2D(2),
-            keras.layers.Conv2D(32, (3, 3), **layer_kwargs),
+            keras.layers.Conv2D(32, (3, 3), **shared_layer_kwargs),
             keras.layers.MaxPooling2D(2),
-            keras.layers.Conv2D(32, (3, 3), **layer_kwargs),
+            keras.layers.Conv2D(32, (3, 3), **shared_layer_kwargs),
             keras.layers.Flatten(name=f"{model_branch_id}-prep-for-dense"),
-            keras.layers.Dense(64, **layer_kwargs),
+            keras.layers.Dense(64, **shared_layer_kwargs),
             keras.layers.Dense(
                 64,
                 name=f"{model_branch_id}-final_dense",
                 kernel_initializer=kernel_initializer,
-                kernel_regularizer=regularizers.l2(0.01),
             ),
         ]
     )
@@ -97,15 +98,21 @@ def create_model(hyperparameters, x_train):
         shape=(numeric_inputs_count,), name="temperature"
     )
 
+    shared_layer_kwargs = {
+        "activation": "relu",
+        "kernel_initializer": kernel_initializer,
+        "kernel_regularizer": regularizers.l2(0.01),
+    }
+
     temp_and_image_add = keras.layers.concatenate(
         [temperature_input] + [ROI_input.get_output_at(-1) for ROI_input in ROI_inputs]
     )
-    dense_1_with_temperature = keras.layers.Dense(
-        64, activation="relu", kernel_initializer=kernel_initializer
-    )(temp_and_image_add)
-    dense_2_with_temperature = keras.layers.Dense(
-        64, activation="relu", kernel_initializer=kernel_initializer
-    )(dense_1_with_temperature)
+    dense_1_with_temperature = keras.layers.Dense(64, **shared_layer_kwargs)(
+        temp_and_image_add
+    )
+    dense_2_with_temperature = keras.layers.Dense(64, **shared_layer_kwargs)(
+        dense_1_with_temperature
+    )
     temperature_aware_do_output = keras.layers.Dense(
         1, activation="sigmoid", kernel_initializer=kernel_initializer
     )(dense_2_with_temperature)
