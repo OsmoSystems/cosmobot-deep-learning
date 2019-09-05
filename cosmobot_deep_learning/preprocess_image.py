@@ -2,6 +2,7 @@ import sys
 import functools
 import concurrent.futures
 import multiprocessing
+import random
 
 import cv2
 import numpy as np
@@ -43,6 +44,12 @@ def open_as_rgb(raw_image_path: str):
     rgb_image = raw_bayer.to_rgb() / RAW_BIT_DEPTH
 
     return rgb_image
+
+
+def change_brightness(rgb_image, brightness_scale_factor):
+    hsv = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
+    hsv[..., 2] = hsv[..., 2] * brightness_scale_factor
+    return cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
 
 
 # COPY-PASTA From cosmobot process experiment
@@ -107,7 +114,12 @@ def open_crop_and_scale_image(raw_image_path: str, output_size: int):
         An `RGB Image`, cropped and scaled
     """
     rgb_image = open_as_rgb(raw_image_path)
-    return crop_and_scale_image(rgb_image, output_size)
+    cropped_image = crop_and_scale_image(rgb_image, output_size)
+    # Generate a random number between 0.95 0 1.05 to adjust the image brightness
+    random_brightness_adjustment = 0.95 + random.random() * 0.1
+    return change_brightness(
+        cropped_image.astype("float32"), random_brightness_adjustment
+    )
 
 
 # Not quite COPY-PASTA from cosmobot-process-experiment (modified!)
