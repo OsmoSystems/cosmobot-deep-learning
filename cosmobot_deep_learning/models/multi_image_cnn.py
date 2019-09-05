@@ -38,7 +38,7 @@ DEFAULT_HYPERPARAMETERS = {
         "center",
     ],
     "kernel_initializer": keras.initializers.he_normal(),
-    "kernel_size": (4, 4),
+    "convolutional_kernel_size": 4,
     "dense_layer_units": 128,
     "dropblock_size": 5,
     "dropblock_keep_prob": 0.9,
