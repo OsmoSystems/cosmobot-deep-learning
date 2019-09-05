@@ -2,6 +2,7 @@ import os
 import logging
 import pickle
 
+import keras.backend as K
 import pandas as pd
 import wandb
 from wandb.keras import WandbCallback
@@ -180,6 +181,10 @@ def run(hyperparameters, prepare_dataset, create_model):
     logging.basicConfig(
         level=logging.INFO, format=logging_format, handlers=[logging.StreamHandler()]
     )
+
+    # Use float16 to save some memory on RTX cards
+    K.set_floatx("float16")
+    K.set_epsilon(1e-4)
 
     epochs = hyperparameters["epochs"]
     batch_size = hyperparameters["batch_size"]
