@@ -166,7 +166,6 @@ def get_hyperparameter_parser():
     parser.add_argument("--dense-layer-units", type=int)
     parser.add_argument("--dropblock-size", type=int),
     parser.add_argument("--dropblock-keep-prob", type=int),
-    parser.add_argument("--dropblock-keep-prob", type=int),
     parser.add_argument("--layer-activation", type=int),
     parser.add_argument("--output-layer-activation", type=int),
     return parser
