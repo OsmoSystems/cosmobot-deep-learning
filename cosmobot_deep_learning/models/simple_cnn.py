@@ -59,24 +59,23 @@ def create_model(hyperparameters, x_train):
             keras.layers.Conv2D(
                 16,
                 convolutional_kernel_shape,
-                activation="relu",
                 input_shape=(image_size, image_size, 3),
                 kernel_initializer=kernel_initializer,
             ),
+            keras.layers.BatchNormalization(),
+            keras.activations.relu(),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
-                32,
-                convolutional_kernel_shape,
-                activation="relu",
-                kernel_initializer=kernel_initializer,
+                32, convolutional_kernel_shape, kernel_initializer=kernel_initializer
             ),
+            keras.layers.BatchNormalization(),
+            keras.activations.relu(),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
-                32,
-                convolutional_kernel_shape,
-                activation="relu",
-                kernel_initializer=kernel_initializer,
+                32, convolutional_kernel_shape, kernel_initializer=kernel_initializer
             ),
+            keras.layers.BatchNormalization(),
+            keras.activations.relu(),
             keras.layers.Flatten(name="prep-for-dense"),
             keras.layers.Dense(
                 dense_layer_units,
