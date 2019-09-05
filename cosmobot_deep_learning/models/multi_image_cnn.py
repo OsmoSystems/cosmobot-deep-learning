@@ -6,6 +6,7 @@ This model is an N-branch network that combines:
     - numeric output of each of the hand-made CNNs
 """
 
+import argparse
 import sys
 
 import keras
@@ -36,42 +37,53 @@ DEFAULT_HYPERPARAMETERS = {
         "reflectance standard",
         "center",
     ],
+    "kernel_initializer": keras.initializers.he_normal(),
+    "kernel_size": (4, 4),
+    "dense_layer_units": 128,
+    "dropblock_size": 5,
+    "dropblock_keep_prob": 0.9,
 }
 
 
-def get_convolutional_input(branch_id, x_train_sample_image, kernel_initializer):
+def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
     # Layer names cannot have spaces
     model_branch_id = branch_id.replace(" ", "_")
 
+    block_size = hyperparameters["dropblock_size"]
+    keep_prob = hyperparameters["dropblock_keep_prob"]
+    convolutional_kernel_size = hyperparameters["convolutional_kernel_size"]
+
     shared_layer_kwargs = {
+        "kernel_size": (convolutional_kernel_size, convolutional_kernel_size),
         "activation": "relu",
-        "kernel_initializer": kernel_initializer,
+        "kernel_initializer": hyperparameters["kernel_initializer"],
     }
 
     convolutional_sub_model = keras.models.Sequential(
         [
             keras.layers.Conv2D(
-                16,
-                (3, 3),
-                input_shape=x_train_sample_image.shape,
-                **shared_layer_kwargs,
+                16, input_shape=x_train_sample_image.shape, **shared_layer_kwargs
             ),
             keras.layers.MaxPooling2D(2),
             DropBlock2D(
-                block_size=5, keep_prob=0.9, name=f"{model_branch_id}-drop-block-1"
+                block_size=block_size,
+                keep_prob=keep_prob,
+                name=f"{model_branch_id}-drop-block-1",
             ),
-            keras.layers.Conv2D(32, (3, 3), **shared_layer_kwargs),
+            keras.layers.Conv2D(32, **shared_layer_kwargs),
             keras.layers.MaxPooling2D(2),
             DropBlock2D(
-                block_size=5, keep_prob=0.9, name=f"{model_branch_id}-drop-block-2"
+                block_size=block_size,
+                keep_prob=keep_prob,
+                name=f"{model_branch_id}-drop-block-2",
             ),
-            keras.layers.Conv2D(32, (3, 3), **shared_layer_kwargs),
+            keras.layers.Conv2D(32, **shared_layer_kwargs),
             keras.layers.Flatten(name=f"{model_branch_id}-prep-for-dense"),
             keras.layers.Dense(64, **shared_layer_kwargs),
             keras.layers.Dense(
                 64,
                 name=f"{model_branch_id}-final_dense",
-                kernel_initializer=kernel_initializer,
+                kernel_initializer=hyperparameters["kernel_initializer"],
             ),
         ]
     )
@@ -94,10 +106,8 @@ def create_model(hyperparameters, x_train):
     x_train_numeric = x_train[0]
     x_train_samples_count, numeric_inputs_count = x_train_numeric.shape
 
-    kernel_initializer = keras.initializers.he_normal()
-
     ROI_inputs = [
-        get_convolutional_input(ROI_name, x_train[i + 1][0], kernel_initializer)
+        get_convolutional_input(ROI_name, x_train[i + 1][0], hyperparameters)
         for i, ROI_name in enumerate(input_ROI_names)
     ]
 
@@ -105,7 +115,10 @@ def create_model(hyperparameters, x_train):
         shape=(numeric_inputs_count,), name="temperature"
     )
 
-    shared_layer_kwargs = {
+    kernel_initializer = hyperparameters["kernel_initializer"]
+    dense_layer_units = hyperparameters["dense_layer_units"]
+    dense_layer_kwargs = {
+        "units ": dense_layer_units,
         "activation": "relu",
         "kernel_initializer": kernel_initializer,
         "kernel_regularizer": regularizers.l2(0.01),
@@ -114,10 +127,10 @@ def create_model(hyperparameters, x_train):
     temp_and_image_add = keras.layers.concatenate(
         [temperature_input] + [ROI_input.get_output_at(-1) for ROI_input in ROI_inputs]
     )
-    dense_1_with_temperature = keras.layers.Dense(64, **shared_layer_kwargs)(
+    dense_1_with_temperature = keras.layers.Dense(**dense_layer_kwargs)(
         temp_and_image_add
     )
-    dense_2_with_temperature = keras.layers.Dense(64, **shared_layer_kwargs)(
+    dense_2_with_temperature = keras.layers.Dense(**dense_layer_kwargs)(
         dense_1_with_temperature
     )
     temperature_aware_do_output = keras.layers.Dense(
@@ -139,11 +152,23 @@ def create_model(hyperparameters, x_train):
     return temperature_aware_model
 
 
+def get_hyperparameter_parser():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--image-size", type=int)
+    parser.add_argument("--convolutional-kernel-size", type=int)
+    parser.add_argument("--dense-layer-units", type=int)
+    parser.add_argument("--dropblock-size", type=int),
+    parser.add_argument("--dropblock-keep-prob", type=int),
+    return parser
+
+
 def main(command_line_args):
     fix_multiprocessing_with_keras_on_macos()
 
     hyperparameters = get_hyperparameters_from_args(
-        command_line_args, DEFAULT_HYPERPARAMETERS
+        command_line_args,
+        model_default_hyperparameters=DEFAULT_HYPERPARAMETERS,
+        model_hyperparameter_parser=get_hyperparameter_parser(),
     )
 
     run(hyperparameters, prepare_dataset_ROIs_and_numeric, create_model)
