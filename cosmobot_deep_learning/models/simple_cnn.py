@@ -106,12 +106,10 @@ def create_model(hyperparameters, x_train):
     x = keras.layers.concatenate(
         [temperature_input, image_to_do_model.get_layer(name="final_dense").output]
     )
-    x = keras.layers.Dense(
-        64, activation="relu", kernel_initializer=kernel_initializer
-    )(x)
-    x = keras.layers.Dense(
-        64, activation="relu", kernel_initializer=kernel_initializer
-    )(x)
+    x = keras.layers.Dense(64, kernel_initializer=kernel_initializer)(x)
+    x = keras.layers.LeakyReLU()(x)
+    x = keras.layers.Dense(64, kernel_initializer=kernel_initializer)(x)
+    x = keras.layers.LeakyReLU()(x)
     x = keras.layers.Dense(
         1,
         activation="sigmoid",
