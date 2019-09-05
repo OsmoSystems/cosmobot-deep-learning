@@ -171,7 +171,7 @@ def open_and_preprocess_images(
 
         # Use partial function to pass desired image_size through to new process
         open_crop_and_scale_image_with_size = functools.partial(
-            open_crop_and_scale_image, augment, output_size=image_size
+            open_crop_and_scale_image, augment=augment, output_size=image_size
         )
 
         return np.array(
