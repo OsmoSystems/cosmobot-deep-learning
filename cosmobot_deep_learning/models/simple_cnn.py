@@ -31,7 +31,7 @@ DEFAULT_HYPERPARAMETERS = {
     "optimizer_name": "adam",
     # 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
     "learning_rate": 0.0001,
-    "dropout_rate": 0.05,
+    "dropout_rate": 0.0,
 }
 
 
@@ -68,13 +68,19 @@ def create_model(hyperparameters, x_train):
             keras.layers.ReLU(),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
-                32, convolutional_kernel_shape, kernel_initializer=kernel_initializer
+                32,
+                convolutional_kernel_shape,
+                kernel_initializer=kernel_initializer,
+                activity_regularizer=keras.regularizers.l1(0.001),
             ),
             keras.layers.BatchNormalization(),
             keras.layers.ReLU(),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
-                32, convolutional_kernel_shape, kernel_initializer=kernel_initializer
+                32,
+                convolutional_kernel_shape,
+                kernel_initializer=kernel_initializer,
+                activity_regularizer=keras.regularizers.l1(0.001),
             ),
             keras.layers.BatchNormalization(),
             keras.layers.ReLU(),
@@ -83,7 +89,6 @@ def create_model(hyperparameters, x_train):
                 dense_layer_units,
                 activation="relu",
                 kernel_initializer=kernel_initializer,
-                kernel_regularizer=keras.regularizers.l1(0.01),
             ),
             keras.layers.Dense(
                 dense_layer_units,
@@ -109,18 +114,10 @@ def create_model(hyperparameters, x_train):
     x = keras.layers.concatenate(
         [temperature_input, image_to_do_model.get_layer(name="final_dense").output]
     )
-    x = keras.layers.Dense(
-        64,
-        kernel_initializer=kernel_initializer,
-        kernel_regularizer=keras.regularizers.l2(0.01),
-    )(x)
+    x = keras.layers.Dense(64, kernel_initializer=kernel_initializer)(x)
     x = keras.layers.Dropout(dropout_rate)(x)
     x = keras.layers.LeakyReLU()(x)
-    x = keras.layers.Dense(
-        64,
-        kernel_initializer=kernel_initializer,
-        kernel_regularizer=keras.regularizers.l2(0.01),
-    )(x)
+    x = keras.layers.Dense(64, kernel_initializer=kernel_initializer)(x)
     x = keras.layers.LeakyReLU()(x)
     x = keras.layers.Dense(
         1,
