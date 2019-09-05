@@ -83,6 +83,7 @@ def create_model(hyperparameters, x_train):
                 dense_layer_units,
                 activation="relu",
                 kernel_initializer=kernel_initializer,
+                kernel_regularizer=keras.regularizers.l1(0.01),
             ),
             keras.layers.Dense(
                 dense_layer_units,
@@ -108,10 +109,18 @@ def create_model(hyperparameters, x_train):
     x = keras.layers.concatenate(
         [temperature_input, image_to_do_model.get_layer(name="final_dense").output]
     )
-    x = keras.layers.Dense(64, kernel_initializer=kernel_initializer)(x)
+    x = keras.layers.Dense(
+        64,
+        kernel_initializer=kernel_initializer,
+        kernel_regularizer=keras.regularizers.l2(0.01),
+    )(x)
     x = keras.layers.Dropout(dropout_rate)(x)
     x = keras.layers.LeakyReLU()(x)
-    x = keras.layers.Dense(64, kernel_initializer=kernel_initializer)(x)
+    x = keras.layers.Dense(
+        64,
+        kernel_initializer=kernel_initializer,
+        kernel_regularizer=keras.regularizers.l2(0.01),
+    )(x)
     x = keras.layers.LeakyReLU()(x)
     x = keras.layers.Dense(
         1,
