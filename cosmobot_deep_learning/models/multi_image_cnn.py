@@ -9,6 +9,7 @@ This model is an N-branch network that combines:
 import sys
 
 import keras
+from keras import regularizers
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
 from cosmobot_deep_learning.hyperparameters import (
@@ -41,31 +42,28 @@ def get_convolutional_input(branch_id, x_train_sample_image, kernel_initializer)
     # Layer names cannot have spaces
     model_branch_id = branch_id.replace(" ", "_")
 
+    layer_kwargs = {
+        "activation": "relu",
+        "kernel_initializer": kernel_initializer,
+        "kernel_regularizer": regularizers.l2(0.01),
+    }
+
     convolutional_sub_model = keras.models.Sequential(
         [
             keras.layers.Conv2D(
-                16,
-                (3, 3),
-                activation="relu",
-                input_shape=x_train_sample_image.shape,
-                kernel_initializer=kernel_initializer,
+                16, (3, 3), input_shape=x_train_sample_image.shape, **layer_kwargs
             ),
             keras.layers.MaxPooling2D(2),
-            keras.layers.Conv2D(
-                32, (3, 3), activation="relu", kernel_initializer=kernel_initializer
-            ),
+            keras.layers.Conv2D(32, (3, 3), **layer_kwargs),
             keras.layers.MaxPooling2D(2),
-            keras.layers.Conv2D(
-                32, (3, 3), activation="relu", kernel_initializer=kernel_initializer
-            ),
+            keras.layers.Conv2D(32, (3, 3), **layer_kwargs),
             keras.layers.Flatten(name=f"{model_branch_id}-prep-for-dense"),
-            keras.layers.Dense(
-                64, activation="relu", kernel_initializer=kernel_initializer
-            ),
+            keras.layers.Dense(64, **layer_kwargs),
             keras.layers.Dense(
                 64,
                 name=f"{model_branch_id}-final_dense",
                 kernel_initializer=kernel_initializer,
+                kernel_regularizer=regularizers.l2(0.01),
             ),
         ]
     )
