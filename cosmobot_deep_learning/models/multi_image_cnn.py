@@ -28,7 +28,8 @@ DEFAULT_HYPERPARAMETERS = {
     # ROI names to extract from `ROI definitions` column in the dataset.
     # WARNING: The order here is preserved through data processing and model creation / input
     # If you are using a cached dataset, make sure you have the correct order.
-    "input_ROI_names": ["DO Patch", "Reference Patch", "Reflectance Standard"],
+    "input_ROI_names": ["DO patch", "reference Patch", "reflectance Standard"],
+    "dataset_filename": "2019-08-27--12-24-59_osmo_ml_dataset.csv",
 }
 
 
