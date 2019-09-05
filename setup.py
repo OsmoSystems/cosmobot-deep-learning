@@ -12,6 +12,7 @@ setup(
     # fmt: off
     install_requires=[
         "keras",
+        "keras_drop_block",
         "keras_resnet",
         "numpy",
         "opencv-python",

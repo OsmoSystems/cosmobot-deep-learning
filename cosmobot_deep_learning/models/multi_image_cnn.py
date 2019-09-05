@@ -10,6 +10,7 @@ import sys
 
 import keras
 from keras import regularizers
+from keras_drop_block import DropBlock2D
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
 from cosmobot_deep_learning.hyperparameters import (
@@ -56,8 +57,10 @@ def get_convolutional_input(branch_id, x_train_sample_image, kernel_initializer)
                 **shared_layer_kwargs,
             ),
             keras.layers.MaxPooling2D(2),
+            DropBlock2D(block_size=5, keep_prob=0.9, name="drop-block-1"),
             keras.layers.Conv2D(32, (3, 3), **shared_layer_kwargs),
             keras.layers.MaxPooling2D(2),
+            DropBlock2D(block_size=5, keep_prob=0.9, name="drop-block-1"),
             keras.layers.Conv2D(32, (3, 3), **shared_layer_kwargs),
             keras.layers.Flatten(name=f"{model_branch_id}-prep-for-dense"),
             keras.layers.Dense(64, **shared_layer_kwargs),
