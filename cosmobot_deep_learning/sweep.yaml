@@ -4,15 +4,17 @@ metric:
   name: val_fraction_outside_0_5_mg_l_error
   goal: minimize
 parameters:
+  dataset-cache:
+    value: "roi_crops_with_center_10k_2"
   convolutional-kernel-size:
-    values: [5]
+    value: 5
   dense-layer-units:
-    values: [64]
+    value: 64
   dropblock-size:
-    values: [3]
+    value: 3
   dropblock-keep-prob:
-    values: [0.9]
+    value: 0.9
   layer-activation:
-    values: ["relu"]
+    value: "relu"
   output-layer-activation:
-    values: ["sigmoid"]
+    value: "sigmoid"
