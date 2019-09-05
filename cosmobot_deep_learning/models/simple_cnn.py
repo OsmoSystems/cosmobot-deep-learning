@@ -46,8 +46,6 @@ def create_model(hyperparameters, x_train):
     x_train_numeric, x_train_images = x_train
     x_train_samples_count, numeric_inputs_count = x_train_numeric.shape
 
-    optimizer = get_optimizer(hyperparameters)
-
     image_size = hyperparameters["image_size"]
     convolutional_kernel_size = hyperparameters["convolutional_kernel_size"]
     convolutional_kernel_shape = (convolutional_kernel_size, convolutional_kernel_size)
@@ -95,12 +93,6 @@ def create_model(hyperparameters, x_train):
         ]
     )
 
-    image_to_do_model.compile(
-        optimizer=optimizer,
-        loss=hyperparameters["loss"],
-        metrics=hyperparameters["metrics"],
-    )
-
     temperature_input = keras.layers.Input(
         shape=(numeric_inputs_count,), name="temperature"
     )
@@ -121,19 +113,9 @@ def create_model(hyperparameters, x_train):
         name="temp-aware-DO",
     )(dense_2_with_temperature)
 
-    temperature_aware_model = multi_gpu_model(
-        keras.models.Model(
-            inputs=[temperature_input, image_to_do_model.get_input_at(0)],
-            outputs=[temperature_aware_do_output],
-        ),
-        gpus=2,
-        cpu_relocation=True,
-    )
-
-    temperature_aware_model.compile(
-        optimizer=optimizer,
-        loss=hyperparameters["loss"],
-        metrics=hyperparameters["metrics"],
+    temperature_aware_model = keras.models.Model(
+        inputs=[temperature_input, image_to_do_model.get_input_at(0)],
+        outputs=[temperature_aware_do_output],
     )
 
     return temperature_aware_model
