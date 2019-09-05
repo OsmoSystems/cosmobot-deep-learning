@@ -64,7 +64,7 @@ def create_model(hyperparameters, x_train):
                 input_shape=(image_size, image_size, 3),
                 kernel_initializer=kernel_initializer,
             ),
-            keras.layers.BatchNormalization(),
+            # keras.layers.BatchNormalization(),
             keras.layers.ReLU(),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
@@ -73,7 +73,7 @@ def create_model(hyperparameters, x_train):
                 kernel_initializer=kernel_initializer,
                 activity_regularizer=keras.regularizers.l1(0.001),
             ),
-            keras.layers.BatchNormalization(),
+            # keras.layers.BatchNormalization(),
             keras.layers.ReLU(),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
@@ -82,7 +82,7 @@ def create_model(hyperparameters, x_train):
                 kernel_initializer=kernel_initializer,
                 activity_regularizer=keras.regularizers.l1(0.001),
             ),
-            keras.layers.BatchNormalization(),
+            # keras.layers.BatchNormalization(),
             keras.layers.ReLU(),
             keras.layers.Flatten(name="prep-for-dense"),
             keras.layers.Dense(
