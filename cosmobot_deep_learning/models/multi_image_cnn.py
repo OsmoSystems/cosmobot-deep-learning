@@ -121,7 +121,7 @@ def create_model(hyperparameters, x_train):
         dense_1_with_temperature
     )
     temperature_aware_do_output = keras.layers.Dense(
-        1, activation="sigmoid", kernel_initializer=kernel_initializer
+        1, activation="relu", kernel_initializer=kernel_initializer
     )(dense_2_with_temperature)
 
     temperature_aware_model = keras.models.Model(
