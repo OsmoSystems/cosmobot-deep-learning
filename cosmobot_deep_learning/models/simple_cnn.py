@@ -103,25 +103,24 @@ def create_model(hyperparameters, x_train):
         shape=(numeric_inputs_count,), name="temperature"
     )
 
-    temp_and_image_add = keras.layers.concatenate(
+    x = keras.layers.concatenate(
         [temperature_input, image_to_do_model.get_layer(name="final_dense").output]
     )
-    dense_1_with_temperature = keras.layers.Dense(
+    x = keras.layers.Dense(
         64, activation="relu", kernel_initializer=kernel_initializer
-    )(temp_and_image_add)
-    dense_2_with_temperature = keras.layers.Dense(
+    )(x)
+    x = keras.layers.Dense(
         64, activation="relu", kernel_initializer=kernel_initializer
-    )(dense_1_with_temperature)
-    temperature_aware_do_output = keras.layers.Dense(
+    )(x)
+    x = keras.layers.Dense(
         1,
         activation="sigmoid",
         kernel_initializer=kernel_initializer,
         name="temp-aware-DO",
-    )(dense_2_with_temperature)
+    )(x)
 
     temperature_aware_model = keras.models.Model(
-        inputs=[temperature_input, image_to_do_model.get_input_at(0)],
-        outputs=[temperature_aware_do_output],
+        inputs=[temperature_input, image_to_do_model.get_input_at(0)], outputs=[x]
     )
 
     temperature_aware_model.compile(
