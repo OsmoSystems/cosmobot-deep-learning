@@ -53,7 +53,7 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
     keep_prob = hyperparameters["dropblock_keep_prob"]
     convolutional_kernel_size = hyperparameters["convolutional_kernel_size"]
     kernel_initializer = hyperparameters["kernel_initializer"]
-    shared_layer_kwargs = {
+    conv_layer_kwargs = {
         "kernel_size": (convolutional_kernel_size, convolutional_kernel_size),
         "activation": "relu",
         "kernel_initializer": kernel_initializer,
@@ -62,7 +62,7 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
     convolutional_sub_model = keras.models.Sequential(
         [
             keras.layers.Conv2D(
-                16, input_shape=x_train_sample_image.shape, **shared_layer_kwargs
+                16, input_shape=x_train_sample_image.shape, **conv_layer_kwargs
             ),
             keras.layers.MaxPooling2D(2),
             DropBlock2D(
@@ -70,14 +70,14 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
                 keep_prob=keep_prob,
                 name=f"{model_branch_id}-drop-block-1",
             ),
-            keras.layers.Conv2D(32, **shared_layer_kwargs),
+            keras.layers.Conv2D(32, **conv_layer_kwargs),
             keras.layers.MaxPooling2D(2),
             DropBlock2D(
                 block_size=block_size,
                 keep_prob=keep_prob,
                 name=f"{model_branch_id}-drop-block-2",
             ),
-            keras.layers.Conv2D(32, **shared_layer_kwargs),
+            keras.layers.Conv2D(32, **conv_layer_kwargs),
             keras.layers.Flatten(name=f"{model_branch_id}-prep-for-dense"),
             keras.layers.Dense(
                 64, activation="relu", kernel_initializer=kernel_initializer
@@ -120,7 +120,7 @@ def create_model(hyperparameters, x_train):
     kernel_initializer = hyperparameters["kernel_initializer"]
     dense_layer_units = hyperparameters["dense_layer_units"]
     dense_layer_kwargs = {
-        "units ": dense_layer_units,
+        "units": dense_layer_units,
         "activation": "relu",
         "kernel_initializer": kernel_initializer,
         "kernel_regularizer": regularizers.l2(0.01),
