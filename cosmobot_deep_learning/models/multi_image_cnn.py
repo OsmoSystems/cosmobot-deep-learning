@@ -52,11 +52,11 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
     block_size = hyperparameters["dropblock_size"]
     keep_prob = hyperparameters["dropblock_keep_prob"]
     convolutional_kernel_size = hyperparameters["convolutional_kernel_size"]
-
+    kernel_initializer = hyperparameters["kernel_initializer"]
     shared_layer_kwargs = {
         "kernel_size": (convolutional_kernel_size, convolutional_kernel_size),
         "activation": "relu",
-        "kernel_initializer": hyperparameters["kernel_initializer"],
+        "kernel_initializer": kernel_initializer,
     }
 
     convolutional_sub_model = keras.models.Sequential(
@@ -79,11 +79,13 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
             ),
             keras.layers.Conv2D(32, **shared_layer_kwargs),
             keras.layers.Flatten(name=f"{model_branch_id}-prep-for-dense"),
-            keras.layers.Dense(64, **shared_layer_kwargs),
+            keras.layers.Dense(
+                64, activation="relu", kernel_initializer=kernel_initializer
+            ),
             keras.layers.Dense(
                 64,
                 name=f"{model_branch_id}-final_dense",
-                kernel_initializer=hyperparameters["kernel_initializer"],
+                kernel_initializer=kernel_initializer,
             ),
         ]
     )
