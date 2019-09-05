@@ -62,7 +62,7 @@ DEFAULT_LABEL_COLUMN = "setpoint O2 (mmHg)"
 DEFAULT_LOSS = "mean_squared_error"
 DEFAULT_OPTIMIZER_NAME = "adadelta"
 DEFAULT_EPOCHS = 600
-DEFAULT_BATCH_SIZE = 128
+DEFAULT_BATCH_SIZE = 1000
 DEFAULT_TRAINING_SET_COLUMN = "training_resampled"
 DEFAULT_DEV_SET_COLUMN = "dev_resampled"
 # Allow some breathing room when DO readings in mmHg go above atmospheric level

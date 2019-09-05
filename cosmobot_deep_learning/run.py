@@ -4,6 +4,7 @@ import pickle
 
 import pandas as pd
 import wandb
+from keras.utils import multi_gpu_model
 from wandb.keras import WandbCallback
 
 from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
@@ -189,7 +190,7 @@ def run(hyperparameters, prepare_dataset, create_model):
         "acceptable_fraction_outside_error"
     ]
 
-    _set_or_check_cuda_visible_devices(hyperparameters.get("gpu"))
+    # _set_or_check_cuda_visible_devices(hyperparameters.get("gpu"))
 
     if hyperparameters["dryrun"]:
         epochs = 1

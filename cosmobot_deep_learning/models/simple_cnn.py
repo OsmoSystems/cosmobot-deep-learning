@@ -10,6 +10,7 @@ import argparse
 import sys
 
 import keras
+from keras.utils import multi_gpu_model
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
 from cosmobot_deep_learning.hyperparameters import (
@@ -120,9 +121,13 @@ def create_model(hyperparameters, x_train):
         name="temp-aware-DO",
     )(dense_2_with_temperature)
 
-    temperature_aware_model = keras.models.Model(
-        inputs=[temperature_input, image_to_do_model.get_input_at(0)],
-        outputs=[temperature_aware_do_output],
+    temperature_aware_model = multi_gpu_model(
+        keras.models.Model(
+            inputs=[temperature_input, image_to_do_model.get_input_at(0)],
+            outputs=[temperature_aware_do_output],
+        ),
+        gpus=2,
+        cpu_relocation=True,
     )
 
     temperature_aware_model.compile(
