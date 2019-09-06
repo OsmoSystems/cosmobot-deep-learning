@@ -131,11 +131,11 @@ def open_crop_and_scale_ROIs(image_and_ROIs, ROI_names, output_size):
     """
     rgb_image_filepath, ROI_definitions = image_and_ROIs
 
-    # Hacky way to add in a manual ROI definition for the center ROI
+    # Hacky way to add in manual ROI definitions
     additional_ROI_definitions = {
         # "background": [350, 510, 230, 230],
-        # "upper left": [350, 245, 230, 230],
-        "center": [650, 550, 250, 250]
+        "upper left": [350, 245, 230, 230],
+        "center": [650, 550, 250, 250],
     }
 
     ROI_definitions = {**ROI_definitions, **additional_ROI_definitions}

@@ -36,14 +36,18 @@ DEFAULT_HYPERPARAMETERS = {
         "reference patch",
         "reflectance standard",
         "center",
+        "upper left",
     ],
     "kernel_initializer": keras.initializers.he_normal(),
     "convolutional_kernel_size": 4,
     "dense_layer_units": 128,
+    "conv_dense_layer_1_units": 64,
+    "conv_dense_layer_2_units": 64,
     "dropblock_size": 5,
     "dropblock_keep_prob": 0.9,
+    "l2_regularization": 0.01,
     "layer_activation": "relu",
-    "output_layer_activation": "relu",
+    "output_layer_activation": "sigmoid",
 }
 
 
@@ -56,6 +60,8 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
     convolutional_kernel_size = hyperparameters["convolutional_kernel_size"]
     kernel_initializer = hyperparameters["kernel_initializer"]
     layer_activation = hyperparameters["layer_activation"]
+    dense_layer_1_units = hyperparameters["conv_dense_layer_1_units"]
+    dense_layer_2_units = hyperparameters["conv_dense_layer_2_units"]
     conv_layer_kwargs = {
         "kernel_size": (convolutional_kernel_size, convolutional_kernel_size),
         "activation": layer_activation,
@@ -83,10 +89,12 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
             keras.layers.Conv2D(32, **conv_layer_kwargs),
             keras.layers.Flatten(name=f"{model_branch_id}-prep-for-dense"),
             keras.layers.Dense(
-                64, activation=layer_activation, kernel_initializer=kernel_initializer
+                dense_layer_1_units,
+                activation=layer_activation,
+                kernel_initializer=kernel_initializer,
             ),
             keras.layers.Dense(
-                64,
+                dense_layer_2_units,
                 name=f"{model_branch_id}-final_dense",
                 kernel_initializer=kernel_initializer,
             ),
@@ -108,6 +116,7 @@ def create_model(hyperparameters, x_train):
     kernel_initializer = hyperparameters["kernel_initializer"]
     dense_layer_units = hyperparameters["dense_layer_units"]
     layer_activation = hyperparameters["layer_activation"]
+    l2_regularization = hyperparameters["l2_regularization"]
     output_layer_activation = hyperparameters["output_layer_activation"]
 
     # x_train is a list of [numeric_inputs, ROI_input_1, ..., ROI_input_x]
@@ -128,7 +137,7 @@ def create_model(hyperparameters, x_train):
         "units": dense_layer_units,
         "activation": layer_activation,
         "kernel_initializer": kernel_initializer,
-        "kernel_regularizer": regularizers.l2(0.01),
+        "kernel_regularizer": regularizers.l2(l2_regularization),
     }
 
     temp_and_image_add = keras.layers.concatenate(
@@ -164,6 +173,9 @@ def get_hyperparameter_parser():
     parser.add_argument("--image-size", type=int)
     parser.add_argument("--convolutional-kernel-size", type=int)
     parser.add_argument("--dense-layer-units", type=int)
+    parser.add_argument("--conv-dense-layer-1-units", type=int)
+    parser.add_argument("--conv-dense-layer-2-units", type=int)
+    parser.add_argument("--l2-regularization", type=int),
     parser.add_argument("--dropblock-size", type=int),
     parser.add_argument("--dropblock-keep-prob", type=float),
     parser.add_argument("--layer-activation", type=str),

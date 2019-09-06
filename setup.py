@@ -20,7 +20,8 @@ setup(
         "plotly>=4,<5",
         "picamraw",
         "scipy",
-        "tqdm",
+        # Older versions break multiprocess https://github.com/pytorch/vision/issues/544
+        "tqdm>=4.29",
         "wandb",
     ],
     # fmt: on
