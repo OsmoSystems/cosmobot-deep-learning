@@ -1,0 +1,22 @@
+
+program: cosmobot_deep_learning/models/simple_cnn.py
+method: bayes
+metric:
+  name: val_fraction_outside_0_5_mg_l_error
+  goal: minimize
+parameters:
+  dataset-cache:
+    value: "10k-remix-simple-cnn"
+  convolutional-kernel-size:
+    values: [3, 4, 5]
+  dense-layer-units:
+    values: [32, 64, 128]
+  prediction-dense-layer-units:
+    values: [32, 64, 128]
+  dropout-rate:
+    values: [0.0, 0.01, 0.1]
+  convolutional-activation-layer:
+    values: ["relu", "leakyrelu"]
+  output-layer-activation:
+    values: ["linear", "sigmoid"]
+  

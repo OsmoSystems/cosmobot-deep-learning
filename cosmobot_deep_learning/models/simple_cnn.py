@@ -11,6 +11,7 @@ import sys
 
 import keras
 
+from cosmobot_deep_learning.constants import ACTIVATION_LAYER_BY_NAME
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
 from cosmobot_deep_learning.hyperparameters import (
     get_hyperparameters_from_args,
@@ -28,10 +29,13 @@ DEFAULT_HYPERPARAMETERS = {
     "image_size": 128,
     "convolutional_kernel_size": 3,
     "dense_layer_units": 64,
+    "prediction_dense_layer_units": 64,
     "optimizer_name": "adam",
     # 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
     "learning_rate": 0.0001,
     "dropout_rate": 0.0,
+    "output_layer_activation": "sigmoid",
+    "convolutional_activation_layer": "relu",
 }
 
 
@@ -52,7 +56,12 @@ def create_model(hyperparameters, x_train):
     convolutional_kernel_size = hyperparameters["convolutional_kernel_size"]
     convolutional_kernel_shape = (convolutional_kernel_size, convolutional_kernel_size)
     dense_layer_units = hyperparameters["dense_layer_units"]
+    prediction_dense_layer_units = hyperparameters["prediction_dense_layer_units"]
     dropout_rate = hyperparameters["dropout_rate"]
+    output_layer_activation = hyperparameters["output_layer_activation"]
+    convolutional_activation_layer = ACTIVATION_LAYER_BY_NAME[
+        hyperparameters["convolutional_activation_layer"]
+    ]
 
     kernel_initializer = keras.initializers.he_normal()
 
@@ -68,22 +77,16 @@ def create_model(hyperparameters, x_train):
             keras.layers.ReLU(),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
-                32,
-                convolutional_kernel_shape,
-                kernel_initializer=kernel_initializer,
-                activity_regularizer=keras.regularizers.l1(0.001),
+                32, convolutional_kernel_shape, kernel_initializer=kernel_initializer
             ),
             # keras.layers.BatchNormalization(),
-            keras.layers.ReLU(),
+            convolutional_activation_layer(),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
-                32,
-                convolutional_kernel_shape,
-                kernel_initializer=kernel_initializer,
-                activity_regularizer=keras.regularizers.l1(0.001),
+                32, convolutional_kernel_shape, kernel_initializer=kernel_initializer
             ),
             # keras.layers.BatchNormalization(),
-            keras.layers.ReLU(),
+            convolutional_activation_layer(),
             keras.layers.Flatten(name="prep-for-dense"),
             keras.layers.Dense(
                 dense_layer_units,
@@ -114,14 +117,18 @@ def create_model(hyperparameters, x_train):
     x = keras.layers.concatenate(
         [temperature_input, image_to_do_model.get_layer(name="final_dense").output]
     )
-    x = keras.layers.Dense(64, kernel_initializer=kernel_initializer)(x)
+    x = keras.layers.Dense(
+        prediction_dense_layer_units, kernel_initializer=kernel_initializer
+    )(x)
     x = keras.layers.Dropout(dropout_rate)(x)
     x = keras.layers.LeakyReLU()(x)
-    x = keras.layers.Dense(64, kernel_initializer=kernel_initializer)(x)
+    x = keras.layers.Dense(
+        prediction_dense_layer_units, kernel_initializer=kernel_initializer
+    )(x)
     x = keras.layers.LeakyReLU()(x)
     x = keras.layers.Dense(
         1,
-        activation="sigmoid",
+        activation=output_layer_activation,
         kernel_initializer=kernel_initializer,
         name="temp-aware-DO",
     )(x)
@@ -144,7 +151,13 @@ def get_hyperparameter_parser():
     parser.add_argument("--image-size", type=int)
     parser.add_argument("--convolutional-kernel-size", type=int)
     parser.add_argument("--dense-layer-units", type=int)
+    parser.add_argument("--prediction-dense-layer-units", type=int)
     parser.add_argument("--dropout-rate", type=float)
+    parser.add_argument("--output-layer-activation", type=str),
+    parser.add_argument(
+        "--convolutional-activation-layer",
+        choices=list(ACTIVATION_LAYER_BY_NAME.keys()),
+    )
     return parser
 
 
