@@ -117,6 +117,18 @@ def _get_ROI_for_image(rgb_image, ROI_definitions, ROI_name, crop_size):
     )
 
 
+def _add_padding_to_definition(roi_definition, padding):
+    x, y, width, height = roi_definition
+    return (x - padding, y - padding, width + 2 * padding, height + 2 * padding)
+
+
+def _add_padding_to_definitions(roi_definitions, padding):
+    return {
+        roi_name: _add_padding_to_definition(roi_definition, padding)
+        for roi_name, roi_definition in roi_definitions.items()
+    }
+
+
 def open_crop_and_scale_ROIs(image_and_ROIs, ROI_names, output_size):
     """ Opens a JPEG+RAW file as an `RGB Image`, then crops each individual ROI to a
         square and resizes to the desired ouput_size.
@@ -140,9 +152,11 @@ def open_crop_and_scale_ROIs(image_and_ROIs, ROI_names, output_size):
 
     ROI_definitions = {**ROI_definitions, **additional_ROI_definitions}
 
+    padded_roi_defitions = _add_padding_to_definitions(ROI_definitions, padding=40)
+
     rgb_image = open_as_rgb(rgb_image_filepath)
     image_rois = [
-        _get_ROI_for_image(rgb_image, ROI_definitions, ROI_name, output_size)
+        _get_ROI_for_image(rgb_image, padded_roi_defitions, ROI_name, output_size)
         for ROI_name in ROI_names  # Extract ROIs in same order provided
     ]
     return image_rois
