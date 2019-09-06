@@ -152,7 +152,7 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
 
     x_train_numeric = extract_inputs(train_samples, numeric_input_columns)
     x_train_images = open_and_preprocess_images(
-        train_samples["local_filepath"].values, image_size, augment=True
+        train_samples["local_filepath"].values, image_size
     )
     y_train = extract_labels(train_samples, label_column, label_scale_factor_mmhg)
 
