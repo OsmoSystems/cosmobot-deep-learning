@@ -31,5 +31,5 @@ OPTIMIZER_CLASSES_BY_NAME = {
 
 ACTIVATION_LAYER_BY_NAME = {
     "relu": keras.layers.ReLU,
-    "leakyrelu": keras.layers.advanced_activations.LeakyReLU(),
+    "leakyrelu": keras.layers.LeakyReLU,
 }
