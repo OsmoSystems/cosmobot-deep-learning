@@ -8,8 +8,7 @@ from . import configure as module
 class TestParseArgs:
     def test_all_args_parsed_appropriately(self):
         args_in = [
-            "--gpu",
-            "-1",
+            "--no-gpu",
             "--dryrun",
             "--dataset-cache",
             "10k-images-and-temp",
@@ -22,7 +21,7 @@ class TestParseArgs:
         ]
 
         expected_args_out = {
-            "gpu": -1,
+            "no_gpu": True,
             "dryrun": True,
             "dataset_cache_name": "10k-images-and-temp",
             "epochs": 100,
@@ -40,6 +39,21 @@ class TestParseArgs:
         args_in = ["--extra"]
         with pytest.raises(SystemExit):
             module.parse_model_run_args(args_in)
+
+    @pytest.mark.parametrize(
+        "args_in,expected_no_gpu_value",
+        (
+            ([], False),
+            (["--no-gpu"], True),
+            (["--no-gpu=True"], True),
+            (["--no-gpu=False"], False),
+            (["--no-gpu", "True"], True),
+            (["--no-gpu", "False"], False),
+        ),
+    )
+    def test_no_gpu_formats(self, args_in, expected_no_gpu_value):
+        args_out = vars(module.parse_model_run_args(args_in))
+        assert args_out["no_gpu"] == expected_no_gpu_value
 
     @pytest.mark.parametrize(
         "args_in,expected_dryrun_value",

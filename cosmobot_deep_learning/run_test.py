@@ -1,3 +1,4 @@
+import os
 from unittest.mock import sentinel
 
 import pytest
@@ -22,6 +23,11 @@ def mock_dataset_cache_helpers(mocker):
         "_load_dataset_cache": mock_load_dataset_cache,
         "_save_dataset_cache": mock_save_dataset_cache,
     }
+
+
+@pytest.fixture
+def mock_get_gpu_stats(mocker):
+    return mocker.patch.object(module, "_get_gpu_stats")
 
 
 class TestLoggableHyperparameters:
@@ -164,3 +170,40 @@ class TestShuffleDataframe:
         expected = expected.reset_index(drop=True)
 
         assert_frame_equal(module._shuffle_dataframe(dataframe), expected)
+
+
+class TestSetCUDAVisibleDevices:
+    def test_sets_cpu_mode_on_dryrun(self):
+        module._set_cuda_visible_devices(no_gpu=False, dryrun=True)
+
+        assert os.getenv("CUDA_VISIBLE_DEVICES") == "-1"
+
+    def test_sets_cpu_mode_when_gpu_disabled(self):
+        module._set_cuda_visible_devices(no_gpu=True, dryrun=False)
+
+        assert os.getenv("CUDA_VISIBLE_DEVICES") == "-1"
+
+    @pytest.mark.parametrize(
+        "stats,expected",
+        (
+            ({"GPU ID": [0], "Memory Free (MiB)": [7001]}, "0"),
+            ({"GPU ID": [0, 1], "Memory Free (MiB)": [7001, 10]}, "0"),
+            ({"GPU ID": [0, 1], "Memory Free (MiB)": [10, 7001]}, "1"),
+            ({"GPU ID": [0, 1, 2], "Memory Free (MiB)": [10, 10, 7001]}, "2"),
+            ({"GPU ID": [0, 1, 2, 3], "Memory Free (MiB)": [10, 10, 10, 7001]}, "3"),
+        ),
+    )
+    def test_gets_first_available_gpu(self, mock_get_gpu_stats, stats, expected):
+        test_stats = pd.DataFrame(stats)
+        mock_get_gpu_stats.return_value = test_stats
+
+        module._set_cuda_visible_devices(no_gpu=False, dryrun=False)
+
+        assert os.getenv("CUDA_VISIBLE_DEVICES") == expected
+
+    def test_raises_if_no_available_gpu(self, mock_get_gpu_stats):
+        test_stats = pd.DataFrame({"GPU ID": [0], "Memory Free (MiB)": [6999]})
+        mock_get_gpu_stats.return_value = test_stats
+
+        with pytest.raises(module.NoGPUAvailable):
+            module._set_cuda_visible_devices(no_gpu=False, dryrun=False)

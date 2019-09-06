@@ -22,7 +22,12 @@ from cosmobot_deep_learning.custom_metrics import (
 )
 from cosmobot_deep_learning import visualizations
 
-GPU_AVAILABLE_MEMORY_THRESHOLD = 4000
+GPU_AVAILABLE_MEMORY_THRESHOLD = 7000
+
+
+class NoGPUAvailable(Exception):
+    # Raised when no GPUs are available for training and --no-gpu or --dryrun were not set
+    pass
 
 
 def _loggable_hyperparameters(hyperparameters):
@@ -151,6 +156,24 @@ def _prepare_dataset_with_caching(prepare_dataset, hyperparameters):
         return dataset
 
 
+def _get_gpu_stats():
+    gpu_stats = pd.read_csv(
+        io.StringIO(
+            subprocess.check_output(
+                'nvidia-smi --query-gpu="index,memory.free" --format=csv', shell=True
+            ).decode("utf-8")
+        ),
+        header=0,
+        names=["GPU ID", "Memory Free (MiB)"],
+    )
+
+    gpu_stats["Memory Free (MiB)"] = (
+        gpu_stats["Memory Free (MiB)"].str.extract(r"(\d+)").astype(int)
+    )
+
+    return gpu_stats
+
+
 def _set_cuda_visible_devices(no_gpu, dryrun):
     """ Assign CUDA_VISIBLE_DEVICES to any available GPU.
         If no_gpu or dryrun are truthy, set CUDA_VISIBLE_DEVICES to -1 for CPU training.
@@ -161,28 +184,15 @@ def _set_cuda_visible_devices(no_gpu, dryrun):
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
     else:
-        gpu_stats = pd.read_csv(
-            io.StringIO(
-                subprocess.check_output(
-                    'nvidia-smi --query-gpu="index,memory.free" --format=csv',
-                    shell=True,
-                ).decode("utf-8")
-            ),
-            header=0,
-            names=["GPU ID", "Memory Free (MiB)"],
-        )
+        gpu_stats = _get_gpu_stats()
 
-        gpu_stats["Memory Free (MiB)"] = (
-            gpu_stats["Memory Free (MiB)"].str.extract(r"(\d+)").astype(int)
-        )
-
-        # Get devices where at least half the memory is free
+        # Get devices where most of the memory is free
         free_gpus = gpu_stats[
             gpu_stats["Memory Free (MiB)"] > GPU_AVAILABLE_MEMORY_THRESHOLD
         ]
 
         if not free_gpus["GPU ID"].size:
-            raise Exception("No available GPUs")
+            raise NoGPUAvailable("No GPUs with enough available memory")
 
         device_id = free_gpus["GPU ID"].iloc[0]
 
