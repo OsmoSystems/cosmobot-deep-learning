@@ -181,7 +181,7 @@ def _set_cuda_visible_devices(no_gpu, dryrun):
             gpu_stats["Memory Free (MiB)"] > GPU_AVAILABLE_MEMORY_THRESHOLD
         ]
 
-        if not free_gpus["GPU ID"].any():
+        if not free_gpus["GPU ID"].size:
             raise Exception("No available GPUs")
 
         device_id = free_gpus["GPU ID"].iloc[0]
