@@ -2,7 +2,6 @@ import sys
 import functools
 import concurrent.futures
 import multiprocessing
-import random
 
 import cv2
 import numpy as np
@@ -44,12 +43,6 @@ def open_as_rgb(raw_image_path: str):
     rgb_image = raw_bayer.to_rgb() / RAW_BIT_DEPTH
 
     return rgb_image
-
-
-def change_brightness(rgb_image, brightness_scale_factor):
-    hsv = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
-    hsv[..., 2] = hsv[..., 2] * brightness_scale_factor
-    return cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
 
 
 # COPY-PASTA From cosmobot process experiment

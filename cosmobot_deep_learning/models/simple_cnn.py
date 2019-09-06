@@ -27,14 +27,14 @@ DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
     "numeric_input_columns": ["PicoLog temperature (C)"],
     "image_size": 128,
-    "convolutional_kernel_size": 3,
-    "dense_layer_units": 64,
+    "convolutional_kernel_size": 5,
+    "dense_layer_units": 32,
     "prediction_dense_layer_units": 64,
     "optimizer_name": "adam",
     # 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
     "learning_rate": 0.0001,
-    "dropout_rate": 0.0,
-    "output_layer_activation": "linear",
+    "dropout_rate": 0.01,
+    "output_layer_activation": "sigmoid",
     "convolutional_activation_layer": "leakyrelu",
 }
 
@@ -73,19 +73,16 @@ def create_model(hyperparameters, x_train):
                 input_shape=(image_size, image_size, 3),
                 kernel_initializer=kernel_initializer,
             ),
-            # keras.layers.BatchNormalization(),
             convolutional_activation_layer(),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
                 32, convolutional_kernel_shape, kernel_initializer=kernel_initializer
             ),
-            keras.layers.BatchNormalization(),
             convolutional_activation_layer(),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
                 32, convolutional_kernel_shape, kernel_initializer=kernel_initializer
             ),
-            keras.layers.BatchNormalization(),
             convolutional_activation_layer(),
             keras.layers.Flatten(name="prep-for-dense"),
             keras.layers.Dense(
