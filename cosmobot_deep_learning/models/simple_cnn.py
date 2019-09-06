@@ -34,8 +34,8 @@ DEFAULT_HYPERPARAMETERS = {
     # 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
     "learning_rate": 0.0001,
     "dropout_rate": 0.0,
-    "output_layer_activation": "sigmoid",
-    "convolutional_activation_layer": "relu",
+    "output_layer_activation": "linear",
+    "convolutional_activation_layer": "leakyrelu",
 }
 
 

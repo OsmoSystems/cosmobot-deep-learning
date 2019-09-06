@@ -8,14 +8,10 @@ parameters:
   dataset-cache:
     value: "10k-remix-simple-cnn"
   convolutional-kernel-size:
-    values: [3, 4, 5]
+    values: [3, 5]
   dense-layer-units:
-    values: [32, 64]
+    values: [32, 64, 128]
   prediction-dense-layer-units:
-    values: [32, 64]
+    values: [64, 128]
   dropout-rate:
     values: [0.0, 0.01, 0.1]
-  convolutional-activation-layer:
-    values: ["leakyrelu"]
-  output-layer-activation:
-    values: ["linear", "sigmoid"]
