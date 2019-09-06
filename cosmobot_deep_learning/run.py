@@ -1,6 +1,8 @@
 import os
+import io
 import logging
 import pickle
+import subprocess
 
 import pandas as pd
 import wandb
@@ -19,6 +21,8 @@ from cosmobot_deep_learning.custom_metrics import (
     ErrorAtPercentile,
 )
 from cosmobot_deep_learning import visualizations
+
+GPU_AVAILABLE_MEMORY_THRESHOLD = 4000
 
 
 def _loggable_hyperparameters(hyperparameters):
@@ -147,23 +151,43 @@ def _prepare_dataset_with_caching(prepare_dataset, hyperparameters):
         return dataset
 
 
-def _set_or_check_cuda_visible_devices(gpu):
-    """Set the CUDA_VISIBLE_DEVICES to the passed in GPU.
-    If passed in GPU is None and CUDA_VISIBLE_DEVICES is not set, print a warning
+def _set_cuda_visible_devices(no_gpu, dryrun):
+    """ Assign CUDA_VISIBLE_DEVICES to any available GPU.
+        If no_gpu or dryrun are truthy, set CUDA_VISIBLE_DEVICES to -1 for CPU training.
     """
 
-    if gpu is not None:
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
-    else:
-        # for sweeps, CUDA_VISIBLE_DEVICES should be set to the desired gpu when running each agent, example:
-        # CUDA_VISIBLE_DEVICES=0 wandb agent <sweep_id>
-        # CUDA_VISIBLE_DEVICES=1 wandb agent <sweep_id>
+    if no_gpu or dryrun:
+        logging.info("Setting CUDA_VISIBLE_DEVICES to -1")
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-        cuda_visible_devices = os.environ.get("CUDA_VISIBLE_DEVICES")
-        if cuda_visible_devices in {None, "-1"}:
-            logging.warning(
-                "--gpu not received and CUDA_VISIBLE_DEVICES not set to a GPU id, running on CPU"
-            )
+    else:
+        gpu_stats = pd.read_csv(
+            io.StringIO(
+                subprocess.check_output(
+                    'nvidia-smi --query-gpu="index,memory.free" --format=csv',
+                    shell=True,
+                ).decode("utf-8")
+            ),
+            header=0,
+            names=["GPU ID", "Memory Free (MiB)"],
+        )
+
+        gpu_stats["Memory Free (MiB)"] = (
+            gpu_stats["Memory Free (MiB)"].str.extract(r"(\d+)").astype(int)
+        )
+
+        # Get devices where at least half the memory is free
+        free_gpus = gpu_stats[
+            gpu_stats["Memory Free (MiB)"] > GPU_AVAILABLE_MEMORY_THRESHOLD
+        ]
+
+        if not free_gpus["GPU ID"].any():
+            raise Exception("No available GPUs")
+
+        device_id = free_gpus["GPU ID"].iloc[0]
+
+        logging.info(f"Setting CUDA_VISIBLE_DEVICES to {device_id}")
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(device_id)
 
 
 def run(hyperparameters, prepare_dataset, create_model):
@@ -189,8 +213,6 @@ def run(hyperparameters, prepare_dataset, create_model):
         "acceptable_fraction_outside_error"
     ]
 
-    _set_or_check_cuda_visible_devices(hyperparameters.get("gpu"))
-
     if hyperparameters["dryrun"]:
         epochs = 1
         # Disable W&B syncing to the cloud since we don't care about the results
@@ -205,6 +227,8 @@ def run(hyperparameters, prepare_dataset, create_model):
     _update_wandb_with_loaded_dataset(loaded_dataset)
 
     x_train, y_train, x_test, y_test = loaded_dataset
+
+    _set_cuda_visible_devices(hyperparameters["no_gpu"], hyperparameters["dryrun"])
 
     model = create_model(hyperparameters, x_train)
 

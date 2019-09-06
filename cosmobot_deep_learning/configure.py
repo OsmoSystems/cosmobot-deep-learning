@@ -42,16 +42,14 @@ def parse_model_run_args(
     )
 
     arg_parser.add_argument(
-        "--gpu",
+        "--no-gpu",
         required=False,
-        type=int,
-        help=(
-            "Select GPU for training by CUDA Device ID number (e.g. 0 - 3).\n"
-            "Run `nvidia-smi` to see available devices and IDs.\n"
-            "Use -1 to disable GPU training.\n"
-            "Default: CUDA_VISIBLE_DEVICES environment variable value"
-        ),
-        dest="gpu",
+        type=_string_to_bool,
+        nargs="?",
+        const=True,
+        default=False,
+        help=("Disable GPU for training."),
+        dest="no_gpu",
     )
 
     # --dryrun=True is allowed so that hyperparameter sweeps can use it
