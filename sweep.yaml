@@ -10,13 +10,12 @@ parameters:
   convolutional-kernel-size:
     values: [3, 4, 5]
   dense-layer-units:
-    values: [32, 64, 128]
+    values: [32, 64]
   prediction-dense-layer-units:
-    values: [32, 64, 128]
+    values: [32, 64]
   dropout-rate:
     values: [0.0, 0.01, 0.1]
   convolutional-activation-layer:
-    values: ["relu", "leakyrelu"]
+    values: ["leakyrelu"]
   output-layer-activation:
     values: ["linear", "sigmoid"]
-  
