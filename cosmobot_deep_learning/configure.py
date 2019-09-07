@@ -88,6 +88,7 @@ def parse_model_run_args(
         "--optimizer-name", choices=list(OPTIMIZER_CLASSES_BY_NAME.keys())
     )
     arg_parser.add_argument("--learning-rate", type=float)
+    arg_parser.add_argument("--epochs", type=int),
 
     arg_namespace = arg_parser.parse_args(args)
     return arg_namespace
