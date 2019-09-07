@@ -157,6 +157,7 @@ def _prepare_dataset_with_caching(prepare_dataset, hyperparameters):
 
 
 def _get_gpu_stats():
+    # Parse nvidi-smi output into a DataFrame for easier handling
     gpu_stats = pd.read_csv(
         io.StringIO(
             subprocess.check_output(
@@ -167,6 +168,7 @@ def _get_gpu_stats():
         names=["GPU ID", "Memory Free (MiB)"],
     )
 
+    # Convert values like "7159 MiB" to int -> 7159
     gpu_stats["Memory Free (MiB)"] = (
         gpu_stats["Memory Free (MiB)"].str.extract(r"(\d+)").astype(int)
     )
@@ -175,7 +177,7 @@ def _get_gpu_stats():
 
 
 def _set_cuda_visible_devices(no_gpu, dryrun):
-    """ Assign CUDA_VISIBLE_DEVICES to any available GPU.
+    """ Assign CUDA_VISIBLE_DEVICES to first available GPU.
         If no_gpu or dryrun are truthy, set CUDA_VISIBLE_DEVICES to -1 for CPU training.
     """
 
