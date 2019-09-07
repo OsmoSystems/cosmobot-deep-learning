@@ -11,9 +11,9 @@ parameters:
   dense-layer-units:
     values: [64, 128]
   conv-dense-layer-1-units:
-    values: [4, 16, 32, 64]
+    values: [64, 128]
   conv-dense-layer-2-units:
-    values: [32, 64, 128]
+    values: [4, 16, 32, 64]
   l2-regularization:
     values: [0.1, 0.01, 0.001]
   dropblock-size:
