@@ -15,12 +15,12 @@ parameters:
   conv-dense-layer-2-units:
     values: [4, 16, 32]
   l2-regularization:
-    values: [0.001, 0.003, 0.0001]
+    values: 0.001
   dropblock-size:
     value: 4
   dropblock-keep-prob:
     value: 0.9
   layer-activation:
-    values: ["relu", "leakyrelu"]
+    values: ["relu", "leakyrelu", "prelu"]
   output-layer-activation:
     value: "sigmoid"
