@@ -14,6 +14,7 @@ from keras import regularizers
 from keras_drop_block import DropBlock2D
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
+from cosmobot_deep_learning.constants import ACTIVATION_LAYER_BY_NAME
 from cosmobot_deep_learning.hyperparameters import (
     get_hyperparameters_from_args,
     get_optimizer,
@@ -46,7 +47,8 @@ DEFAULT_HYPERPARAMETERS = {
     "dropblock_size": 5,
     "dropblock_keep_prob": 0.9,
     "l2_regularization": 0.01,
-    "layer_activation": "relu",
+    "dense_layer_activation": "leakyrelu",
+    "conv_layer_activation": "leakyrelu",
     "output_layer_activation": "sigmoid",
 }
 
@@ -59,12 +61,12 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
     keep_prob = hyperparameters["dropblock_keep_prob"]
     convolutional_kernel_size = hyperparameters["convolutional_kernel_size"]
     kernel_initializer = hyperparameters["kernel_initializer"]
-    layer_activation = hyperparameters["layer_activation"]
     dense_layer_1_units = hyperparameters["conv_dense_layer_1_units"]
     dense_layer_2_units = hyperparameters["conv_dense_layer_2_units"]
+    activation_layer = ACTIVATION_LAYER_BY_NAME[hyperparameters["layer_activation"]]
+
     conv_layer_kwargs = {
         "kernel_size": (convolutional_kernel_size, convolutional_kernel_size),
-        "activation": layer_activation,
         "kernel_initializer": kernel_initializer,
     }
 
@@ -73,6 +75,7 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
             keras.layers.Conv2D(
                 16, input_shape=x_train_sample_image.shape, **conv_layer_kwargs
             ),
+            activation_layer(),
             keras.layers.MaxPooling2D(2),
             DropBlock2D(
                 block_size=block_size,
@@ -80,6 +83,7 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
                 name=f"{model_branch_id}-drop-block-1",
             ),
             keras.layers.Conv2D(32, **conv_layer_kwargs),
+            activation_layer(),
             keras.layers.MaxPooling2D(2),
             DropBlock2D(
                 block_size=block_size,
@@ -87,12 +91,12 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
                 name=f"{model_branch_id}-drop-block-2",
             ),
             keras.layers.Conv2D(32, **conv_layer_kwargs),
+            activation_layer(),
             keras.layers.Flatten(name=f"{model_branch_id}-prep-for-dense"),
             keras.layers.Dense(
-                dense_layer_1_units,
-                activation=layer_activation,
-                kernel_initializer=kernel_initializer,
+                dense_layer_1_units, kernel_initializer=kernel_initializer
             ),
+            activation_layer(),
             keras.layers.Dense(
                 dense_layer_2_units,
                 name=f"{model_branch_id}-final_dense",
@@ -115,7 +119,6 @@ def create_model(hyperparameters, x_train):
     optimizer = get_optimizer(hyperparameters)
     kernel_initializer = hyperparameters["kernel_initializer"]
     dense_layer_units = hyperparameters["dense_layer_units"]
-    layer_activation = hyperparameters["layer_activation"]
     l2_regularization = hyperparameters["l2_regularization"]
     output_layer_activation = hyperparameters["output_layer_activation"]
 
@@ -135,7 +138,7 @@ def create_model(hyperparameters, x_train):
 
     dense_layer_kwargs = {
         "units": dense_layer_units,
-        "activation": layer_activation,
+        "activation": "relu",
         "kernel_initializer": kernel_initializer,
         "kernel_regularizer": regularizers.l2(l2_regularization),
     }

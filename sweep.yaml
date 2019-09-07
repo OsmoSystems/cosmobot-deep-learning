@@ -7,20 +7,20 @@ parameters:
   dataset-cache:
     value: "roi_crops_with_center_upper_left_with_padding_10k_2"
   convolutional-kernel-size:
-    value: 3
+    values: [3, 4]
   dense-layer-units:
     values: [64, 128]
   conv-dense-layer-1-units:
-    values: [64, 128]
+    value: 64
   conv-dense-layer-2-units:
-    values: [4, 16, 32, 64]
+    values: [4, 16, 32]
   l2-regularization:
-    values: [0.1, 0.01, 0.001]
+    values: [0.001, 0.003, 0.0001]
   dropblock-size:
     value: 4
   dropblock-keep-prob:
     value: 0.9
   layer-activation:
-    value: "relu"
+    values: ["relu", "leakyrelu"]
   output-layer-activation:
     value: "sigmoid"
