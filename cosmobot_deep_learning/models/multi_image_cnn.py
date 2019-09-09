@@ -40,14 +40,14 @@ DEFAULT_HYPERPARAMETERS = {
         "upper left",
     ],
     "kernel_initializer": keras.initializers.he_normal(),
-    "convolutional_kernel_size": 4,
-    "dense_layer_units": 64,
+    "convolutional_kernel_size": 3,
+    "dense_layer_units": 128,
     "conv_dense_layer_1_units": 64,
-    "conv_dense_layer_2_units": 32,
+    "conv_dense_layer_2_units": 4,
     "dropblock_size": 4,
     "dropblock_keep_prob": 0.9,
     "l2_regularization": 0.001,
-    "layer_activation": "leakyrelu",
+    "layer_activation": "prelu",
     "output_layer_activation": "sigmoid",
 }
 
