@@ -1,4 +1,5 @@
 import keras
+import wandb
 from keras.callbacks import Callback
 import numpy as np
 import tensorflow as tf
@@ -83,7 +84,7 @@ class ErrorAtPercentile(Callback):
         epoch_interval: Only calculate this metric once every epoch_interval
     """
 
-    def __init__(self, percentile, label_scale_factor_mmhg, dataset, epoch_interval=10):
+    def __init__(self, percentile, label_scale_factor_mmhg, dataset, epoch_interval=1):
         super(Callback, self).__init__()
 
         self.percentile = percentile
@@ -146,6 +147,8 @@ class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
             multiplied by an ARBITRARILY_LARGE_MULTIPLIER when the satisficing metric is not hit
             so that we can evaluate a "best" performing model, prefering the satisficing metric, and
             falling back to the best mean absolute error if the satisficing metric is never reached.
+        "best_val_adjusted_mean_absolute_error" is the best version of this value seen so far during training
+        "best_epoch" is the epoch that best_val_adjusted_mean_absolute_error corresponds to
 
     """
 
@@ -183,3 +186,23 @@ class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
                 logs["val_adjusted_mean_absolute_error"] = (
                     logs["val_mean_absolute_error"] * ARBITRARILY_LARGE_MULTIPLIER
                 )
+
+
+class SaveBestMetricValueAndEpochToWandb(Callback):
+    """ Save the best seen value of a particular metric to the Weights & Biases summary for a run
+    This metric is saved as "best_[original metric name]".
+    Also stores "best_epoch" with the epoch number that the best metric came from.
+    Using multiple copies of this callback will result in only one best_epoch being saved.
+    """
+
+    def __init__(self, metric):
+        self.source_metric_key = metric
+        self.best_metric_key = f"best_{metric}"
+
+    def on_epoch_end(self, epoch, logs):
+        current_metric = logs[self.source_metric_key]
+        previous_best_metric = wandb.run.summary.get(self.best_metric_key)
+
+        if not previous_best_metric or current_metric < previous_best_metric:
+            wandb.run.summary[self.best_metric_key] = current_metric
+            wandb.run.summary["best_epoch"] = epoch
