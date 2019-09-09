@@ -17,6 +17,7 @@ from cosmobot_deep_learning.custom_metrics import (
     ThresholdValMeanAbsoluteErrorOnCustomMetric,
     magical_incantation_to_make_custom_metric_work,
     ErrorAtPercentile,
+    SaveBestMetricValueAndEpochToWandb,
 )
 from cosmobot_deep_learning import visualizations
 
@@ -166,27 +167,6 @@ def _set_or_check_cuda_visible_devices(gpu):
             )
 
 
-def _add_best_stats_to_wandb_summary(history_dict, monitor_metric):
-    """ Add stats for the best model state, as judged by the montior metric, to the wandb summary.
-
-    Args:
-        history_dict: Dictionary of metrics history - history.history from model.fit().
-            Metrics with only one value will be ignored (these have usually just been tacked on to the end)
-        monitor_metric: Metric in the history to minimize when choosing the best model
-    """
-    history_df = pd.DataFrame(
-        {
-            metric_name: metric_history
-            for metric_name, metric_history in history_dict.items()
-            if len(metric_history) > 1
-        }
-    )
-    index_of_best_model = history_df[monitor_metric].idxmin()
-    best_model_stats = history_df.loc[index_of_best_model]
-
-    wandb.run.summary.update(best_model_stats.add_prefix("best_").to_dict())
-
-
 def run(hyperparameters, prepare_dataset, create_model):
     """ Use the provided hyperparameters to train the model in this module.
 
@@ -248,12 +228,11 @@ def run(hyperparameters, prepare_dataset, create_model):
                 acceptable_fraction_outside_error=acceptable_fraction_outside_error,
                 acceptable_error_mg_l=acceptable_error_mg_l,
             ),
+            SaveBestMetricValueAndEpochToWandb(
+                metric="val_adjusted_mean_absolute_error"
+            ),
             WandbCallback(verbose=1, monitor="val_adjusted_mean_absolute_error"),
         ],
-    )
-
-    _add_best_stats_to_wandb_summary(
-        history.history, monitor_metric="val_adjusted_mean_absolute_error"
     )
 
     _log_visualizations(
