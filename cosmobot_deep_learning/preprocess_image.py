@@ -152,7 +152,7 @@ def open_crop_and_scale_ROIs(image_and_ROIs, ROI_names, output_size):
 
     ROI_definitions = {**ROI_definitions, **additional_ROI_definitions}
 
-    padded_roi_defitions = _add_padding_to_definitions(ROI_definitions, padding=40)
+    padded_roi_defitions = _add_padding_to_definitions(ROI_definitions, padding=60)
 
     rgb_image = open_as_rgb(rgb_image_filepath)
     image_rois = [
