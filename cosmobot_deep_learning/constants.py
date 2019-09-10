@@ -28,3 +28,10 @@ OPTIMIZER_CLASSES_BY_NAME = {
     "adam": keras.optimizers.Adam,
     "adadelta": keras.optimizers.Adadelta,
 }
+
+ACTIVATION_LAYER_BY_NAME = {
+    "relu": keras.layers.ReLU,
+    "leakyrelu": keras.layers.LeakyReLU,
+    "linear": lambda: keras.layers.Activation(activation="linear"),
+    "sigmoid": lambda: keras.layers.Activation(activation="sigmoid"),
+}
