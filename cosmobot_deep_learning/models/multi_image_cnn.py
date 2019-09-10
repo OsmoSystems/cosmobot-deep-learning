@@ -32,18 +32,12 @@ DEFAULT_HYPERPARAMETERS = {
     # ROI names to extract from `ROI definitions` column in the dataset.
     # WARNING: The order here is preserved through data processing and model creation / input
     # If you are using a cached dataset, make sure you have the correct order.
-    "input_ROI_names": [
-        "DO patch",
-        "reference patch",
-        "reflectance standard",
-        "center",
-        "upper left",
-    ],
+    "input_ROI_names": ["DO patch", "reference patch", "reflectance standard"],
     "kernel_initializer": keras.initializers.he_normal(),
     "convolutional_kernel_size": 3,
     "dense_layer_units": 64,
-    "conv_dense_layer_1_units": 64,
-    "conv_dense_layer_2_units": 4,
+    "roi_branch_dense_layer_1_units": 64,
+    "roi_branch_dense_layer_2_units": 4,
     "dropblock_size": 4,
     "dropblock_keep_prob": 0.9,
     "l2_regularization": 0.001,
@@ -60,8 +54,8 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
     keep_prob = hyperparameters["dropblock_keep_prob"]
     convolutional_kernel_size = hyperparameters["convolutional_kernel_size"]
     kernel_initializer = hyperparameters["kernel_initializer"]
-    dense_layer_1_units = hyperparameters["conv_dense_layer_1_units"]
-    dense_layer_2_units = hyperparameters["conv_dense_layer_2_units"]
+    dense_layer_1_units = hyperparameters["roi_branch_dense_layer_1_units"]
+    dense_layer_2_units = hyperparameters["roi_branch_dense_layer_2_units"]
     activation_layer = ACTIVATION_LAYER_BY_NAME[hyperparameters["layer_activation"]]
 
     conv_layer_kwargs = {
@@ -175,8 +169,8 @@ def get_hyperparameter_parser():
     parser.add_argument("--image-size", type=int)
     parser.add_argument("--convolutional-kernel-size", type=int)
     parser.add_argument("--dense-layer-units", type=int)
-    parser.add_argument("--conv-dense-layer-1-units", type=int)
-    parser.add_argument("--conv-dense-layer-2-units", type=int)
+    parser.add_argument("--roi_branch-dense-layer-1-units", type=int)
+    parser.add_argument("--roi_branch-dense-layer-2-units", type=int)
     parser.add_argument("--l2-regularization", type=float),
     parser.add_argument("--dropblock-size", type=int),
     parser.add_argument("--dropblock-keep-prob", type=float),
