@@ -41,7 +41,7 @@ DEFAULT_HYPERPARAMETERS = {
     ],
     "kernel_initializer": keras.initializers.he_normal(),
     "convolutional_kernel_size": 3,
-    "dense_layer_units": 128,
+    "dense_layer_units": 64,
     "conv_dense_layer_1_units": 64,
     "conv_dense_layer_2_units": 4,
     "dropblock_size": 4,
