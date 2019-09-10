@@ -4,22 +4,6 @@ metric:
   name: val_fraction_outside_0_5_mg_l_error
   goal: minimize
 parameters:
-  dataset-cache:
-    value: "roi_crops_with_center_upper_left_with_60px_padding_10k_2"
-  convolutional-kernel-size:
-    values: [3, 4]
-  dense-layer-units:
-    values: [64, 128]
-  conv-dense-layer-1-units:
-    value: 64
-  conv-dense-layer-2-units:
-    values: [4, 16, 32]
-  l2-regularization:
-    value: 0.001
-  dropblock-size:
-    value: 4
-  dropblock-keep-prob:
-    value: 0.9
   layer-activation:
     values: ["relu", "leakyrelu", "prelu"]
   output-layer-activation:
