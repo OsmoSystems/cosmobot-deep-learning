@@ -34,7 +34,7 @@ DEFAULT_HYPERPARAMETERS = {
     # 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
     "learning_rate": 0.0001,
     "dropout_rate": 0.01,
-    "output_layer_activation": "sigmoid",
+    "output_activation_layer": "sigmoid",
     "convolutional_activation_layer": "leakyrelu",
 }
 
@@ -58,7 +58,9 @@ def create_model(hyperparameters, x_train):
     dense_layer_units = hyperparameters["dense_layer_units"]
     prediction_dense_layer_units = hyperparameters["prediction_dense_layer_units"]
     dropout_rate = hyperparameters["dropout_rate"]
-    output_layer_activation = hyperparameters["output_layer_activation"]
+    output_activation_layer = ACTIVATION_LAYER_BY_NAME[
+        hyperparameters["output_activation_layer"]
+    ]
     convolutional_activation_layer = ACTIVATION_LAYER_BY_NAME[
         hyperparameters["convolutional_activation_layer"]
     ]
@@ -111,27 +113,26 @@ def create_model(hyperparameters, x_train):
         shape=(numeric_inputs_count,), name="temperature"
     )
 
-    x = keras.layers.concatenate(
+    latest_layer = keras.layers.concatenate(
         [temperature_input, image_to_do_model.get_layer(name="final_dense").output]
     )
-    x = keras.layers.Dense(
+    latest_layer = keras.layers.Dense(
         prediction_dense_layer_units, kernel_initializer=kernel_initializer
-    )(x)
-    x = keras.layers.Dropout(dropout_rate)(x)
-    x = keras.layers.LeakyReLU()(x)
-    x = keras.layers.Dense(
+    )(latest_layer)
+    latest_layer = keras.layers.Dropout(dropout_rate)(latest_layer)
+    latest_layer = keras.layers.LeakyReLU()(latest_layer)
+    latest_layer = keras.layers.Dense(
         prediction_dense_layer_units, kernel_initializer=kernel_initializer
-    )(x)
-    x = keras.layers.LeakyReLU()(x)
-    x = keras.layers.Dense(
-        1,
-        activation=output_layer_activation,
-        kernel_initializer=kernel_initializer,
-        name="temp-aware-DO",
-    )(x)
+    )(latest_layer)
+    latest_layer = keras.layers.LeakyReLU()(latest_layer)
+    latest_layer = keras.layers.Dense(
+        1, kernel_initializer=kernel_initializer, name="temp-aware-DO"
+    )(latest_layer)
+    latest_layer = output_activation_layer()(latest_layer)
 
     temperature_aware_model = keras.models.Model(
-        inputs=[temperature_input, image_to_do_model.get_input_at(0)], outputs=[x]
+        inputs=[temperature_input, image_to_do_model.get_input_at(0)],
+        outputs=[latest_layer],
     )
 
     temperature_aware_model.compile(
@@ -150,7 +151,9 @@ def get_hyperparameter_parser():
     parser.add_argument("--dense-layer-units", type=int)
     parser.add_argument("--prediction-dense-layer-units", type=int)
     parser.add_argument("--dropout-rate", type=float)
-    parser.add_argument("--output-layer-activation", type=str),
+    parser.add_argument(
+        "--output-activation-layer", choices=list(ACTIVATION_LAYER_BY_NAME.keys())
+    ),
     parser.add_argument(
         "--convolutional-activation-layer",
         choices=list(ACTIVATION_LAYER_BY_NAME.keys()),
