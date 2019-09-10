@@ -84,7 +84,7 @@ class ErrorAtPercentile(Callback):
         epoch_interval: Only calculate this metric once every epoch_interval
     """
 
-    def __init__(self, percentile, label_scale_factor_mmhg, dataset, epoch_interval=1):
+    def __init__(self, percentile, label_scale_factor_mmhg, dataset, epoch_interval=10):
         super(Callback, self).__init__()
 
         self.percentile = percentile
@@ -147,9 +147,6 @@ class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
             multiplied by an ARBITRARILY_LARGE_MULTIPLIER when the satisficing metric is not hit
             so that we can evaluate a "best" performing model, prefering the satisficing metric, and
             falling back to the best mean absolute error if the satisficing metric is never reached.
-        "best_val_adjusted_mean_absolute_error" is the best version of this value seen so far during training
-        "best_epoch" is the epoch that best_val_adjusted_mean_absolute_error corresponds to
-
     """
 
     def __init__(self, acceptable_fraction_outside_error, acceptable_error_mg_l):

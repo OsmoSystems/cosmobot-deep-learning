@@ -10,6 +10,8 @@ import argparse
 import sys
 
 import keras
+import tensorflow
+from functools import partial
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
 from cosmobot_deep_learning.hyperparameters import (
@@ -139,6 +141,7 @@ def get_hyperparameter_parser():
     parser.add_argument("--image-size", type=int)
     parser.add_argument("--convolutional-kernel-size", type=int)
     parser.add_argument("--dense-layer-units", type=int)
+    parser.add_argument("--huber-loss-delta", type=float, required=True)
     return parser
 
 
@@ -150,6 +153,17 @@ def main(command_line_args):
     hyperparameters = get_hyperparameters_from_args(
         command_line_args, DEFAULT_HYPERPARAMETERS, simple_cnn_hyperparameter_parser
     )
+
+    def custom_huber_loss(labels, predictions):
+        return
+
+    custom_huber_loss.__name__ = "huber_loss"
+
+    loss_fn = partial(
+        tensorflow.losses.huber_loss, delta=hyperparameters["huber_loss_delta"]
+    )
+    loss_fn.__name__ = f"huber loss delta={hyperparameters['huber_loss_delta']}"
+    hyperparameters["loss"] = loss_fn
 
     run(hyperparameters, prepare_dataset_image_and_numeric, create_model)
 
