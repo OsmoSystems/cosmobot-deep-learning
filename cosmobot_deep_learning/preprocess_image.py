@@ -130,6 +130,7 @@ def open_crop_and_scale_ROIs(image_and_ROIs, ROI_names, output_size):
             A numpy array of ROIs, cropped and scaled
     """
     rgb_image_filepath, ROI_definitions = image_and_ROIs
+
     rgb_image = open_as_rgb(rgb_image_filepath)
     image_rois = [
         _get_ROI_for_image(rgb_image, ROI_definitions, ROI_name, output_size)
