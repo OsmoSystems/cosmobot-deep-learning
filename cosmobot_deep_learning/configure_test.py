@@ -23,7 +23,7 @@ class TestParseArgs:
         ]
 
         expected_args_out = {
-            "gpu": "auto",
+            "gpu": AUTO_ASSIGN_GPU,
             "dryrun": True,
             "dataset_cache_name": "10k-images-and-temp",
             "epochs": 100,
