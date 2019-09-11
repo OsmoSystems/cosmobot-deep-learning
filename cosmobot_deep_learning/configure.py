@@ -51,7 +51,7 @@ def parse_model_run_args(
         help=(
             "Select the GPU device ID(s) to use for training.\n"
             "If set with a value, passes that value straight through to CUDA_VISIBLE_DEVICES.\n"
-            "If set without value, automatically assign to GPU with most free memory.\n"
+            'If set without value or with a value of "auto", automatically assign to GPU with most free memory.\n'
             "If not set, use CPU."
         ),
         dest="gpu",
