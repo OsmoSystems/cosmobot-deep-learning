@@ -2,6 +2,8 @@ from typing import List
 
 import pytest
 
+from cosmobot_deep_learning.constants import AUTO_ASSIGN_GPU
+
 from . import configure as module
 
 
@@ -43,9 +45,9 @@ class TestParseArgs:
     @pytest.mark.parametrize(
         "args_in,expected_gpu_value",
         (
-            ([], "no-gpu"),
-            (["--gpu"], "auto"),
-            (["--gpu=auto"], "auto"),
+            ([], "-1"),
+            (["--gpu"], AUTO_ASSIGN_GPU),
+            ([f"--gpu={AUTO_ASSIGN_GPU}"], AUTO_ASSIGN_GPU),
             (["--gpu=3"], "3"),
             (["--gpu", "3"], "3"),
         ),

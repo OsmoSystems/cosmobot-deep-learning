@@ -4,6 +4,8 @@ import textwrap
 import pandas as pd
 import pytest
 
+from cosmobot_deep_learning.constants import AUTO_ASSIGN_GPU
+
 from . import gpu as module
 
 
@@ -14,7 +16,7 @@ def mock_get_gpus_free_memory(mocker):
 
 @pytest.fixture
 def mock_os_environ(mocker):
-    return mocker.patch.object(os, "environ")
+    return mocker.patch.object(os, "environ", {})
 
 
 class TestGetGPUFreeMemory:
@@ -41,11 +43,6 @@ class TestGetGPUFreeMemory:
 
 
 class TestSetCUDAVisibleDevices:
-    def test_sets_cpu_mode_when_gpu_disabled(self, mock_os_environ):
-        module.set_cuda_visible_devices(gpu="no-gpu")
-
-        mock_os_environ.__setitem__.assert_called_with("CUDA_VISIBLE_DEVICES", "-1")
-
     @pytest.mark.parametrize(
         "stats,expected",
         (
@@ -57,20 +54,18 @@ class TestSetCUDAVisibleDevices:
             ([10, 5000, 10, 7001], "3"),
         ),
     )
-    def test_gets_first_available_gpu(
+    def test_gets_gpu_with_most_free_memory(
         self, mock_get_gpus_free_memory, mock_os_environ, stats, expected
     ):
         mock_memory_stats = pd.Series(stats)
         mock_get_gpus_free_memory.return_value = mock_memory_stats
 
-        module.set_cuda_visible_devices(gpu="auto")
+        module.set_cuda_visible_devices(gpu=AUTO_ASSIGN_GPU)
 
-        mock_os_environ.__setitem__.assert_called_with("CUDA_VISIBLE_DEVICES", expected)
+        assert mock_os_environ["CUDA_VISIBLE_DEVICES"] == expected
 
-    @pytest.mark.parametrize("gpu_value", ("2", "0,3"))
+    @pytest.mark.parametrize("gpu_value", ("-1", "2", "0,3"))
     def test_sets_gpu_when_specified(self, mock_os_environ, gpu_value):
         module.set_cuda_visible_devices(gpu=gpu_value)
 
-        mock_os_environ.__setitem__.assert_called_with(
-            "CUDA_VISIBLE_DEVICES", gpu_value
-        )
+        assert mock_os_environ["CUDA_VISIBLE_DEVICES"] == gpu_value

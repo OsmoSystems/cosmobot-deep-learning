@@ -28,3 +28,5 @@ OPTIMIZER_CLASSES_BY_NAME = {
     "adam": keras.optimizers.Adam,
     "adadelta": keras.optimizers.Adadelta,
 }
+
+AUTO_ASSIGN_GPU = "auto"

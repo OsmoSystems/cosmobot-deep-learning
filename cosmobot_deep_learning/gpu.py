@@ -5,6 +5,8 @@ import subprocess
 
 import pandas as pd
 
+from cosmobot_deep_learning.constants import AUTO_ASSIGN_GPU
+
 
 def _query_nvidia_smi_free_memory():
     return subprocess.check_output(
@@ -29,14 +31,10 @@ def get_gpus_free_memory() -> pd.Series:
 
 
 def set_cuda_visible_devices(gpu):
-    """ If `gpu` "auto", assign CUDA_VISIBLE_DEVICES to first available GPU, otherwise set to `gpu`.
-        If `gpu` is "no-gpu" or `dryrun` is truthy, set CUDA_VISIBLE_DEVICES to -1 for CPU training.
+    """ If `gpu` is AUTO_ASSIGN_GPU, assign CUDA_VISIBLE_DEVICES to GPU with most available RAM, otherwise set to `gpu`.
     """
 
-    if gpu == "no-gpu":
-        logging.info("Setting CUDA_VISIBLE_DEVICES to -1")
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-    elif gpu == "auto":
+    if gpu == AUTO_ASSIGN_GPU:
         gpu_free_memory = get_gpus_free_memory()
 
         # Sort devices by amount of free memory and take ID of device with the most
@@ -45,4 +43,5 @@ def set_cuda_visible_devices(gpu):
         logging.info(f"Setting CUDA_VISIBLE_DEVICES to {device_id}")
         os.environ["CUDA_VISIBLE_DEVICES"] = str(device_id)
     else:
+        logging.info(f"Setting CUDA_VISIBLE_DEVICES to {gpu}")
         os.environ["CUDA_VISIBLE_DEVICES"] = gpu
