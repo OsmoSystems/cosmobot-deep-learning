@@ -10,6 +10,8 @@ import argparse
 import sys
 
 import keras
+import tensorflow
+from functools import partial
 
 from cosmobot_deep_learning.constants import ACTIVATION_LAYER_BY_NAME
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
@@ -158,10 +160,15 @@ def get_hyperparameter_parser():
         "--convolutional-activation-layer",
         choices=list(ACTIVATION_LAYER_BY_NAME.keys()),
     )
+    parser.add_argument("--huber-loss-delta", type=float, required=True)
     return parser
 
 
 def main(command_line_args):
+    config = tensorflow.ConfigProto()
+    config.gpu_options.allow_growth = True
+    keras.backend.set_session(tensorflow.Session(config=config))
+
     fix_multiprocessing_with_keras_on_macos()
 
     simple_cnn_hyperparameter_parser = get_hyperparameter_parser()
@@ -169,6 +176,12 @@ def main(command_line_args):
     hyperparameters = get_hyperparameters_from_args(
         command_line_args, DEFAULT_HYPERPARAMETERS, simple_cnn_hyperparameter_parser
     )
+
+    loss_fn = partial(
+        tensorflow.losses.huber_loss, delta=hyperparameters["huber_loss_delta"]
+    )
+    loss_fn.__name__ = f"huber loss delta={hyperparameters['huber_loss_delta']}"
+    hyperparameters["loss"] = loss_fn
 
     run(hyperparameters, prepare_dataset_image_and_numeric, create_model)
 

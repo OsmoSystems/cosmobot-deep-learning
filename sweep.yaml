@@ -1,0 +1,17 @@
+description: Sweep different loss funcitons
+
+program: cosmobot_deep_learning/models/simple_cnn.py
+
+method: random
+
+
+parameters:
+  dataset-cache:
+    values: [simple_cnn_2019-09-04_dataset]
+#  loss:
+#    values:
+#      - mean_squared_error
+#      - mean_absolute_error
+  huber-loss-delta:
+    values:
+      [0.1, 0.01, 0.5, 0.033, 0.3, 1]

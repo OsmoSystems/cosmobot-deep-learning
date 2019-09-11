@@ -88,6 +88,12 @@ def parse_model_run_args(
         "--optimizer-name", choices=list(OPTIMIZER_CLASSES_BY_NAME.keys())
     )
     arg_parser.add_argument("--learning-rate", type=float)
+    arg_parser.add_argument(
+        "--hyperparameter_sweep_iteration_number",
+        type=int,
+        help="Dummy value to support multiple iterations of the same values in a Weights & Biases hyperparameter sweep."
+        " Unused.",
+    )
 
     arg_namespace = arg_parser.parse_args(args)
     return arg_namespace
