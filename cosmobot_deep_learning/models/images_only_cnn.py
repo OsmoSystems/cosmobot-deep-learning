@@ -7,6 +7,7 @@ import sys
 import keras
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
+from cosmobot_deep_learning.gpu_configuration import dont_use_all_the_gpu_memory
 from cosmobot_deep_learning.hyperparameters import (
     get_hyperparameters_from_args,
     get_optimizer,
@@ -84,6 +85,7 @@ def create_model(hyperparameters, x_train):
 
 
 def main(command_line_args):
+    dont_use_all_the_gpu_memory()
     fix_multiprocessing_with_keras_on_macos()
 
     hyperparameters = get_hyperparameters_from_args(

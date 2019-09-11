@@ -17,6 +17,7 @@ from cosmobot_deep_learning.hyperparameters import (
     get_hyperparameters_from_args,
     get_optimizer,
 )
+from cosmobot_deep_learning.gpu_configuration import dont_use_all_the_gpu_memory
 from cosmobot_deep_learning.prepare_dataset import prepare_dataset_image_and_numeric
 from cosmobot_deep_learning.run import run
 from cosmobot_deep_learning.preprocess_image import (
@@ -162,6 +163,7 @@ def get_hyperparameter_parser():
 
 
 def main(command_line_args):
+    dont_use_all_the_gpu_memory()
     fix_multiprocessing_with_keras_on_macos()
 
     simple_cnn_hyperparameter_parser = get_hyperparameter_parser()
