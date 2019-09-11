@@ -7,6 +7,7 @@ import wandb
 from wandb.keras import WandbCallback
 
 from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
+from cosmobot_deep_learning.gpu_configuration import dont_use_all_the_gpu_memory
 from cosmobot_deep_learning.load_dataset import (
     get_dataset_cache_filepath,
     download_images_and_attach_filepaths_to_dataset,
@@ -190,6 +191,7 @@ def run(hyperparameters, prepare_dataset, create_model):
         "acceptable_fraction_outside_error"
     ]
 
+    dont_use_all_the_gpu_memory()
     _set_or_check_cuda_visible_devices(hyperparameters.get("gpu"))
 
     if hyperparameters["dryrun"]:

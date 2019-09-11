@@ -15,7 +15,6 @@ from keras_drop_block import DropBlock2D
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
 from cosmobot_deep_learning.constants import ACTIVATION_LAYER_BY_NAME
-from cosmobot_deep_learning.gpu_configuration import dont_use_all_the_gpu_memory
 from cosmobot_deep_learning.hyperparameters import (
     get_hyperparameters_from_args,
     get_optimizer,
@@ -181,7 +180,6 @@ def get_hyperparameter_parser():
 
 
 def main(command_line_args):
-    dont_use_all_the_gpu_memory()
     fix_multiprocessing_with_keras_on_macos()
 
     hyperparameters = get_hyperparameters_from_args(
