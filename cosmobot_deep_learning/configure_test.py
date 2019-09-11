@@ -8,7 +8,7 @@ from . import configure as module
 class TestParseArgs:
     def test_all_args_parsed_appropriately(self):
         args_in = [
-            "--no-gpu",
+            "--gpu",
             "--dryrun",
             "--dataset-cache",
             "10k-images-and-temp",
@@ -21,7 +21,7 @@ class TestParseArgs:
         ]
 
         expected_args_out = {
-            "no_gpu": True,
+            "gpu": "auto",
             "dryrun": True,
             "dataset_cache_name": "10k-images-and-temp",
             "epochs": 100,
@@ -41,19 +41,18 @@ class TestParseArgs:
             module.parse_model_run_args(args_in)
 
     @pytest.mark.parametrize(
-        "args_in,expected_no_gpu_value",
+        "args_in,expected_gpu_value",
         (
-            ([], False),
-            (["--no-gpu"], True),
-            (["--no-gpu=True"], True),
-            (["--no-gpu=False"], False),
-            (["--no-gpu", "True"], True),
-            (["--no-gpu", "False"], False),
+            ([], "no-gpu"),
+            (["--gpu"], "auto"),
+            (["--gpu=auto"], "auto"),
+            (["--gpu=3"], "3"),
+            (["--gpu", "3"], "3"),
         ),
     )
-    def test_no_gpu_formats(self, args_in, expected_no_gpu_value):
+    def test_no_gpu_formats(self, args_in, expected_gpu_value):
         args_out = vars(module.parse_model_run_args(args_in))
-        assert args_out["no_gpu"] == expected_no_gpu_value
+        assert args_out["gpu"] == expected_gpu_value
 
     @pytest.mark.parametrize(
         "args_in,expected_dryrun_value",

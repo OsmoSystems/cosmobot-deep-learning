@@ -186,7 +186,9 @@ def run(hyperparameters, prepare_dataset, create_model):
 
     x_train, y_train, x_test, y_test = loaded_dataset
 
-    set_cuda_visible_devices(hyperparameters["no_gpu"], hyperparameters["dryrun"])
+    set_cuda_visible_devices(hyperparameters["gpu"], hyperparameters["dryrun"])
+
+    wandb.config.update({"CUDA_VISIBLE_DEVICES": os.getenv("CUDA_VISIBLE_DEVICES")})
 
     model = create_model(hyperparameters, x_train)
 

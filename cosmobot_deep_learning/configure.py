@@ -42,14 +42,19 @@ def parse_model_run_args(
     )
 
     arg_parser.add_argument(
-        "--no-gpu",
+        "--gpu",
         required=False,
-        type=_string_to_bool,
+        type=str,
         nargs="?",
-        const=True,
-        default=False,
-        help=("Disable GPU for training."),
-        dest="no_gpu",
+        const="auto",
+        default="no-gpu",
+        help=(
+            "Select the GPU device ID(s) to use for training.\n"
+            "If set with a value, passes that value straight through to CUDA_VISIBLE_DEVICES.\n"
+            "If set without value, automatically assign to GPU with most free memory.\n"
+            "If not set, use CPU."
+        ),
+        dest="gpu",
     )
 
     # --dryrun=True is allowed so that hyperparameter sweeps can use it

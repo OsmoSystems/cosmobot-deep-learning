@@ -5,7 +5,7 @@ import subprocess
 
 import pandas as pd
 
-GPU_AVAILABLE_MEMORY_THRESHOLD = 7000
+GPU_AVAILABLE_MEMORY_THRESHOLD = 4000
 
 
 class NoGPUAvailable(Exception):
@@ -35,20 +35,21 @@ def get_gpus_free_memory() -> pd.Series:
     )
 
 
-def set_cuda_visible_devices(no_gpu, dryrun):
-    """ Assign CUDA_VISIBLE_DEVICES to first available GPU.
-        If no_gpu or dryrun are truthy, set CUDA_VISIBLE_DEVICES to -1 for CPU training.
+def set_cuda_visible_devices(gpu, dryrun):
+    """ If `gpu` 'auto,' assign CUDA_VISIBLE_DEVICES to first available GPU, otherwise set to `gpu`.
+        If `gpu` is 'no-gpu' or `dryrun` is truthy, set CUDA_VISIBLE_DEVICES to -1 for CPU training.
     """
 
-    if no_gpu or dryrun:
+    if gpu == "no-gpu" or dryrun:
         logging.info("Setting CUDA_VISIBLE_DEVICES to -1")
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
-    else:
+    elif gpu == "auto":
         gpu_free_memory = get_gpus_free_memory()
 
-        # Get devices where most of the memory is free
-        free_gpus = gpu_free_memory[gpu_free_memory > GPU_AVAILABLE_MEMORY_THRESHOLD]
+        # Get devices where most of the memory is free, sorted with most available GPU first
+        free_gpus = gpu_free_memory[
+            gpu_free_memory > GPU_AVAILABLE_MEMORY_THRESHOLD
+        ].sort_values(ascending=False)
 
         if not free_gpus.size:
             raise NoGPUAvailable("No GPUs with enough available memory")
@@ -57,3 +58,5 @@ def set_cuda_visible_devices(no_gpu, dryrun):
 
         logging.info(f"Setting CUDA_VISIBLE_DEVICES to {device_id}")
         os.environ["CUDA_VISIBLE_DEVICES"] = str(device_id)
+    else:
+        os.environ["CUDA_VISIBLE_DEVICES"] = gpu
