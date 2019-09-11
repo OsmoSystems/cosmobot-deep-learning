@@ -29,4 +29,12 @@ OPTIMIZER_CLASSES_BY_NAME = {
     "adadelta": keras.optimizers.Adadelta,
 }
 
+ACTIVATION_LAYER_BY_NAME = {
+    "relu": keras.layers.ReLU,
+    "leakyrelu": keras.layers.LeakyReLU,
+    "prelu": keras.layers.PReLU,
+    "linear": lambda: keras.layers.Activation(activation="linear"),
+    "sigmoid": lambda: keras.layers.Activation(activation="sigmoid"),
+}
+
 AUTO_ASSIGN_GPU = "auto"

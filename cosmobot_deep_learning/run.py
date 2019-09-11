@@ -17,6 +17,7 @@ from cosmobot_deep_learning.custom_metrics import (
     ThresholdValMeanAbsoluteErrorOnCustomMetric,
     magical_incantation_to_make_custom_metric_work,
     ErrorAtPercentile,
+    SaveBestMetricValueAndEpochToWandb,
 )
 from cosmobot_deep_learning.gpu import set_cuda_visible_devices
 from cosmobot_deep_learning import visualizations
@@ -210,6 +211,9 @@ def run(hyperparameters, prepare_dataset, create_model):
             ThresholdValMeanAbsoluteErrorOnCustomMetric(
                 acceptable_fraction_outside_error=acceptable_fraction_outside_error,
                 acceptable_error_mg_l=acceptable_error_mg_l,
+            ),
+            SaveBestMetricValueAndEpochToWandb(
+                metric="val_adjusted_mean_absolute_error"
             ),
             WandbCallback(verbose=1, monitor="val_adjusted_mean_absolute_error"),
         ],

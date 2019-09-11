@@ -1,4 +1,5 @@
 import keras
+import wandb
 from keras.callbacks import Callback
 import numpy as np
 import tensorflow as tf
@@ -146,7 +147,6 @@ class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
             multiplied by an ARBITRARILY_LARGE_MULTIPLIER when the satisficing metric is not hit
             so that we can evaluate a "best" performing model, prefering the satisficing metric, and
             falling back to the best mean absolute error if the satisficing metric is never reached.
-
     """
 
     def __init__(self, acceptable_fraction_outside_error, acceptable_error_mg_l):
@@ -183,3 +183,23 @@ class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
                 logs["val_adjusted_mean_absolute_error"] = (
                     logs["val_mean_absolute_error"] * ARBITRARILY_LARGE_MULTIPLIER
                 )
+
+
+class SaveBestMetricValueAndEpochToWandb(Callback):
+    """ Save the best seen value of a particular metric to the Weights & Biases summary for a training run
+    This metric is saved as "best_[original metric name]".
+    Also stores "best_epoch_by_[original metric name]" with the epoch number that the best metric came from.
+    """
+
+    def __init__(self, metric):
+        self.source_metric_key = metric
+        self.best_metric_key = f"best_{metric}"
+        self.best_epoch_key = f"best_epoch_by_{metric}"
+
+    def on_epoch_end(self, epoch, logs):
+        current_metric = logs[self.source_metric_key]
+        previous_best_metric = wandb.run.summary.get(self.best_metric_key)
+
+        if not previous_best_metric or current_metric < previous_best_metric:
+            wandb.run.summary[self.best_metric_key] = current_metric
+            wandb.run.summary[self.best_epoch_key] = epoch
