@@ -36,3 +36,5 @@ ACTIVATION_LAYER_BY_NAME = {
     "linear": lambda: keras.layers.Activation(activation="linear"),
     "sigmoid": lambda: keras.layers.Activation(activation="sigmoid"),
 }
+
+AUTO_ASSIGN_GPU = "auto"

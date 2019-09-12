@@ -3,7 +3,7 @@ from pathlib import Path
 
 from typing import List
 
-from cosmobot_deep_learning.constants import OPTIMIZER_CLASSES_BY_NAME
+from cosmobot_deep_learning.constants import OPTIMIZER_CLASSES_BY_NAME, AUTO_ASSIGN_GPU
 
 
 def _string_to_bool(v):
@@ -44,12 +44,16 @@ def parse_model_run_args(
     arg_parser.add_argument(
         "--gpu",
         required=False,
-        type=int,
+        type=str,
+        nargs="?",
+        const=AUTO_ASSIGN_GPU,
+        default="-1",
         help=(
-            "Select GPU for training by CUDA Device ID number (e.g. 0 - 3).\n"
-            "Run `nvidia-smi` to see available devices and IDs.\n"
-            "Use -1 to disable GPU training.\n"
-            "Default: CUDA_VISIBLE_DEVICES environment variable value"
+            "Select the GPU device ID(s) to use for training.\n"
+            "If set with a value, passes that value straight through to CUDA_VISIBLE_DEVICES.\n"
+            f'If set without value or with a value of "{AUTO_ASSIGN_GPU}", '
+            "automatically assign to GPU with most free memory.\n"
+            "If not set, use CPU."
         ),
         dest="gpu",
     )
