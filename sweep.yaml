@@ -1,11 +1,13 @@
 description: Sweep different loss functions
 
-program: cosmobot_deep_learning/models/simple_cnn.py --gpu
+program: cosmobot_deep_learning/models/simple_cnn.py
 
 method: random
 
 
 parameters:
+  gpu:
+    values: [auto]
   dataset-cache:
     values: [simple_cnn_2019-09-05--15-08-28_osmo_ml_dataset_dev_at_start]
   loss:
