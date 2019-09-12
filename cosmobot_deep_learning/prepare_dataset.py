@@ -126,6 +126,44 @@ def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters: Dict)
     return (x_train, y_train, x_test, y_test)
 
 
+def _uniformly_sample_array(arr, output_length):
+    sampling_indexes = np.linspace(
+        start=0, stop=(len(arr) - 1), num=output_length, dtype=np.int16
+    )
+    return np.array(list(arr))[sampling_indexes]
+
+
+# TODO generalize this function for temperature setpoints
+def _sample_do_setpoints(dataset, desired_num_setpoints):
+    o2_fraction_setpoint_column = "setpoint O2 (fraction)"
+
+    # round the setpoints in the dataset to get rid of floating point errors
+    # TODO this rounding should be done in another function that's explicit about what it's mutating
+    dataset[o2_fraction_setpoint_column] = dataset[o2_fraction_setpoint_column].round(
+        decimals=5
+    )
+
+    setpoint_values = set(dataset[o2_fraction_setpoint_column].tolist())
+    num_setpoints = len(setpoint_values)
+    print(num_setpoints)
+
+    if num_setpoints < desired_num_setpoints:
+        raise Exception(
+            f"too many setpoints requested ({len(setpoint_values)} in dataset, {desired_num_setpoints} requested)"
+        )
+
+    # uniformly sample num_setpoints values from the list of unique setpoint values
+    sampled_setpoint_values = _uniformly_sample_array(
+        setpoint_values, desired_num_setpoints
+    )
+
+    # return raw dataset filtered down to those setpoints
+    sampled_dataset = dataset[
+        dataset[o2_fraction_setpoint_column].isin(sampled_setpoint_values)
+    ]
+    return sampled_dataset
+
+
 def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters):
     """ Transform a dataset CSV into the appropriate inputs and labels for training and
     validating a model, for a model that uses separate image and numeric inputs
@@ -149,6 +187,16 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
 
     train_samples = raw_dataset[raw_dataset[training_set_column]]
     test_samples = raw_dataset[raw_dataset[dev_set_column]]
+
+    print(f"original train sample count: {len(train_samples)}")
+
+    # TODO should we only do this sampling on the training set? keep dev set as is?
+    if hyperparameters.get("num_do_setpoints") is not None:
+        train_samples = _sample_do_setpoints(
+            train_samples, hyperparameters["num_do_setpoints"]
+        )
+
+    print(f"filtered train sample count: {len(train_samples)}")
 
     x_train_numeric = extract_inputs(train_samples, numeric_input_columns)
     x_train_images = open_and_preprocess_images(

@@ -158,6 +158,7 @@ def get_hyperparameter_parser():
         "--convolutional-activation-layer",
         choices=list(ACTIVATION_LAYER_BY_NAME.keys()),
     )
+    parser.add_argument("--num-do-setpoints", type=int)
     return parser
 
 
