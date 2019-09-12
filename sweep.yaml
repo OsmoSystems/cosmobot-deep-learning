@@ -1,6 +1,6 @@
-description: Sweep different loss funcitons
+description: Sweep different loss functions
 
-program: cosmobot_deep_learning/models/simple_cnn.py
+program: cosmobot_deep_learning/models/simple_cnn.py --gpu
 
 method: random
 
