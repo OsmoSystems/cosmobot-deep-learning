@@ -7,11 +7,15 @@ method: random
 
 parameters:
   dataset-cache:
-    values: [simple_cnn_2019-09-04_dataset]
-#  loss:
-#    values:
-#      - mean_squared_error
-#      - mean_absolute_error
-  huber-loss-delta:
+    values: [simple_cnn_2019-09-05--15-08-28_osmo_ml_dataset_dev_at_start]
+  loss:
     values:
-      [0.1, 0.01, 0.5, 0.033, 0.3, 1]
+      - mean_squared_error
+      - mean_absolute_error
+      - logcosh
+      - huber
+      - mean_squared_logarithmic_error
+      - mean_absolute_percentage_error
+#  huber-loss-delta:
+#    values:
+#      [0.1, 0.01, 0.5, 0.033, 0.3, 1]

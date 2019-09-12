@@ -160,7 +160,8 @@ def get_hyperparameter_parser():
         "--convolutional-activation-layer",
         choices=list(ACTIVATION_LAYER_BY_NAME.keys()),
     )
-    parser.add_argument("--huber-loss-delta", type=float, required=True)
+    parser.add_argument("--huber-loss-delta", type=float, default=0.3)
+    parser.add_argument("--loss")
     return parser
 
 
@@ -177,11 +178,13 @@ def main(command_line_args):
         command_line_args, DEFAULT_HYPERPARAMETERS, simple_cnn_hyperparameter_parser
     )
 
-    loss_fn = partial(
-        tensorflow.losses.huber_loss, delta=hyperparameters["huber_loss_delta"]
-    )
-    loss_fn.__name__ = f"huber loss delta={hyperparameters['huber_loss_delta']}"
-    hyperparameters["loss"] = loss_fn
+    if hyperparameters["loss"] == "huber":
+        # Patch huber loss function with appropriate delta value
+        loss_fn = partial(
+            tensorflow.losses.huber_loss, delta=hyperparameters["huber_loss_delta"]
+        )
+        loss_fn.__name__ = f"huber loss delta={hyperparameters['huber_loss_delta']}"
+        hyperparameters["loss"] = loss_fn
 
     run(hyperparameters, prepare_dataset_image_and_numeric, create_model)
 
