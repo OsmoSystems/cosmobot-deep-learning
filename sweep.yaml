@@ -10,6 +10,8 @@ parameters:
     values: [auto]
   dataset-cache:
     values: [simple_cnn_2019-09-05--15-08-28_osmo_ml_dataset_dev_at_start]
+  epochs:
+    values: [300]
   loss:
     values:
       - mean_squared_error
