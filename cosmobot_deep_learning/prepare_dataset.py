@@ -133,24 +133,32 @@ def _uniformly_sample_array(arr, output_length):
     return np.array(list(arr))[sampling_indexes]
 
 
-# TODO generalize this function for temperature setpoints
-def _sample_do_setpoints(dataset, desired_num_setpoints):
-    o2_fraction_setpoint_column = "setpoint O2 (fraction)"
-
+def _round_setpoint_columns(
+    dataset, setpoint_o2_fraction_column_name, setpoint_temperature_column_name
+):
     # round the setpoints in the dataset to get rid of floating point errors
-    # TODO this rounding should be done in another function that's explicit about what it's mutating
-    dataset[o2_fraction_setpoint_column] = dataset[o2_fraction_setpoint_column].round(
-        decimals=5
-    )
+    dataset[setpoint_o2_fraction_column_name] = dataset[
+        setpoint_o2_fraction_column_name
+    ].round(decimals=5)
+    dataset[setpoint_temperature_column_name] = dataset[
+        setpoint_temperature_column_name
+    ].round(
+        decimals=3
+    )  # TODO is this correct?
 
-    setpoint_values = set(dataset[o2_fraction_setpoint_column].tolist())
+
+def _downsample_setpoints(dataset, setpoint_column_name, desired_num_setpoints):
+    setpoint_values = set(dataset[setpoint_column_name].tolist())
     num_setpoints = len(setpoint_values)
-    print(num_setpoints)
 
     if num_setpoints < desired_num_setpoints:
         raise Exception(
             f"too many setpoints requested ({len(setpoint_values)} in dataset, {desired_num_setpoints} requested)"
         )
+
+    print(
+        f'reducing setpoints for "{setpoint_column_name}" from {len(setpoint_values)} to {desired_num_setpoints}'
+    )
 
     # uniformly sample num_setpoints values from the list of unique setpoint values
     sampled_setpoint_values = _uniformly_sample_array(
@@ -159,19 +167,19 @@ def _sample_do_setpoints(dataset, desired_num_setpoints):
 
     # return raw dataset filtered down to those setpoints
     sampled_dataset = dataset[
-        dataset[o2_fraction_setpoint_column].isin(sampled_setpoint_values)
+        dataset[setpoint_column_name].isin(sampled_setpoint_values)
     ]
     return sampled_dataset
 
 
-def _shrink_dataset(dataset, size):
+def _downsample_dataset(dataset, size):
     # for my safety
     if size > len(dataset):
         raise Exception(
-            f"trying to shrink dataset of size {len(dataset)} to larger size of {size}. you're probably doing something wrong."
+            f"trying to downsample dataset of size {len(dataset)} to larger size of {size}. you're probably doing something wrong."
         )
 
-    print(f"shrinking dataset of size {len(dataset)} to {size}")
+    print(f"downsampling dataset of size {len(dataset)} to {size}")
     return dataset.sample(n=size, random_state=0)
 
 
@@ -189,6 +197,9 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
         Returns:
             A 4-tuple containing (x_train, y_train, x_test, y_test) data sets.
     """
+    setpoint_o2_fraction_column_name = "setpoint O2 (fraction)"
+    setpoint_temperature_column_name = "setpoint temperature (C)"
+
     numeric_input_columns = hyperparameters["numeric_input_columns"]
     label_column = hyperparameters["label_column"]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
@@ -196,19 +207,36 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
     training_set_column = hyperparameters["training_set_column"]
     dev_set_column = hyperparameters["dev_set_column"]
 
+    # clean up floating point discrepencies fow downsampling number of setpoint values
+    _round_setpoint_columns(
+        raw_dataset, setpoint_o2_fraction_column_name, setpoint_temperature_column_name
+    )
+
     train_samples = raw_dataset[raw_dataset[training_set_column]]
     test_samples = raw_dataset[raw_dataset[dev_set_column]]
 
     print(f"original train sample count: {len(train_samples)}")
 
     if hyperparameters.get("num_do_setpoints") is not None:
-        train_samples = _sample_do_setpoints(
-            train_samples, hyperparameters["num_do_setpoints"]
+        train_samples = _downsample_setpoints(
+            train_samples,
+            setpoint_o2_fraction_column_name,
+            hyperparameters["num_do_setpoints"],
         )
+
+    if hyperparameters.get("num_temp_setpoints") is not None:
+        train_samples = _downsample_setpoints(
+            train_samples,
+            setpoint_temperature_column_name,
+            hyperparameters["num_temp_setpoints"],
+        )
+
+    # TODO ability to reduce number of images per setpoint to 1
+    # TODO ability to reduce number of replicates? (I don't know if we have a way to do that in here)
 
     # this filter should be performed last
     if hyperparameters.get("train_sample_count") is not None:
-        train_samples = _shrink_dataset(
+        train_samples = _downsample_dataset(
             train_samples, hyperparameters["train_sample_count"]
         )
 

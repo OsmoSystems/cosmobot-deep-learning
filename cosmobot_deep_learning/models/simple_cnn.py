@@ -159,6 +159,7 @@ def get_hyperparameter_parser():
         choices=list(ACTIVATION_LAYER_BY_NAME.keys()),
     )
     parser.add_argument("--num-do-setpoints", type=int)
+    parser.add_argument("--num-temp-setpoints", type=int)
     parser.add_argument("--train-sample-count", type=int)
     return parser
 
