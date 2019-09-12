@@ -15,7 +15,7 @@ from cosmobot_deep_learning.custom_metrics import (
 )
 from cosmobot_deep_learning.gpu import (
     set_cuda_visible_devices,
-    dont_use_all_the_gpu_memory
+    dont_use_all_the_gpu_memory,
 )
 from cosmobot_deep_learning.load_dataset import (
     get_dataset_cache_filepath,
