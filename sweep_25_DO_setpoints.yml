@@ -1,0 +1,14 @@
+description: repeated runs with only 25 DO setpoints
+program: cosmobot_deep_learning/models/simple_cnn.py
+method: grid
+parameters:
+  gpu:
+    value: auto
+  num-do-setpoints:
+    value: 25
+  train-sample-count:
+    value: 4678
+  dataset-cache:
+    value: "simple_cnn_09-05_dev_at_start__25_do_setpoints"
+  repeat:
+    values: [1, 2, 3, 4, 5]

@@ -1,0 +1,12 @@
+description: repeated runs with all 35 DO setpoints, downsampled to match size of 25 DO setpoints
+program: cosmobot_deep_learning/models/simple_cnn.py
+method: grid
+parameters:
+  num-do-setpoints:
+    value: 35
+  train-sample-count:
+    value: 4678
+  dataset-cache:
+    value: "simple_cnn_09-05_dev_at_start__35_do_setpoints_downsampled"
+  repeat:
+    values: [1, 2, 3, 4, 5]
