@@ -19,6 +19,7 @@ from cosmobot_deep_learning.custom_metrics import (
     ErrorAtPercentile,
     SaveBestMetricValueAndEpochToWandb,
 )
+from cosmobot_deep_learning.gpu import set_cuda_visible_devices
 from cosmobot_deep_learning import visualizations
 
 
@@ -148,25 +149,6 @@ def _prepare_dataset_with_caching(prepare_dataset, hyperparameters):
         return dataset
 
 
-def _set_or_check_cuda_visible_devices(gpu):
-    """Set the CUDA_VISIBLE_DEVICES to the passed in GPU.
-    If passed in GPU is None and CUDA_VISIBLE_DEVICES is not set, print a warning
-    """
-
-    if gpu is not None:
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
-    else:
-        # for sweeps, CUDA_VISIBLE_DEVICES should be set to the desired gpu when running each agent, example:
-        # CUDA_VISIBLE_DEVICES=0 wandb agent <sweep_id>
-        # CUDA_VISIBLE_DEVICES=1 wandb agent <sweep_id>
-
-        cuda_visible_devices = os.environ.get("CUDA_VISIBLE_DEVICES")
-        if cuda_visible_devices in {None, "-1"}:
-            logging.warning(
-                "--gpu not received and CUDA_VISIBLE_DEVICES not set to a GPU id, running on CPU"
-            )
-
-
 def run(hyperparameters, prepare_dataset, create_model):
     """ Use the provided hyperparameters to train the model in this module.
 
@@ -190,8 +172,6 @@ def run(hyperparameters, prepare_dataset, create_model):
         "acceptable_fraction_outside_error"
     ]
 
-    _set_or_check_cuda_visible_devices(hyperparameters.get("gpu"))
-
     if hyperparameters["dryrun"]:
         epochs = 1
         # Disable W&B syncing to the cloud since we don't care about the results
@@ -206,6 +186,10 @@ def run(hyperparameters, prepare_dataset, create_model):
     _update_wandb_with_loaded_dataset(loaded_dataset)
 
     x_train, y_train, x_test, y_test = loaded_dataset
+
+    set_cuda_visible_devices(hyperparameters["gpu"])
+
+    wandb.config.update({"CUDA_VISIBLE_DEVICES": os.getenv("CUDA_VISIBLE_DEVICES")})
 
     model = create_model(hyperparameters, x_train)
 
