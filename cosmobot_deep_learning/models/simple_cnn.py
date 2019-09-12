@@ -166,10 +166,6 @@ def get_hyperparameter_parser():
 
 
 def main(command_line_args):
-    config = tensorflow.ConfigProto()
-    config.gpu_options.allow_growth = True
-    keras.backend.set_session(tensorflow.Session(config=config))
-
     fix_multiprocessing_with_keras_on_macos()
 
     simple_cnn_hyperparameter_parser = get_hyperparameter_parser()
