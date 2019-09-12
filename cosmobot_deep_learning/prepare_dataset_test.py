@@ -17,7 +17,7 @@ MOCK_DATASET = pd.DataFrame(
         "reference patch r_msorm": [7, 8, 9],
         "local_filepath": [sentinel.filepath] * 3,
         "training_resampled": [True, True, False],
-        "test": [False, False, True],
+        "dev": [False, False, True],
         "ROI definitions": ["{}", "{}", "{}"],
     }
 )
@@ -76,13 +76,13 @@ class TestExtractLabels:
 
 
 class TestPrepareDatasetnumeric:
-    def test_returns_expected_x_y_train_test(self):
+    def test_returns_expected_x_y_train_dev(self):
         scale_factor = 100
 
         expected_x_train = np.array([[1, 2], [4 / 7, 5 / 8]]).T
         expected_y_train = np.array([[10 / scale_factor, 20 / scale_factor]]).T
-        expected_x_test = np.array([[3], [6 / 9]]).T
-        expected_y_test = np.array([[30 / scale_factor]]).T
+        expected_x_dev = np.array([[3], [6 / 9]]).T
+        expected_y_dev = np.array([[30 / scale_factor]]).T
 
         actual = module.prepare_dataset_numeric(
             MOCK_DATASET,
@@ -91,16 +91,11 @@ class TestPrepareDatasetnumeric:
                 "label_column": "DO_label_column",
                 "label_scale_factor_mmhg": scale_factor,
                 "training_set_column": "training_resampled",
-                "dev_set_column": "test",
+                "dev_set_column": "dev",
             },
         )
 
-        expected = (
-            expected_x_train,
-            expected_y_train,
-            expected_x_test,
-            expected_y_test,
-        )
+        expected = (expected_x_train, expected_y_train, expected_x_dev, expected_y_dev)
 
         for i, _ in enumerate(actual):
             np.testing.assert_array_equal(actual[i], expected[i])
@@ -119,15 +114,15 @@ def mock_open_and_preprocess_images(mocker):
 
 
 class TestPrepareDatasetImageAndnumeric:
-    def test_returns_expected_x_y_train_test(self, mock_open_and_preprocess_images):
+    def test_returns_expected_x_y_train_dev(self, mock_open_and_preprocess_images):
         scale_factor = 100
 
         expected_x_train_numeric = np.array([[1, 2], [4 / 7, 5 / 8]]).T
         expected_x_train_images = np.array([sentinel.image, sentinel.image])
         expected_y_train = np.array([[10 / scale_factor, 20 / scale_factor]]).T
-        expected_x_test_numeric = np.array([[3], [6 / 9]]).T
-        expected_x_test_images = np.array([sentinel.image])
-        expected_y_test = np.array([[30 / scale_factor]]).T
+        expected_x_dev_numeric = np.array([[3], [6 / 9]]).T
+        expected_x_dev_images = np.array([sentinel.image])
+        expected_y_dev = np.array([[30 / scale_factor]]).T
 
         actual = module.prepare_dataset_image_and_numeric(
             MOCK_DATASET,
@@ -137,24 +132,24 @@ class TestPrepareDatasetImageAndnumeric:
                 "label_scale_factor_mmhg": scale_factor,
                 "image_size": sentinel.image_size,
                 "training_set_column": "training_resampled",
-                "dev_set_column": "test",
+                "dev_set_column": "dev",
             },
         )
 
         (
             (actual_x_train_numeric, actual_x_train_images),
             actual_y_train,
-            (actual_x_test_numeric, actual_x_test_images),
-            actual_y_test,
+            (actual_x_dev_numeric, actual_x_dev_images),
+            actual_y_dev,
         ) = actual
 
         # No easy way to compare tuples of np arrays
         np.testing.assert_array_equal(actual_x_train_numeric, expected_x_train_numeric)
         np.testing.assert_array_equal(actual_x_train_images, expected_x_train_images)
         np.testing.assert_array_equal(actual_y_train, expected_y_train)
-        np.testing.assert_array_equal(actual_x_test_numeric, expected_x_test_numeric)
-        np.testing.assert_array_equal(actual_x_test_images, expected_x_test_images)
-        np.testing.assert_array_equal(actual_y_test, expected_y_test)
+        np.testing.assert_array_equal(actual_x_dev_numeric, expected_x_dev_numeric)
+        np.testing.assert_array_equal(actual_x_dev_images, expected_x_dev_images)
+        np.testing.assert_array_equal(actual_y_dev, expected_y_dev)
 
 
 @pytest.fixture
@@ -171,9 +166,9 @@ def mock_open_and_preprocess_image_ROIs(mocker):
 
 
 class TestPrepareDatasetROIAndNumeric:
-    def test_returns_expected_x_y_train_test(self, mock_open_and_preprocess_image_ROIs):
+    def test_returns_expected_x_y_train_dev(self, mock_open_and_preprocess_image_ROIs):
         scale_factor = 100
-        test_ROIs = [sentinel.ROI_0, sentinel.ROI_1]
+        mock_ROIs = [sentinel.ROI_0, sentinel.ROI_1]
 
         expected_x_train_numeric = np.array([[1, 2], [4 / 7, 5 / 8]]).T
         expected_x_train_ROIs = [
@@ -181,9 +176,9 @@ class TestPrepareDatasetROIAndNumeric:
             [sentinel.ROI_1, sentinel.ROI_1],
         ]
         expected_y_train = np.array([[10 / scale_factor, 20 / scale_factor]]).T
-        expected_x_test_numeric = np.array([[3], [6 / 9]]).T
-        expected_x_test_ROIs = [[sentinel.ROI_0], [sentinel.ROI_1]]
-        expected_y_test = np.array([[30 / scale_factor]]).T
+        expected_x_dev_numeric = np.array([[3], [6 / 9]]).T
+        expected_x_dev_ROIs = [[sentinel.ROI_0], [sentinel.ROI_1]]
+        expected_y_dev = np.array([[30 / scale_factor]]).T
 
         actual = module.prepare_dataset_ROIs_and_numeric(
             MOCK_DATASET,
@@ -193,20 +188,20 @@ class TestPrepareDatasetROIAndNumeric:
                 "label_scale_factor_mmhg": scale_factor,
                 "image_size": sentinel.image_size,
                 "training_set_column": "training_resampled",
-                "dev_set_column": "test",
-                "input_ROI_names": test_ROIs,
+                "dev_set_column": "dev",
+                "input_ROI_names": mock_ROIs,
             },
         )
 
-        (actual_x_train, actual_y_train, actual_x_test, actual_y_test) = actual
+        (actual_x_train, actual_y_train, actual_x_dev, actual_y_dev) = actual
 
         # Number of X values = 1 numeric + 1 for each ROI
-        assert len(actual_x_train) == len(test_ROIs) + 1
+        assert len(actual_x_train) == len(mock_ROIs) + 1
         assert actual_x_train[1:] == expected_x_train_ROIs
-        assert actual_x_test[1:] == expected_x_test_ROIs
+        assert actual_x_dev[1:] == expected_x_dev_ROIs
 
         # No easy way to compare tuples of np arrays
         np.testing.assert_array_equal(actual_x_train[0], expected_x_train_numeric)
         np.testing.assert_array_equal(actual_y_train, expected_y_train)
-        np.testing.assert_array_equal(actual_x_test[0], expected_x_test_numeric)
-        np.testing.assert_array_equal(actual_y_test, expected_y_test)
+        np.testing.assert_array_equal(actual_x_dev[0], expected_x_dev_numeric)
+        np.testing.assert_array_equal(actual_y_dev, expected_y_dev)

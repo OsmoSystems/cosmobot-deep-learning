@@ -111,7 +111,7 @@ def get_loaded_dataset_hash(dataset):
     """ Get a unique hash based on a dataset that has been loaded into memory
 
     Args:
-        dataset: iterable containing lists and/or numpy arrays. Usually (x_train, y_train, x_test, y_test)
+        dataset: iterable containing lists and/or numpy arrays. Usually (x_train, y_train, x_dev, y_dev)
 
     Returns:
         hash which will be the same for identical datasets that have been loaded identically,
