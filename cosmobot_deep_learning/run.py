@@ -7,19 +7,21 @@ import wandb
 from wandb.keras import WandbCallback
 
 from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
-from cosmobot_deep_learning.load_dataset import (
-    get_dataset_cache_filepath,
-    download_images_and_attach_filepaths_to_dataset,
-    get_loaded_dataset_hash,
-)
-
 from cosmobot_deep_learning.custom_metrics import (
     ThresholdValMeanAbsoluteErrorOnCustomMetric,
     magical_incantation_to_make_custom_metric_work,
     ErrorAtPercentile,
     SaveBestMetricValueAndEpochToWandb,
 )
-from cosmobot_deep_learning.gpu import set_cuda_visible_devices
+from cosmobot_deep_learning.gpu import (
+    set_cuda_visible_devices,
+    dont_use_all_the_gpu_memory,
+)
+from cosmobot_deep_learning.load_dataset import (
+    get_dataset_cache_filepath,
+    download_images_and_attach_filepaths_to_dataset,
+    get_loaded_dataset_hash,
+)
 from cosmobot_deep_learning import visualizations
 
 
@@ -171,6 +173,8 @@ def run(hyperparameters, prepare_dataset, create_model):
     acceptable_fraction_outside_error = hyperparameters[
         "acceptable_fraction_outside_error"
     ]
+
+    dont_use_all_the_gpu_memory()
 
     if hyperparameters["dryrun"]:
         epochs = 1
