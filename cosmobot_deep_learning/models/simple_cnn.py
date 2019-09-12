@@ -184,7 +184,7 @@ def main(command_line_args):
         )
     else:
         loss_fn = hyperparameters["loss_fn_name"]
-        hyperparameters["loss"] = loss_fn
+    hyperparameters["loss"] = loss_fn
 
     run(hyperparameters, prepare_dataset_image_and_numeric, create_model)
 
