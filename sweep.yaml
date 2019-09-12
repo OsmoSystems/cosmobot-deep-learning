@@ -12,7 +12,7 @@ parameters:
     values: [simple_cnn_2019-09-05--15-08-28_osmo_ml_dataset_dev_at_start]
   epochs:
     values: [300]
-  loss:
+  loss-fn-name:
     values:
       - mean_squared_error
       - mean_absolute_error
