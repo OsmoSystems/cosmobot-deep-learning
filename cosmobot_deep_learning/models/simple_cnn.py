@@ -179,7 +179,9 @@ def main(command_line_args):
         loss_fn = partial(
             tensorflow.losses.huber_loss, delta=hyperparameters["huber_loss_delta"]
         )
-        loss_fn.__name__ = f"huber loss delta={hyperparameters['huber_loss_delta']}"
+        loss_fn.__name__ = (  # type: ignore  # Mypy gets mad because partials don't usually have a __name__
+            f"huber loss delta={hyperparameters['huber_loss_delta']}"
+        )
         hyperparameters["loss"] = loss_fn
 
     run(hyperparameters, prepare_dataset_image_and_numeric, create_model)

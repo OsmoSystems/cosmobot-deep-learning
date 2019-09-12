@@ -27,6 +27,7 @@ class TestParseArgs:
             "dryrun": True,
             "dataset_cache_name": "10k-images-and-temp",
             "epochs": 100,
+            "hyperparameter_sweep_iteration_number": None,
             "optimizer_name": "adam",
             "learning_rate": 0.001,
         }
