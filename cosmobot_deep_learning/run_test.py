@@ -46,13 +46,13 @@ class TestDryRunFlag:
     def test_creates_tiny_dataset(self):
         mock_hyperparameters = {
             "training_set_column": "training_resampled",
-            "dev_set_column": "test",
+            "dev_set_column": "dev",
         }
 
         test_df = pd.DataFrame(
             {
                 "training_resampled": [True, True, True, False, False, False],
-                "test": [False, False, False, True, True, True],
+                "dev": [False, False, False, True, True, True],
             },
             index=[0, 1, 2, 3, 4, 5],
         )
@@ -60,7 +60,7 @@ class TestDryRunFlag:
         expected_df = pd.DataFrame(
             {
                 "training_resampled": [True, True, False, False],
-                "test": [False, False, True, True],
+                "dev": [False, False, True, True],
             },
             index=[0, 1, 3, 4],
         )
