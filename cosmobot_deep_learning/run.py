@@ -174,8 +174,6 @@ def run(hyperparameters, prepare_dataset, create_model):
         "acceptable_fraction_outside_error"
     ]
 
-    dont_use_all_the_gpu_memory()
-
     if hyperparameters["dryrun"]:
         epochs = 1
         # Disable W&B syncing to the cloud since we don't care about the results
@@ -192,6 +190,7 @@ def run(hyperparameters, prepare_dataset, create_model):
     x_train, y_train, x_dev, y_dev = loaded_dataset
 
     set_cuda_visible_devices(hyperparameters["gpu"])
+    dont_use_all_the_gpu_memory()
 
     wandb.config.update({"CUDA_VISIBLE_DEVICES": os.getenv("CUDA_VISIBLE_DEVICES")})
 
