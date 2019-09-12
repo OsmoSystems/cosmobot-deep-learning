@@ -164,6 +164,17 @@ def _sample_do_setpoints(dataset, desired_num_setpoints):
     return sampled_dataset
 
 
+def _shrink_dataset(dataset, size):
+    # for my safety
+    if size > len(dataset):
+        raise Exception(
+            f"trying to shrink dataset of size {len(dataset)} to larger size of {size}. you're probably doing something wrong."
+        )
+
+    print(f"shrinking dataset of size {len(dataset)} to {size}")
+    return dataset.sample(n=size, random_state=0)
+
+
 def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters):
     """ Transform a dataset CSV into the appropriate inputs and labels for training and
     validating a model, for a model that uses separate image and numeric inputs
@@ -190,10 +201,15 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
 
     print(f"original train sample count: {len(train_samples)}")
 
-    # TODO should we only do this sampling on the training set? keep dev set as is?
     if hyperparameters.get("num_do_setpoints") is not None:
         train_samples = _sample_do_setpoints(
             train_samples, hyperparameters["num_do_setpoints"]
+        )
+
+    # this filter should be performed last
+    if hyperparameters.get("train_sample_count") is not None:
+        train_samples = _shrink_dataset(
+            train_samples, hyperparameters["train_sample_count"]
         )
 
     print(f"filtered train sample count: {len(train_samples)}")
