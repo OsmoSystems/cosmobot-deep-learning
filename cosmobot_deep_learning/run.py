@@ -7,19 +7,21 @@ import wandb
 from wandb.keras import WandbCallback
 
 from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
-from cosmobot_deep_learning.load_dataset import (
-    get_dataset_cache_filepath,
-    download_images_and_attach_filepaths_to_dataset,
-    get_loaded_dataset_hash,
-)
-
 from cosmobot_deep_learning.custom_metrics import (
     ThresholdValMeanAbsoluteErrorOnCustomMetric,
     magical_incantation_to_make_custom_metric_work,
     ErrorAtPercentile,
     SaveBestMetricValueAndEpochToWandb,
 )
-from cosmobot_deep_learning.gpu import set_cuda_visible_devices
+from cosmobot_deep_learning.gpu import (
+    set_cuda_visible_devices,
+    dont_use_all_the_gpu_memory,
+)
+from cosmobot_deep_learning.load_dataset import (
+    get_dataset_cache_filepath,
+    download_images_and_attach_filepaths_to_dataset,
+    get_loaded_dataset_hash,
+)
 from cosmobot_deep_learning import visualizations
 
 
@@ -46,31 +48,31 @@ def _update_wandb_with_loaded_dataset(loaded_dataset):
     """ update wandb configuration hyperparameters with information about the dataset that's been loaded
 
     Args:
-        loaded_dataset: (x_train, y_train, x_test, y_test) tuple of data being used for modeling
+        loaded_dataset: (x_train, y_train, x_dev, y_dev) tuple of data being used for modeling
 
     Returns:
         None
     """
     loaded_dataset_hash = get_loaded_dataset_hash(loaded_dataset)
 
-    x_train, y_train, x_test, y_test = loaded_dataset
+    x_train, y_train, x_dev, y_dev = loaded_dataset
     wandb.config.update(
         {
             "loaded_dataset_hash": loaded_dataset_hash,
             "train_sample_count": y_train.shape[0],
-            "test_sample_count": y_test.shape[0],
+            "dev_sample_count": y_dev.shape[0],
         }
     )
 
 
 def _log_visualizations(
-    model, training_history, label_scale_factor_mmhg, x_train, y_train, x_test, y_test
+    model, training_history, label_scale_factor_mmhg, x_train, y_train, x_dev, y_dev
 ):
     train_labels = y_train.flatten() * label_scale_factor_mmhg
     train_predictions = model.predict(x_train).flatten() * label_scale_factor_mmhg
 
-    dev_labels = y_test.flatten() * label_scale_factor_mmhg
-    dev_predictions = model.predict(x_test).flatten() * label_scale_factor_mmhg
+    dev_labels = y_dev.flatten() * label_scale_factor_mmhg
+    dev_predictions = model.predict(x_dev).flatten() * label_scale_factor_mmhg
 
     visualizations.log_do_prediction_error(
         train_labels, train_predictions, dev_labels, dev_predictions
@@ -84,8 +86,8 @@ def _generate_tiny_dataset(dataset, hyperparameters):
     """ Grab the first two training and dev data points to create a tiny dataset.
     """
     training_sample = dataset[dataset[hyperparameters["training_set_column"]]][:2]
-    test_sample = dataset[dataset[hyperparameters["dev_set_column"]]][:2]
-    return training_sample.append(test_sample)
+    dev_sample = dataset[dataset[hyperparameters["dev_set_column"]]][:2]
+    return training_sample.append(dev_sample)
 
 
 def _shuffle_dataframe(dataframe):
@@ -106,12 +108,12 @@ def _get_prepared_dataset(prepare_dataset, hyperparameters):
 
     shuffled_dataset = _shuffle_dataframe(dataset)
 
-    x_train, y_train, x_test, y_test = prepare_dataset(
+    x_train, y_train, x_dev, y_dev = prepare_dataset(
         raw_dataset=download_images_and_attach_filepaths_to_dataset(shuffled_dataset),
         hyperparameters=hyperparameters,
     )
 
-    return x_train, y_train, x_test, y_test
+    return x_train, y_train, x_dev, y_dev
 
 
 def _load_dataset_cache(dataset_cache_filepath):
@@ -154,7 +156,7 @@ def run(hyperparameters, prepare_dataset, create_model):
 
     Args:
         hyperparameters: Any variables that are parameterizable for this model. See `get_hyperparameters` for details
-        prepare_dataset: A function that takes a raw_dataset and returns (x_train, y_train, x_test, y_test)
+        prepare_dataset: A function that takes a raw_dataset and returns (x_train, y_train, x_dev, y_dev)
         create_model: A function that takes hyperparameters and x_train and returns a compiled model
         dryrun: Whether the model should be run with a tiny dataset in dryrun mode.
         dataset_cache_name: Optional. Name of dataset cache file to load from for this run or save to for future runs.
@@ -185,9 +187,10 @@ def run(hyperparameters, prepare_dataset, create_model):
 
     _update_wandb_with_loaded_dataset(loaded_dataset)
 
-    x_train, y_train, x_test, y_test = loaded_dataset
+    x_train, y_train, x_dev, y_dev = loaded_dataset
 
     set_cuda_visible_devices(hyperparameters["gpu"])
+    dont_use_all_the_gpu_memory()
 
     wandb.config.update({"CUDA_VISIBLE_DEVICES": os.getenv("CUDA_VISIBLE_DEVICES")})
 
@@ -201,7 +204,7 @@ def run(hyperparameters, prepare_dataset, create_model):
         batch_size=batch_size,
         epochs=epochs,
         verbose=2,
-        validation_data=(x_test, y_test),
+        validation_data=(x_dev, y_dev),
         callbacks=[
             ErrorAtPercentile(
                 percentile=95,
@@ -220,7 +223,7 @@ def run(hyperparameters, prepare_dataset, create_model):
     )
 
     _log_visualizations(
-        model, history, label_scale_factor_mmhg, x_train, y_train, x_test, y_test
+        model, history, label_scale_factor_mmhg, x_train, y_train, x_dev, y_dev
     )
 
-    return x_train, y_train, x_test, y_test, model, history
+    return x_train, y_train, x_dev, y_dev, model, history
