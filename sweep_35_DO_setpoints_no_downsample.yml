@@ -1,4 +1,4 @@
-description: repeated runs with only 6 temperature setpoints
+description: repeated runs with all 35 DO setpoints, no downsampling
 program: cosmobot_deep_learning/models/simple_cnn.py
 method: grid
 parameters:
@@ -6,11 +6,11 @@ parameters:
     value: auto
   epochs:
     value: 300
-  num-temp-setpoints:
-    value: 6
+  num-do-setpoints:
+    value: 35
   train-sample-count:
-    value: 3950
+    value: 6794
   dataset-cache:
-    value: "simple_cnn_09-05_dev_at_start__6_temperature_setpoints"
+    value: "simple_cnn_09-05_dev_at_start__35_do_setpoints_full_train_data"
   repeat:
     values: [1, 2, 3, 4, 5]

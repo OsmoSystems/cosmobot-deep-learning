@@ -4,6 +4,8 @@ method: grid
 parameters:
   gpu:
     value: auto
+  epochs:
+    value: 300
   num-temp-setpoints:
     value: 9
   train-sample-count:
