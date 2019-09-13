@@ -11,6 +11,10 @@ from cosmobot_deep_learning.preprocess_image import (
 )
 
 
+SETPOINT_O2_FRACTION_COLUMN_NAME = "setpoint O2 (fraction)"
+SETPOINT_TEMPERATURE_COLUMN_NAME = "setpoint temperature (C)"
+
+
 def extract_inputs(df, input_column_names):
     """ Extract non-image input data values
 
@@ -133,22 +137,23 @@ def _uniformly_sample_array(arr, output_length):
     return np.array(list(arr))[sampling_indexes]
 
 
-def _round_setpoint_columns(
-    dataset, setpoint_o2_fraction_column_name, setpoint_temperature_column_name
-):
+def _round_setpoint_columns(dataset):
     # round the setpoints in the dataset to get rid of floating point errors
-    dataset[setpoint_o2_fraction_column_name] = dataset[
-        setpoint_o2_fraction_column_name
+    dataset[SETPOINT_O2_FRACTION_COLUMN_NAME] = dataset[
+        SETPOINT_O2_FRACTION_COLUMN_NAME
     ].round(decimals=5)
-    dataset[setpoint_temperature_column_name] = dataset[
-        setpoint_temperature_column_name
+    dataset[SETPOINT_TEMPERATURE_COLUMN_NAME] = dataset[
+        SETPOINT_TEMPERATURE_COLUMN_NAME
     ].round(
         decimals=3
     )  # TODO is this correct?
 
 
 def _downsample_setpoints(dataset, setpoint_column_name, desired_num_setpoints):
-    setpoint_values = set(dataset[setpoint_column_name].tolist())
+    setpoint_values = sorted(set(dataset[setpoint_column_name].tolist()))
+
+    print(f"{setpoint_column_name} values: {setpoint_values}")
+
     num_setpoints = len(setpoint_values)
 
     if num_setpoints < desired_num_setpoints:
@@ -164,6 +169,7 @@ def _downsample_setpoints(dataset, setpoint_column_name, desired_num_setpoints):
     sampled_setpoint_values = _uniformly_sample_array(
         setpoint_values, desired_num_setpoints
     )
+    print(f"{setpoint_column_name} downsampled values: {sampled_setpoint_values}")
 
     # return raw dataset filtered down to those setpoints
     sampled_dataset = dataset[
@@ -172,15 +178,32 @@ def _downsample_setpoints(dataset, setpoint_column_name, desired_num_setpoints):
     return sampled_dataset
 
 
-def _downsample_dataset(dataset, size):
-    # for my safety
-    if size > len(dataset):
+def _downsample_dataset(dataset, desired_size):
+    dataset_size = len(dataset)
+
+    if desired_size > dataset_size:
         raise Exception(
-            f"trying to downsample dataset of size {len(dataset)} to larger size of {size}. you're probably doing something wrong."
+            f"trying to downsample dataset of size {dataset_size} to larger size of {desired_size}. you're probably doing something wrong."
         )
 
-    print(f"downsampling dataset of size {len(dataset)} to {size}")
-    return dataset.sample(n=size, random_state=0)
+    print(f"downsampling dataset of size {dataset_size} to {desired_size}")
+
+    sampling_indexes = np.linspace(
+        start=0, stop=(dataset_size - 1), num=desired_size, dtype=np.int16
+    )
+
+    downsampled_dataset = (
+        dataset.sort_values(
+            [SETPOINT_TEMPERATURE_COLUMN_NAME, SETPOINT_O2_FRACTION_COLUMN_NAME]
+        )
+        .reset_index(drop=True)
+        .iloc[sampling_indexes]
+    )
+
+    # TODO remove after verifying
+    print(f"downsampled dataset size: {len(downsampled_dataset)}")
+
+    return downsampled_dataset
 
 
 def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters):
@@ -197,8 +220,6 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
         Returns:
             A 4-tuple containing (x_train, y_train, x_dev, y_dev) data sets.
     """
-    setpoint_o2_fraction_column_name = "setpoint O2 (fraction)"
-    setpoint_temperature_column_name = "setpoint temperature (C)"
 
     numeric_input_columns = hyperparameters["numeric_input_columns"]
     label_column = hyperparameters["label_column"]
@@ -208,9 +229,7 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
     dev_set_column = hyperparameters["dev_set_column"]
 
     # clean up floating point discrepencies fow downsampling number of setpoint values
-    _round_setpoint_columns(
-        raw_dataset, setpoint_o2_fraction_column_name, setpoint_temperature_column_name
-    )
+    _round_setpoint_columns(raw_dataset)
 
     train_samples = raw_dataset[raw_dataset[training_set_column]]
     dev_samples = raw_dataset[raw_dataset[dev_set_column]]
@@ -220,14 +239,14 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
     if hyperparameters.get("num_do_setpoints") is not None:
         train_samples = _downsample_setpoints(
             train_samples,
-            setpoint_o2_fraction_column_name,
+            SETPOINT_O2_FRACTION_COLUMN_NAME,
             hyperparameters["num_do_setpoints"],
         )
 
     if hyperparameters.get("num_temp_setpoints") is not None:
         train_samples = _downsample_setpoints(
             train_samples,
-            setpoint_temperature_column_name,
+            SETPOINT_TEMPERATURE_COLUMN_NAME,
             hyperparameters["num_temp_setpoints"],
         )
 

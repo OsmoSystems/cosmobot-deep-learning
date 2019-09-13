@@ -1,0 +1,14 @@
+description: repeated runs with all 9 temperature setpoints, dowsampled to compare with 6
+program: cosmobot_deep_learning/models/simple_cnn.py
+method: grid
+parameters:
+  gpu:
+    value: auto
+  num-temp-setpoints:
+    value: 9
+  train-sample-count:
+    value: 3950
+  dataset-cache:
+    value: "simple_cnn_09-05_dev_at_start__9_temperature_setpoints_downsampled"
+  repeat:
+    values: [1, 2, 3, 4, 5]
