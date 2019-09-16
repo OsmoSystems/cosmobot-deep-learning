@@ -144,13 +144,11 @@ def _round_setpoint_columns(dataset):
     ].round(decimals=5)
     dataset[SETPOINT_TEMPERATURE_COLUMN_NAME] = dataset[
         SETPOINT_TEMPERATURE_COLUMN_NAME
-    ].round(
-        decimals=3
-    )  # TODO is this correct?
+    ].round(decimals=3)
 
 
 def _downsample_setpoints(dataset, setpoint_column_name, desired_num_setpoints):
-    setpoint_values = sorted(set(dataset[setpoint_column_name].tolist()))
+    setpoint_values = dataset[setpoint_column_name].unique().sort()
 
     print(f"{setpoint_column_name} values: {setpoint_values}")
 
@@ -167,7 +165,7 @@ def _downsample_setpoints(dataset, setpoint_column_name, desired_num_setpoints):
 
     # uniformly sample num_setpoints values from the list of unique setpoint values
     sampled_setpoint_values = _uniformly_sample_array(
-        np.array(setpoint_values), desired_num_setpoints
+        setpoint_values, desired_num_setpoints
     )
     print(f"{setpoint_column_name} downsampled values: {sampled_setpoint_values}")
 
