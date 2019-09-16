@@ -130,11 +130,11 @@ def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters: Dict)
     return (x_train, y_train, x_dev, y_dev)
 
 
-def _uniformly_sample_array(arr, output_length):
+def _uniformly_sample_array(arr: np.ndarray, output_length: int):
     sampling_indexes = np.linspace(
         start=0, stop=(len(arr) - 1), num=output_length, dtype=np.int16
     )
-    return np.array(list(arr))[sampling_indexes]
+    return arr[sampling_indexes]
 
 
 def _round_setpoint_columns(dataset):
@@ -167,7 +167,7 @@ def _downsample_setpoints(dataset, setpoint_column_name, desired_num_setpoints):
 
     # uniformly sample num_setpoints values from the list of unique setpoint values
     sampled_setpoint_values = _uniformly_sample_array(
-        setpoint_values, desired_num_setpoints
+        np.array(setpoint_values), desired_num_setpoints
     )
     print(f"{setpoint_column_name} downsampled values: {sampled_setpoint_values}")
 
@@ -183,7 +183,8 @@ def _downsample_dataset(dataset, desired_size):
 
     if desired_size > dataset_size:
         raise Exception(
-            f"trying to downsample dataset of size {dataset_size} to larger size of {desired_size}. you're probably doing something wrong."
+            f"trying to downsample dataset of size {dataset_size} to larger size of {desired_size}. "
+            "you're probably doing something wrong  ಠ_ಠ "
         )
 
     print(f"downsampling dataset of size {dataset_size} to {desired_size}")

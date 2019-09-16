@@ -19,6 +19,8 @@ MOCK_DATASET = pd.DataFrame(
         "training_resampled": [True, True, False],
         "dev": [False, False, True],
         "ROI definitions": ["{}", "{}", "{}"],
+        module.SETPOINT_O2_FRACTION_COLUMN_NAME: [1, 2, 3],
+        module.SETPOINT_TEMPERATURE_COLUMN_NAME: [1, 2, 3],
     }
 )
 
@@ -205,3 +207,32 @@ class TestPrepareDatasetROIAndNumeric:
         np.testing.assert_array_equal(actual_y_train, expected_y_train)
         np.testing.assert_array_equal(actual_x_dev[0], expected_x_dev_numeric)
         np.testing.assert_array_equal(actual_y_dev, expected_y_dev)
+
+
+# fmt: off
+@pytest.mark.parametrize(
+    "input_arr, output_len, expected_output", (
+        ([], 0, []),
+        ([1], 1, [1]),
+        ([1, 2], 1, [1]),
+        ([1, 2, 3, 4, 5], 4, [1, 2, 3, 5]),
+    )
+)
+# fmt: on
+def test_uniformly_sample_array(input_arr, output_len, expected_output):
+    result = module._uniformly_sample_array(np.array(input_arr), output_len)
+    assert len(result) == output_len
+    np.testing.assert_array_equal(result, expected_output)
+
+
+def test_round_setpoint_columns():
+    dataset = pd.DataFrame({
+        module.SETPOINT_O2_FRACTION_COLUMN_NAME: [0.123456789, 0.12346],
+        module.SETPOINT_TEMPERATURE_COLUMN_NAME: [0.123456789, 0.123],
+    })
+    expected_dataset = pd.DataFrame({
+        module.SETPOINT_O2_FRACTION_COLUMN_NAME: [0.12346, 0.12346],
+        module.SETPOINT_TEMPERATURE_COLUMN_NAME: [0.123, 0.123],
+    })
+    module._round_setpoint_columns(dataset)
+    pd.testing.assert_frame_equal(dataset, expected_dataset)
