@@ -232,7 +232,7 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
     training_set_column = hyperparameters["training_set_column"]
     dev_set_column = hyperparameters["dev_set_column"]
 
-    # clean up floating point discrepencies fow downsampling number of setpoint values
+    # clean up floating point discrepencies for downsampling number of setpoint values
     _round_setpoint_columns(raw_dataset)
 
     train_samples = raw_dataset[raw_dataset[training_set_column]]
