@@ -179,6 +179,11 @@ def _downsample_setpoints(dataset, setpoint_column_name, desired_num_setpoints):
 
 
 def _downsample_dataset(dataset, desired_size):
+    """Return a copy of the dataset downsampled to the desired size (rows).
+
+    This will sort the values by [SETPOINT_TEMPERATURE_COLUMN_NAME, SETPOINT_O2_FRACTION_COLUMN_NAME] to
+    make the sampling somewhat uniform across setpoints.
+    """
     dataset_size = len(dataset)
 
     if desired_size > dataset_size:
@@ -201,7 +206,7 @@ def _downsample_dataset(dataset, desired_size):
         .iloc[sampling_indexes]
     )
 
-    # TODO remove after verifying
+    assert len(downsampled_dataset) == desired_size
     print(f"downsampled dataset size: {len(downsampled_dataset)}")
 
     return downsampled_dataset
