@@ -161,6 +161,8 @@ def get_hyperparameter_parser():
     parser.add_argument("--num-do-setpoints", type=int)
     parser.add_argument("--num-temp-setpoints", type=int)
     parser.add_argument("--train-sample-count", type=int)
+    parser.add_argument("--max-images-per-setpoint", type=int)
+
     return parser
 
 

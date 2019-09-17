@@ -236,3 +236,31 @@ def test_round_setpoint_columns():
     })
     module._round_setpoint_columns(dataset)
     pd.testing.assert_frame_equal(dataset, expected_dataset)
+
+
+class TestReduceImagesPerSetpoint():
+    def test_one_image_per_setpoint(self):
+        dataset = pd.DataFrame({
+            module.SETPOINT_O2_FRACTION_COLUMN_NAME: [0.1, 0.1, 0.2, 0.2],
+            module.SETPOINT_TEMPERATURE_COLUMN_NAME: [0.10, 0.10, 0.20, 0.30],
+            'local_filepath': ['image1', 'image2', 'image3', 'image4'],
+        })
+
+        # image2 should be removed since it is at the same setpoint as image1
+        expected_dataset = dataset[~(dataset['local_filepath'] == 'image2')]
+
+        result = module._reduce_images_per_setpoint(dataset, max_images_per_setpoint=1)
+        pd.testing.assert_frame_equal(result, expected_dataset)
+
+    def test_max_two_images_per_setpoint(self):
+        dataset = pd.DataFrame({
+            module.SETPOINT_O2_FRACTION_COLUMN_NAME: [0.1, 0.1, 0.1, 0.2],
+            module.SETPOINT_TEMPERATURE_COLUMN_NAME: [0.10, 0.10, 0.10, 0.30],
+            'local_filepath': ['image1', 'image2', 'image3', 'image4'],
+        })
+
+        # image3 should be removed since it's the 3rd image for that setpoint
+        expected_dataset = dataset[~(dataset['local_filepath'] == 'image3')]
+
+        result = module._reduce_images_per_setpoint(dataset, max_images_per_setpoint=2)
+        pd.testing.assert_frame_equal(result, expected_dataset)

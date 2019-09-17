@@ -210,6 +210,22 @@ def _downsample_dataset(dataset, desired_size):
     return downsampled_dataset
 
 
+def _reduce_images_per_setpoint(dataset, max_images_per_setpoint):
+    """Return dataset with at most max_images_per_setpoint images per setpoint.
+    """
+    first_image_indexes = (
+        dataset.reset_index()  # move old indexes to an 'index' column
+        .groupby(
+            [SETPOINT_TEMPERATURE_COLUMN_NAME, SETPOINT_O2_FRACTION_COLUMN_NAME]
+        )  # sorted by default
+        .nth(list(range(max_images_per_setpoint)))[
+            "index"
+        ]  # get indexes of first item in each group
+        .tolist()
+    )
+    return dataset.loc[first_image_indexes]
+
+
 def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters):
     """ Transform a dataset CSV into the appropriate inputs and labels for training and
     validating a model, for a model that uses separate image and numeric inputs
@@ -254,7 +270,12 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
             hyperparameters["num_temp_setpoints"],
         )
 
-    # TODO ability to reduce number of images per setpoint to 1
+    max_images_per_setpoint = hyperparameters.get("max_images_per_setpoint")
+    if max_images_per_setpoint:
+        train_samples = _reduce_images_per_setpoint(
+            train_samples, max_images_per_setpoint
+        )
+
     # TODO ability to reduce number of replicates? (I don't know if we have a way to do that in here)
 
     # this filter should be performed last
