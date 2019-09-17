@@ -1,0 +1,12 @@
+description: run simple_cnn
+program: cosmobot_deep_learning/models/simple_cnn.py
+method: grid
+parameters:
+  gpu:
+    value: auto
+  epochs:
+    value: 300
+  dataset-cache:
+    value: "simple_cnn_09-05_dev_at_start"
+  repeat:
+    values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
