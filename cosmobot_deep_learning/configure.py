@@ -96,6 +96,8 @@ def parse_model_run_args(
     # not used, just included to be able to do a grid hyperparameter sweep over it
     arg_parser.add_argument("--repeat", type=int)
 
+    arg_parser.add_argument("--training-set-column", type=str)
+
     arg_namespace = arg_parser.parse_args(args)
     return arg_namespace
 

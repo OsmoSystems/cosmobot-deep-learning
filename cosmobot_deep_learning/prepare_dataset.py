@@ -148,7 +148,7 @@ def _round_setpoint_columns(dataset):
 
 
 def _downsample_setpoints(dataset, setpoint_column_name, desired_num_setpoints):
-    setpoint_values = dataset[setpoint_column_name].unique().sort()
+    setpoint_values = np.sort(dataset[setpoint_column_name].unique())
 
     print(f"{setpoint_column_name} values: {setpoint_values}")
 
