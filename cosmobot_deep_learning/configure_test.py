@@ -22,6 +22,8 @@ class TestParseArgs:
             "0.001",
             "--repeat",
             "1",
+            "--training-set-column",
+            "training",
         ]
 
         expected_args_out = {
@@ -32,6 +34,7 @@ class TestParseArgs:
             "optimizer_name": "adam",
             "learning_rate": 0.001,
             "repeat": 1,
+            "training_set_column": "training",
         }
 
         assert vars(module.parse_model_run_args(args_in)) == expected_args_out
