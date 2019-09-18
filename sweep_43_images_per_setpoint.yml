@@ -11,4 +11,4 @@ parameters:
   dataset-cache:
     value: "simple_cnn_09-05_dev_at_start__max_43_images_per_setpoint"
   repeat:
-    values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]

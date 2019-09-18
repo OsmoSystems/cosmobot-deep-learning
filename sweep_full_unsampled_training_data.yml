@@ -1,4 +1,4 @@
-description: run simple_cnn
+description: run simple_cnn with all training data (not resampled)
 program: cosmobot_deep_learning/models/simple_cnn.py
 method: grid
 parameters:
@@ -7,6 +7,8 @@ parameters:
   epochs:
     value: 300
   dataset-cache:
-    value: "simple_cnn_09-05_dev_at_start"
+    value: "simple_cnn_09-05_dev_at_start__unsampled_training_data"
+  training-set-column:
+    value: "training"
   repeat:
     values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]

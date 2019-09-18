@@ -11,6 +11,6 @@ parameters:
   train-sample-count:
     value: 4678
   dataset-cache:
-    value: "simple_cnn_09-05_dev_at_start__35_do_setpoints_better_downsampling"
+    value: "simple_cnn_09-05_dev_at_start__35_do_setpoints__downsampled_25_comparison"
   repeat:
     values: [1, 2, 3, 4, 5]
