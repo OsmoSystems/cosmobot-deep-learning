@@ -11,6 +11,8 @@ setup(
     packages=find_packages(),
     # fmt: off
     install_requires=[
+        # dill is required by shap but not installed with it
+        "dill",
         "keras",
         "keras_drop_block",
         "keras_resnet",

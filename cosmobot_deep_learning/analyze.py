@@ -8,7 +8,7 @@ from sklearn.manifold import TSNE
 from cosmobot_deep_learning.hyperparameters import DEFAULT_LABEL_SCALE_FACTOR_MMHG
 
 
-def get_custom_objects(metrics: List) -> Dict:
+def _get_custom_objects(metrics: List) -> Dict:
     """ Get custom objects necessary to load a keras Model from .h5 file.
         Currently this is just our custom metric functions.
     """
@@ -20,31 +20,36 @@ def load_model_from_h5(run_hyperparameters: Dict, model_filepath: str) -> keras.
     """ Load a .h5 model file as a keras Model
 
         Args:
-            run_hyperparameters: A dictionary containing hyperparameters necessary for deserializing the model, currently:
-                "metrics": The list of metric names and custom metric functions compiled into the model.
+            run_hyperparameters: A dictionary containing hyperparameters necessary for deserializing the model,
+                currently:
+                    "metrics": The list of metric names and custom metric functions compiled into the model.
             model_filepath: The filepath to the .h5 file to load.
         Returns:
             A keras Model
     """
-    custom_objects = get_custom_objects(run_hyperparameters["metrics"])
+    custom_objects = _get_custom_objects(run_hyperparameters["metrics"])
     return keras.models.load_model(model_filepath, custom_objects=custom_objects)
 
 
-def get_convolutional_submodel(
+def get_submodel_for_input(
     model: keras.Model, input_index: int, last_layer: str
 ) -> keras.Model:
-    """ Pull out a convolutional branch from a multi-input model into a standalone Model for independent analysis.
+    """ Pull out a subsection from an input model into a standalone Model for independent analysis.
 
         Args:
-            model: The multi-input keras Model
-            input_index: The input index of the convolutional branch to pull out.
-            last_layer: The name of the convolutional branch's final layer. This will be the output layer of the new model.
+            model: A keras Model
+            input_index: The input index of a branch to pull out if provdiing a multi-branch model.
+            last_layer: The name of the final layer to stop at. This will be the output layer of the new model.
         Returns:
-            A new single-input convolutional keras Model up to the specified layer.
+            A new single-input keras Model up to the specified layer.
     """
-    return keras.Model(
-        inputs=model.input[input_index], outputs=model.get_layer(last_layer).output
-    )
+    # If there are multiple input branches, get the one specified by input_index
+    if type(model.input) == "list":
+        input = model.input[input_index]
+    else:
+        input = model.input
+
+    return keras.Model(inputs=input, outputs=model.get_layer(last_layer).output)
 
 
 def get_layer_tsne_vectors_for_images(
@@ -65,7 +70,7 @@ def get_layer_tsne_vectors_for_images(
         Returns:
             2 dimensional numpy array of tSNE similarity scores for each image
     """
-    submodel = get_convolutional_submodel(model, image_input_index, layer_to_visualize)
+    submodel = get_submodel_for_input(model, image_input_index, layer_to_visualize)
 
     feature_vector = submodel.predict(images)
 
@@ -87,7 +92,7 @@ def plot_shap_deep_explainer(
 
         Args:
             model: The keras Model to evaluate
-            x_data: The x input data to the model. Can either be a numpy array of inputs, or a list of inputs, 
+            x_data: The x input data to the model. Can either be a numpy array of inputs, or a list of inputs,
                 as appropriate for the given model
             y_data: The label values corresponding to the x_data
             num_images_to_plot: The number of input images to plot pixel SHAP values for
