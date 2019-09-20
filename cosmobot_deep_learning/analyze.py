@@ -32,14 +32,14 @@ def load_model_from_h5(run_hyperparameters: Dict, model_filepath: str) -> keras.
 
 
 def get_submodel_for_input(
-    model: keras.Model, input_index: int, last_layer: str
+    model: keras.Model, last_layer: str, input_index: int = None
 ) -> keras.Model:
     """ Pull out a subsection from an input model into a standalone Model for independent analysis.
 
         Args:
             model: A keras Model
-            input_index: The input index of a branch to pull out if provdiing a multi-branch model.
             last_layer: The name of the final layer to stop at. This will be the output layer of the new model.
+            input_index: Optional. The input index of a branch to pull out if providing a multi-branch model.
         Returns:
             A new single-input keras Model up to the specified layer.
     """
@@ -70,7 +70,7 @@ def get_layer_tsne_vectors_for_images(
         Returns:
             2 dimensional numpy array of tSNE similarity scores for each image
     """
-    submodel = get_submodel_for_input(model, image_input_index, layer_to_visualize)
+    submodel = get_submodel_for_input(model, layer_to_visualize, image_input_index)
 
     feature_vector = submodel.predict(images)
 
@@ -97,14 +97,14 @@ def plot_shap_deep_explainer(
             y_data: The label values corresponding to the x_data
             num_images_to_plot: The number of input images to plot pixel SHAP values for
             image_input_index: Integer index of the model's input convolutional branch to be evaluated
-            numerical_input_index: Intefer index of the model's numerical input to be evaluated
+            numerical_input_index: Integer index of the model's numerical input to be evaluated
             numerical_input_labels: Human-readable names corresponding the the numerical inputs
             label_scale_factor_mmhg: Scale factor to use when displaying human-readable label values
     """
 
-    e = shap.DeepExplainer(model, x_data)
+    deep_explainer = shap.DeepExplainer(model, x_data)
 
-    shap_values = e.shap_values(x_data)
+    shap_values = deep_explainer.shap_values(x_data)
 
     format_do_values = np.vectorize(
         lambda target_value: f"{np.round(target_value * label_scale_factor_mmhg)} mmHg"

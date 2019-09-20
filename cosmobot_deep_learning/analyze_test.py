@@ -14,9 +14,7 @@ class TestGetSubmodelForInput:
             ]
         )
 
-        submodel = module.get_submodel_for_input(
-            model, input_index=0, last_layer="stop_here"
-        )
+        submodel = module.get_submodel_for_input(model, last_layer="stop_here")
 
         expected_layers = set(["first_dense_input", "first_dense", "stop_here"])
 
@@ -44,7 +42,7 @@ class TestGetSubmodelForInput:
         last_layer = f"dense_{input_index}_1"
 
         submodel = module.get_submodel_for_input(
-            model, input_index=input_index, last_layer=last_layer
+            model, last_layer=last_layer, input_index=input_index
         )
 
         expected_layers = set([f"input_{input_index}", last_layer])
