@@ -11,7 +11,10 @@ setup(
     packages=find_packages(),
     # fmt: off
     install_requires=[
-        "keras",
+        # dill is required by shap but not installed with it
+        "dill",
+        # 2.3.0 breaks support for tf 1.12.0
+        "keras<2.3.0",
         "keras_drop_block",
         "keras_resnet",
         "numpy",
@@ -20,6 +23,8 @@ setup(
         "plotly>=4,<5",
         "picamraw",
         "scipy",
+        "sklearn",
+        "shap",
         # Older versions break multiprocess https://github.com/pytorch/vision/issues/544
         "tqdm>=4.29",
         "wandb",

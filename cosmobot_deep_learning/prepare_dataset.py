@@ -126,6 +126,19 @@ def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters: Dict)
     return (x_train, y_train, x_dev, y_dev)
 
 
+def _extract_image_and_numeric_features_and_labels(samples, hyperparameters):
+    numeric_input_columns = hyperparameters["numeric_input_columns"]
+    label_column = hyperparameters["label_column"]
+    image_size = hyperparameters["image_size"]
+    label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
+
+    x_numeric = extract_inputs(samples, numeric_input_columns)
+    x_images = open_and_preprocess_images(samples["local_filepath"].values, image_size)
+    y = extract_labels(samples, label_column, label_scale_factor_mmhg)
+
+    return ([x_numeric, x_images], y)
+
+
 def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters):
     """ Transform a dataset CSV into the appropriate inputs and labels for training and
     validating a model, for a model that uses separate image and numeric inputs
@@ -140,34 +153,21 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
         Returns:
             A 4-tuple containing (x_train, y_train, x_dev, y_dev) data sets.
     """
-    numeric_input_columns = hyperparameters["numeric_input_columns"]
-    label_column = hyperparameters["label_column"]
-    label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
-    image_size = hyperparameters["image_size"]
     training_set_column = hyperparameters["training_set_column"]
     dev_set_column = hyperparameters["dev_set_column"]
 
     train_samples = raw_dataset[raw_dataset[training_set_column]]
     dev_samples = raw_dataset[raw_dataset[dev_set_column]]
 
-    x_train_numeric = extract_inputs(train_samples, numeric_input_columns)
-    x_train_images = open_and_preprocess_images(
-        train_samples["local_filepath"].values, image_size
+    x_train, y_train = _extract_image_and_numeric_features_and_labels(
+        train_samples, hyperparameters
     )
-    y_train = extract_labels(train_samples, label_column, label_scale_factor_mmhg)
 
-    x_dev_numeric = extract_inputs(dev_samples, numeric_input_columns)
-    x_dev_images = open_and_preprocess_images(
-        dev_samples["local_filepath"].values, image_size
+    x_dev, y_dev = _extract_image_and_numeric_features_and_labels(
+        dev_samples, hyperparameters
     )
-    y_dev = extract_labels(dev_samples, label_column, label_scale_factor_mmhg)
 
-    return (
-        [x_train_numeric, x_train_images],
-        y_train,
-        [x_dev_numeric, x_dev_images],
-        y_dev,
-    )
+    return (x_train, y_train, x_dev, y_dev)
 
 
 def _extract_ROI_and_numeric_features_and_labels(samples, hyperparameters):
