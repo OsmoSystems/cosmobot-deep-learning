@@ -10,6 +10,7 @@ import argparse
 import sys
 
 import keras
+from keras_drop_block import DropBlock2D
 
 from cosmobot_deep_learning.constants import ACTIVATION_LAYER_BY_NAME
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
@@ -31,6 +32,8 @@ DEFAULT_HYPERPARAMETERS = {
     "dense_layer_units": 32,
     "prediction_dense_layer_units": 64,
     "optimizer_name": "adam",
+    "dropblock_size": 4,
+    "dropblock_keep_prob": 0.9,
     # 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
     "learning_rate": 0.0001,
     "dropout_rate": 0.01,
@@ -58,6 +61,8 @@ def create_model(hyperparameters, x_train):
     dense_layer_units = hyperparameters["dense_layer_units"]
     prediction_dense_layer_units = hyperparameters["prediction_dense_layer_units"]
     dropout_rate = hyperparameters["dropout_rate"]
+    block_size = hyperparameters["dropblock_size"]
+    keep_prob = hyperparameters["dropblock_keep_prob"]
     output_activation_layer = ACTIVATION_LAYER_BY_NAME[
         hyperparameters["output_activation_layer"]
     ]
@@ -77,11 +82,17 @@ def create_model(hyperparameters, x_train):
             ),
             convolutional_activation_layer(),
             keras.layers.MaxPooling2D(2),
+            DropBlock2D(
+                block_size=block_size, keep_prob=keep_prob, name="drop-block-1"
+            ),
             keras.layers.Conv2D(
                 32, convolutional_kernel_shape, kernel_initializer=kernel_initializer
             ),
             convolutional_activation_layer(),
             keras.layers.MaxPooling2D(2),
+            DropBlock2D(
+                block_size=block_size, keep_prob=keep_prob, name="drop-block-2"
+            ),
             keras.layers.Conv2D(
                 32, convolutional_kernel_shape, kernel_initializer=kernel_initializer
             ),
@@ -151,6 +162,8 @@ def get_hyperparameter_parser():
     parser.add_argument("--dense-layer-units", type=int)
     parser.add_argument("--prediction-dense-layer-units", type=int)
     parser.add_argument("--dropout-rate", type=float)
+    parser.add_argument("--dropblock-size", type=int),
+    parser.add_argument("--dropblock-keep-prob", type=float),
     parser.add_argument(
         "--output-activation-layer", choices=list(ACTIVATION_LAYER_BY_NAME.keys())
     ),
@@ -158,6 +171,7 @@ def get_hyperparameter_parser():
         "--convolutional-activation-layer",
         choices=list(ACTIVATION_LAYER_BY_NAME.keys()),
     )
+    parser.add_argument("--repeat", type=int, required=False)
     return parser
 
 

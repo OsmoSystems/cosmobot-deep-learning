@@ -1,10 +1,18 @@
-program: cosmobot_deep_learning/models/multi_image_cnn.py
+program: cosmobot_deep_learning/models/simple_cnn.py
 method: bayes
 metric:
   name: val_fraction_outside_0_5_mg_l_error
   goal: minimize
 parameters:
-  layer-activation:
+  gpu:
+    value: "auto"
+  dataset-cache:
+    value: "10k-remix-simple-cnn"
+  convolutional-activation-layer:
     values: ["relu", "leakyrelu", "prelu"]
-  output-layer-activation:
-    value: "sigmoid"
+  dropblock-size:
+    values: [4, 6, 10]
+  dropblock-keep-prob:
+    values: [1, 0.9, 0.85, 0.8]
+  repeat:
+    values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
