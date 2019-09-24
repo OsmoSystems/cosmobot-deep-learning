@@ -57,7 +57,7 @@ def _calculate_additional_hyperparameters(
     }
 
 
-LATEST_DATASET = "2019-09-05--15-08-28_osmo_ml_dataset_dev_at_start.csv"
+LATEST_DATASET = "2019-09-24--13-35-07_osmo_ml_dataset_dev_at_start.csv"
 DEFAULT_LABEL_COLUMN = "setpoint O2 (mmHg)"
 DEFAULT_LOSS = "logcosh"
 DEFAULT_OPTIMIZER_NAME = "adadelta"
