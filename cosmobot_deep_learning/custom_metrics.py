@@ -1,8 +1,9 @@
 import keras
-import wandb
+import keras.backend as K
 from keras.callbacks import Callback
 import numpy as np
 import tensorflow as tf
+import wandb
 
 from cosmobot_deep_learning.constants import (
     MG_L_PER_MMHG_AT_25_C_1_ATM as MG_L_PER_MMHG,
@@ -203,3 +204,27 @@ class SaveBestMetricValueAndEpochToWandb(Callback):
         if not previous_best_metric or current_metric < previous_best_metric:
             wandb.run.summary[self.best_metric_key] = current_metric
             wandb.run.summary[self.best_epoch_key] = epoch
+
+
+def logcosh_float_16(y_true, y_pred):
+    """ Modified keras logcosh function to allow calculating loss with float16.
+    Logarithm of the hyperbolic cosine of the prediction error.
+    `log(cosh(x))` is approximately equal to `(x ** 2) / 2` for small `x` and
+    to `abs(x) - log(2)` for large `x`. This means that 'logcosh' works mostly
+    like the mean squared error, but will not be so strongly affected by the
+    occasional wildly incorrect prediction.
+    # Arguments
+        y_true: tensor of true targets.
+        y_pred: tensor of predicted targets.
+    # Returns
+        Tensor with one scalar loss entry per sample.
+    """
+
+    def _logcosh(x):
+        return (
+            x
+            + K.softplus(tf.constant(-2.0, dtype=tf.float16) * x)
+            - K.log(tf.constant(2.0, dtype=tf.float16))
+        )
+
+    return K.mean(_logcosh(y_pred - y_true), axis=-1)

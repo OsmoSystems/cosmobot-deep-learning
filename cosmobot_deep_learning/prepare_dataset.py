@@ -27,7 +27,7 @@ def extract_inputs(df, input_column_names):
         **{"sr": df["DO patch r_msorm"] / df["reference patch r_msorm"]}
     )[input_column_names]
 
-    return dataset.values
+    return dataset.values.astype("float16")
 
 
 def extract_labels(df, label_column, label_scale_factor_mmhg):
@@ -43,7 +43,7 @@ def extract_labels(df, label_column, label_scale_factor_mmhg):
     scaled_labels = df[label_column] / label_scale_factor_mmhg
 
     # Reshape to 2d array
-    return np.reshape(scaled_labels.values, (-1, 1))
+    return np.reshape(scaled_labels.values, (-1, 1)).astype("float16")
 
 
 def prepare_dataset_numeric(raw_dataset: pd.DataFrame, hyperparameters):

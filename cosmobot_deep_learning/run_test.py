@@ -29,13 +29,18 @@ class TestLoggableHyperparameters:
         def mock_custom_metric():
             return None
 
+        def mock_custom_loss():
+            return None
+
         unloggable_hyperparameters = {
             "some other attribute": sentinel.something,
             "metrics": ["a metric", "another metric", mock_custom_metric],
+            "loss": mock_custom_loss,
         }
         expected = {
             "some other attribute": sentinel.something,
             "metrics": ["a metric", "another metric", "mock_custom_metric"],
+            "loss": "mock_custom_loss",
         }
         actual = module._loggable_hyperparameters(unloggable_hyperparameters)
 

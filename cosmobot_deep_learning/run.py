@@ -2,6 +2,7 @@ import os
 import logging
 import pickle
 
+import keras.backend as K
 import pandas as pd
 import wandb
 from wandb.keras import WandbCallback
@@ -25,6 +26,10 @@ from cosmobot_deep_learning.load_dataset import (
 from cosmobot_deep_learning import visualizations
 
 
+K.set_floatx("float16")
+K.set_epsilon(1e-4)
+
+
 def _loggable_hyperparameters(hyperparameters):
     # W&B logging chokes on our custom metric function.
     # Manually fix this by replacing metric function with its __name__
@@ -33,10 +38,15 @@ def _loggable_hyperparameters(hyperparameters):
         for metric in hyperparameters["metrics"]
     ]
 
+    loggable_loss_func = hyperparameters["loss"]
+    if hasattr(loggable_loss_func, "__name__"):
+        loggable_loss_func = loggable_loss_func.__name__
+
     return {
         **hyperparameters,
         # Override the original "unloggable" metrics key
         "metrics": loggable_metrics,
+        "loss": loggable_loss_func,
     }
 
 
