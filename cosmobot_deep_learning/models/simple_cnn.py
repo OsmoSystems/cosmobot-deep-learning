@@ -25,7 +25,11 @@ from cosmobot_deep_learning.preprocess_image import (
 
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
-    "numeric_input_columns": ["PicoLog temperature (C)"],
+    "dataset_filename": "2019-09-26--14-19-22_osmo_ml_dataset_scum_dev_at_start.csv",
+    "training_set_column": "cosmobot_a_training_resampled",
+    "dev_set_column": "cosmobot_a_dev_resampled",
+    "numeric_input_columns": ["YSI temperature (C)"],
+    "label_column": "YSI DO (mmHg)",
     "image_size": 128,
     "convolutional_kernel_size": 5,
     "dense_layer_units": 32,
