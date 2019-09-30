@@ -3,6 +3,10 @@ program: cosmobot_deep_learning/models/simple_cnn.py
 method: grid
 
 parameters:
+#  dataset-cache:
+#    value: simple_cnn_2019-09-04_dataset
+  gpu:
+    value: auto
   output-activation-layer:
     values: [relu, leakyrelu, prelu, linear, sigmoid]
   replicate:
