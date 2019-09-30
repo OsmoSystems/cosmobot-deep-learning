@@ -3,7 +3,7 @@ program: cosmobot_deep_learning/models/simple_cnn.py
 method: grid
 
 parameters:
-  layer-activation:
-    values: ["relu", "leakyrelu", "prelu"]
+  output-activation-layer:
+    values: [relu, leakyrelu, prelu, linear, sigmoid]
   replicate:
     values: [1,2,3]
