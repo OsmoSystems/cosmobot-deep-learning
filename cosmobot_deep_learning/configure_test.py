@@ -29,6 +29,7 @@ class TestParseArgs:
             "epochs": 100,
             "optimizer_name": "adam",
             "learning_rate": 0.001,
+            "replicate": None,
         }
 
         assert vars(module.parse_model_run_args(args_in)) == expected_args_out

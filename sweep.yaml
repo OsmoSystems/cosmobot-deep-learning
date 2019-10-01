@@ -1,10 +1,13 @@
-program: cosmobot_deep_learning/models/multi_image_cnn.py
-method: bayes
-metric:
-  name: val_fraction_outside_0_5_mg_l_error
-  goal: minimize
+program: cosmobot_deep_learning/models/simple_cnn.py
+
+method: grid
+
 parameters:
-  layer-activation:
-    values: ["relu", "leakyrelu", "prelu"]
-  output-layer-activation:
-    value: "sigmoid"
+#  dataset-cache:
+#    value: simple_cnn_2019-09-04_dataset
+  gpu:
+    value: auto
+  output-activation-layer:
+    values: [relu, leakyrelu, prelu, linear, sigmoid]
+  replicate:
+    values: [1,2,3]

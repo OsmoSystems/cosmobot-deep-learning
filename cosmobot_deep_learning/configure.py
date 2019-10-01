@@ -93,6 +93,16 @@ def parse_model_run_args(
     )
     arg_parser.add_argument("--learning-rate", type=float)
 
+    arg_parser.add_argument(
+        "--replicate",
+        type=int,
+        required=False,
+        help=(
+            "Parameter ignored by models; "
+            "useful in hyperparameter sweeps to create runs with identical hyperparameter sets."
+        ),
+    )
+
     arg_namespace = arg_parser.parse_args(args)
     return arg_namespace
 
