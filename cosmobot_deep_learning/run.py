@@ -2,10 +2,11 @@ import os
 import logging
 import pickle
 
-import keras.backend as K
 import pandas as pd
 import wandb
 from wandb.keras import WandbCallback
+
+import keras.backend as K
 
 from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
 from cosmobot_deep_learning.custom_metrics import (
@@ -26,32 +27,27 @@ from cosmobot_deep_learning.load_dataset import (
 from cosmobot_deep_learning import visualizations
 
 
-K.set_floatx("float16")
-K.set_epsilon(1e-4)
-
-
-def _loggable_hyperparameters(hyperparameters):
-    # W&B logging chokes on our custom metric function.
-    # Manually fix this by replacing metric function with its __name__
-    loggable_metrics = [
-        metric.__name__ if hasattr(metric, "__name__") else metric
-        for metric in hyperparameters["metrics"]
-    ]
-
-    loggable_loss_func = hyperparameters["loss"]
-    if hasattr(loggable_loss_func, "__name__"):
-        loggable_loss_func = loggable_loss_func.__name__
-
-    return {
-        **hyperparameters,
-        # Override the original "unloggable" metrics key
-        "metrics": loggable_metrics,
-        "loss": loggable_loss_func,
-    }
+def _get_loggable_function_name(function_or_function_name):
+    """ Selectively replace a function object with the function's name,
+        or return the provided value if it is not a function.
+    """
+    return (
+        function_or_function_name.__name__
+        if hasattr(function_or_function_name, "__name__")
+        else function_or_function_name
+    )
 
 
 def _initialize_wandb(hyperparameters):
-    wandb.init(config={**_loggable_hyperparameters(hyperparameters)})
+    wandb.init(
+        config={
+            **hyperparameters,
+            "metrics": list(
+                map(_get_loggable_function_name, hyperparameters["metrics"])
+            ),
+            "loss": _get_loggable_function_name(hyperparameters["loss"]),
+        }
+    )
 
 
 def _update_wandb_with_loaded_dataset(loaded_dataset):
@@ -161,6 +157,23 @@ def _prepare_dataset_with_caching(prepare_dataset, hyperparameters):
         return dataset
 
 
+def _cast_dataset_to_keras_dtype(dataset):
+    x_train, y_train, x_dev, y_dev = dataset
+    if type(x_train) == list:
+        x_train_floatx = list(map(K.cast_to_floatx, x_train))
+        x_dev_floatx = list(map(K.cast_to_floatx, x_dev))
+    else:
+        x_train_floatx = K.cast_to_floatx(x_train)
+        x_dev_floatx = K.cast_to_floatx(x_dev)
+
+    return (
+        x_train_floatx,
+        K.cast_to_floatx(y_train),
+        x_dev_floatx,
+        K.cast_to_floatx(y_dev),
+    )
+
+
 def run(hyperparameters, prepare_dataset, create_model):
     """ Use the provided hyperparameters to train the model in this module.
 
@@ -197,7 +210,7 @@ def run(hyperparameters, prepare_dataset, create_model):
 
     _update_wandb_with_loaded_dataset(loaded_dataset)
 
-    x_train, y_train, x_dev, y_dev = loaded_dataset
+    x_train, y_train, x_dev, y_dev = _cast_dataset_to_keras_dtype(loaded_dataset)
 
     set_cuda_visible_devices(hyperparameters["gpu"])
     dont_use_all_the_gpu_memory()

@@ -40,8 +40,7 @@ class TestExtractInputs:
                 [1, 2, 3],
                 [4 / 7, 5 / 8, 6 / 9]
                 # fmt: on
-            ],
-            dtype=np.float16,
+            ]
         ).T
 
         actual = module.extract_inputs(
@@ -64,8 +63,7 @@ class TestExtractLabels:
     def test_scales_by_scale_factor(self):
         scale_factor = 100
         expected = np.array(
-            [[10 / scale_factor, 20 / scale_factor, 30 / scale_factor]],
-            dtype=np.float16,
+            [[10 / scale_factor, 20 / scale_factor, 30 / scale_factor]]
         ).T
 
         actual = module.extract_labels(
@@ -81,12 +79,10 @@ class TestPrepareDatasetnumeric:
     def test_returns_expected_x_y_train_dev(self):
         scale_factor = 100
 
-        expected_x_train = np.array([[1, 2], [4 / 7, 5 / 8]], dtype=np.float16).T
-        expected_y_train = np.array(
-            [[10 / scale_factor, 20 / scale_factor]], dtype=np.float16
-        ).T
-        expected_x_dev = np.array([[3], [6 / 9]], dtype=np.float16).T
-        expected_y_dev = np.array([[30 / scale_factor]], dtype=np.float16).T
+        expected_x_train = np.array([[1, 2], [4 / 7, 5 / 8]]).T
+        expected_y_train = np.array([[10 / scale_factor, 20 / scale_factor]]).T
+        expected_x_dev = np.array([[3], [6 / 9]]).T
+        expected_y_dev = np.array([[30 / scale_factor]]).T
 
         actual = module.prepare_dataset_numeric(
             MOCK_DATASET,
@@ -121,16 +117,12 @@ class TestPrepareDatasetImageAndnumeric:
     def test_returns_expected_x_y_train_dev(self, mock_open_and_preprocess_images):
         scale_factor = 100
 
-        expected_x_train_numeric = np.array(
-            [[1, 2], [4 / 7, 5 / 8]], dtype=np.float16
-        ).T
+        expected_x_train_numeric = np.array([[1, 2], [4 / 7, 5 / 8]]).T
         expected_x_train_images = np.array([sentinel.image, sentinel.image])
-        expected_y_train = np.array(
-            [[10 / scale_factor, 20 / scale_factor]], dtype=np.float16
-        ).T
-        expected_x_dev_numeric = np.array([[3], [6 / 9]], dtype=np.float16).T
+        expected_y_train = np.array([[10 / scale_factor, 20 / scale_factor]]).T
+        expected_x_dev_numeric = np.array([[3], [6 / 9]]).T
         expected_x_dev_images = np.array([sentinel.image])
-        expected_y_dev = np.array([[30 / scale_factor]], dtype=np.float16).T
+        expected_y_dev = np.array([[30 / scale_factor]]).T
 
         actual = module.prepare_dataset_image_and_numeric(
             MOCK_DATASET,
@@ -178,19 +170,15 @@ class TestPrepareDatasetROIAndNumeric:
         scale_factor = 100
         mock_ROIs = [sentinel.ROI_0, sentinel.ROI_1]
 
-        expected_x_train_numeric = np.array(
-            [[1, 2], [4 / 7, 5 / 8]], dtype=np.float16
-        ).T
+        expected_x_train_numeric = np.array([[1, 2], [4 / 7, 5 / 8]]).T
         expected_x_train_ROIs = [
             [sentinel.ROI_0, sentinel.ROI_0],
             [sentinel.ROI_1, sentinel.ROI_1],
         ]
-        expected_y_train = np.array(
-            [[10 / scale_factor, 20 / scale_factor]], dtype=np.float16
-        ).T
-        expected_x_dev_numeric = np.array([[3], [6 / 9]], dtype=np.float16).T
+        expected_y_train = np.array([[10 / scale_factor, 20 / scale_factor]]).T
+        expected_x_dev_numeric = np.array([[3], [6 / 9]]).T
         expected_x_dev_ROIs = [[sentinel.ROI_0], [sentinel.ROI_1]]
-        expected_y_dev = np.array([[30 / scale_factor]], dtype=np.float16).T
+        expected_y_dev = np.array([[30 / scale_factor]]).T
 
         actual = module.prepare_dataset_ROIs_and_numeric(
             MOCK_DATASET,

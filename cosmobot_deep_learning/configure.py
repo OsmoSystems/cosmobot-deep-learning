@@ -42,6 +42,16 @@ def parse_model_run_args(
     )
 
     arg_parser.add_argument(
+        "--float16",
+        required=False,
+        type=_string_to_bool,
+        nargs="?",
+        const=True,
+        default=False,
+        help=("Train with 16 bit floating point resolution in the model and dataset"),
+    )
+
+    arg_parser.add_argument(
         "--gpu",
         required=False,
         type=str,

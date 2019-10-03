@@ -1,6 +1,8 @@
 import argparse
 from typing import List, Set
 
+import keras.backend as K
+
 from cosmobot_deep_learning.configure import parse_model_run_args
 from cosmobot_deep_learning.constants import (
     ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
@@ -60,7 +62,7 @@ def _calculate_additional_hyperparameters(
 
 LATEST_DATASET = "2019-09-05--15-08-28_osmo_ml_dataset_dev_at_start.csv"
 DEFAULT_LABEL_COLUMN = "setpoint O2 (mmHg)"
-DEFAULT_LOSS = logcosh_float_16
+DEFAULT_LOSS = "logcosh"
 DEFAULT_OPTIMIZER_NAME = "adadelta"
 DEFAULT_EPOCHS = 600
 DEFAULT_BATCH_SIZE = 128
@@ -177,6 +179,17 @@ def get_hyperparameters_from_args(
 
     # remove undefined arguments so that Nones don't override default values
     hyperparameters_from_args = _remove_items_with_no_value(vars(args))
+
+    # Set the backend floating point dtype before any tf variables are initialized
+    if hyperparameters_from_args["float16"]:
+        K.set_floatx("float16")
+        # Sets the value of the "fuzz factor" used internally in Keras
+        # This is 1e-7 by default, 1e-4 is the recommended starting value for f16
+        # But can be treated as further optimizeable
+        K.set_epsilon(1e-4)
+        if "loss" not in model_default_hyperparameters.keys():
+            hyperparameters_from_args["loss"] = logcosh_float_16
+
     defaulted_hyperparameters = {
         **model_default_hyperparameters,
         **hyperparameters_from_args,

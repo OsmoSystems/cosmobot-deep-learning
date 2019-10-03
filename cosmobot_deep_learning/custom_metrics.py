@@ -207,16 +207,20 @@ class SaveBestMetricValueAndEpochToWandb(Callback):
 
 
 def logcosh_float_16(y_true, y_pred):
-    """ Modified keras logcosh function to allow calculating loss with float16.
+    """ Modified fork of Keras' logcosh function to allow calculating loss with float16.
+    Original Source:
+        https://github.com/keras-team/keras/blob/3e8e2733ab281f50d03170c744cc42275f47c4fd/keras/losses.py#L651
+    Keras docs: https://keras.io/losses/#logcosh
     Logarithm of the hyperbolic cosine of the prediction error.
     `log(cosh(x))` is approximately equal to `(x ** 2) / 2` for small `x` and
     to `abs(x) - log(2)` for large `x`. This means that 'logcosh' works mostly
     like the mean squared error, but will not be so strongly affected by the
     occasional wildly incorrect prediction.
-    # Arguments
+
+    Args:
         y_true: tensor of true targets.
         y_pred: tensor of predicted targets.
-    # Returns
+    Returns:
         Tensor with one scalar loss entry per sample.
     """
 

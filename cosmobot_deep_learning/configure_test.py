@@ -11,6 +11,7 @@ class TestParseArgs:
     def test_all_args_parsed_appropriately(self):
         args_in = [
             "--gpu",
+            "--float16",
             "--dryrun",
             "--dataset-cache",
             "10k-images-and-temp",
@@ -24,6 +25,7 @@ class TestParseArgs:
 
         expected_args_out = {
             "gpu": AUTO_ASSIGN_GPU,
+            "float16": True,
             "dryrun": True,
             "dataset_cache_name": "10k-images-and-temp",
             "epochs": 100,
@@ -35,7 +37,16 @@ class TestParseArgs:
 
     def test_optional_args_take_default_value(self):
         args_in: List[str] = []
-        assert vars(module.parse_model_run_args(args_in))["dataset_cache_name"] is None
+        expected_args_out = {
+            "gpu": "-1",
+            "float16": False,
+            "dryrun": False,
+            "dataset_cache_name": None,
+            "epochs": None,
+            "learning_rate": None,
+            "optimizer_name": None,
+        }
+        assert vars(module.parse_model_run_args(args_in)) == expected_args_out
 
     def test_unrecognized_args_throws(self):
         args_in = ["--extra"]

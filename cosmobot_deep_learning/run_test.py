@@ -24,27 +24,19 @@ def mock_dataset_cache_helpers(mocker):
     }
 
 
-class TestLoggableHyperparameters:
-    def test_overrides_unloggable_metrics(self):
-        def mock_custom_metric():
-            return None
+def mock_custom_metric():
+    return None
 
-        def mock_custom_loss():
-            return None
 
-        unloggable_hyperparameters = {
-            "some other attribute": sentinel.something,
-            "metrics": ["a metric", "another metric", mock_custom_metric],
-            "loss": mock_custom_loss,
-        }
-        expected = {
-            "some other attribute": sentinel.something,
-            "metrics": ["a metric", "another metric", "mock_custom_metric"],
-            "loss": "mock_custom_loss",
-        }
-        actual = module._loggable_hyperparameters(unloggable_hyperparameters)
+class TestGetLoggableFunctionName:
+    @pytest.mark.parametrize(
+        "metric,serialized_name",
+        [(mock_custom_metric, "mock_custom_metric"), ("mock_metric", "mock_metric")],
+    )
+    def test_fixes_function_hyperparameters(self, metric, serialized_name):
+        actual = module._get_loggable_function_name(metric)
 
-        assert actual == expected
+        assert actual == serialized_name
 
 
 class TestDryRunFlag:
