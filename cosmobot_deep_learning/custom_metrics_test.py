@@ -44,7 +44,7 @@ class TestRestoreBestWeights:
     def test_calls_set_weights_with_best_weights(self):
         metric = "some_metric"
         epoch_metric_values = [0.3, 0.1, 0.15]
-        epoch_weights = list(range(3))
+        epoch_weights = [sentinel.epoch_1, sentinel.epoch_2, sentinel.epoch_3]
 
         mock_model = Mock()
         mock_model.get_weights.side_effect = epoch_weights
@@ -56,4 +56,4 @@ class TestRestoreBestWeights:
         callback.on_train_end()
 
         assert callback.best_value == 0.1
-        mock_model.set_weights.assert_called_once_with(1)
+        mock_model.set_weights.assert_called_once_with(sentinel.epoch_2)

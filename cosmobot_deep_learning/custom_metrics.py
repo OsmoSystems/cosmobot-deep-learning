@@ -214,9 +214,15 @@ class RestoreBestWeights(Callback):
     and restores them onto the model at the end of training.
 
     This assumes that lower is better for the given metric.
+
+    Attributes:
+        metric: name of the metric to read from logs dict
+        best_epoch: epoch number (int) of the best epoch seen so far
+        best_value: best value for the given metric seen so far
+        best_weights: model weights from the epoch with the best value
     """
 
-    def __init__(self, metric):
+    def __init__(self, metric: str):
         self.metric = metric
         self.best_epoch = None
         self.best_value = None
