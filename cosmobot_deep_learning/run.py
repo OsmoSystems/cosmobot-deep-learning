@@ -11,6 +11,7 @@ from cosmobot_deep_learning.custom_metrics import (
     ThresholdValMeanAbsoluteErrorOnCustomMetric,
     magical_incantation_to_make_custom_metric_work,
     ErrorAtPercentile,
+    RestoreBestWeights,
     SaveBestMetricValueAndEpochToWandb,
 )
 from cosmobot_deep_learning.gpu import (
@@ -219,6 +220,7 @@ def run(hyperparameters, prepare_dataset, create_model):
                 metric="val_adjusted_mean_absolute_error"
             ),
             WandbCallback(verbose=1, monitor="val_adjusted_mean_absolute_error"),
+            RestoreBestWeights(metric="val_adjusted_mean_absolute_error"),
         ],
     )
 

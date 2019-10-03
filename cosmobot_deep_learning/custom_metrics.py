@@ -1,14 +1,18 @@
+import logging
+
 import keras
-import wandb
 from keras.callbacks import Callback
 import numpy as np
 import tensorflow as tf
+import wandb
 
 from cosmobot_deep_learning.constants import (
     MG_L_PER_MMHG_AT_25_C_1_ATM as MG_L_PER_MMHG,
 )
 
 ARBITRARILY_LARGE_MULTIPLIER = 10
+
+logger = logging.getLogger(__name__)
 
 
 def _function_namify(_float: float) -> str:
@@ -203,3 +207,30 @@ class SaveBestMetricValueAndEpochToWandb(Callback):
         if not previous_best_metric or current_metric < previous_best_metric:
             wandb.run.summary[self.best_metric_key] = current_metric
             wandb.run.summary[self.best_epoch_key] = epoch
+
+
+class RestoreBestWeights(Callback):
+    """ Saves the model weights from the best epoch according to the given metric
+    and restores them onto the model at the end of training.
+
+    This assumes that lower is better for the given metric.
+    """
+
+    def __init__(self, metric):
+        self.metric = metric
+        self.best_epoch = None
+        self.best_value = None
+        self.best_weights = None
+
+    def on_epoch_end(self, epoch, logs):
+        current_value = logs[self.metric]
+
+        if self.best_value is None or current_value < self.best_value:
+            logger.info(f"New best epoch is {epoch}: ({self.metric} = {current_value})")
+            self.best_epoch = epoch
+            self.best_value = current_value
+            self.best_weights = self.model.get_weights()
+
+    def on_train_end(self, logs=None):
+        logger.info(f"Restoring model weights from best epoch {self.best_epoch}")
+        self.model.set_weights(self.best_weights)
