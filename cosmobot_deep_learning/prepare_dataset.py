@@ -4,6 +4,7 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
+
 from cosmobot_deep_learning.preprocess_image import (
     open_and_preprocess_images,
     open_and_preprocess_image_ROIs,

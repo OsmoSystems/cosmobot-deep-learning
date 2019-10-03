@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 from tqdm.auto import tqdm
 
+
 from picamraw import PiRawBayer, PiCameraVersion
 
 
@@ -91,7 +92,7 @@ def crop_and_scale_image(rgb_image: np.ndarray, output_size: int):
     """
     square_image = crop_square(rgb_image)
     cv2_image = cv2.resize(square_image, (output_size, output_size))
-    return np.array(cv2_image, dtype=np.float16)
+    return np.array(cv2_image)
 
 
 def open_crop_and_scale_image(raw_image_path: str, output_size: int):
