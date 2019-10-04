@@ -20,7 +20,7 @@ from cosmobot_deep_learning.run import run
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
     "batch_size": 3000,
-    "numeric_input_columns": ["sr", "PicoLog temperature (C)"],
+    "numeric_input_columns": ["sr", "YSI temperature (C)"],
 }
 
 

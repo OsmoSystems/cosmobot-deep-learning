@@ -25,7 +25,7 @@ from cosmobot_deep_learning.preprocess_image import (
 
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
-    "numeric_input_columns": ["PicoLog temperature (C)"],
+    "numeric_input_columns": ["YSI temperature (C)"],
     "image_size": 128,
     "convolutional_kernel_size": 5,
     "dense_layer_units": 32,

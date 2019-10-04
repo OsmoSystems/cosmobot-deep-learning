@@ -57,13 +57,13 @@ def _calculate_additional_hyperparameters(
     }
 
 
-LATEST_DATASET = "2019-09-05--15-08-28_osmo_ml_dataset_dev_at_start.csv"
-DEFAULT_LABEL_COLUMN = "setpoint O2 (mmHg)"
+LATEST_DATASET = "2019-10-03--10-40-27_unit_A_scum_and_calibration.csv"
+DEFAULT_LABEL_COLUMN = "YSI DO (mmHg)"
 DEFAULT_LOSS = "logcosh"
 DEFAULT_OPTIMIZER_NAME = "adadelta"
 DEFAULT_EPOCHS = 600
 DEFAULT_BATCH_SIZE = 128
-DEFAULT_TRAINING_SET_COLUMN = "training_resampled"
+DEFAULT_TRAINING_SET_COLUMN = "training"
 DEFAULT_DEV_SET_COLUMN = "dev_resampled"
 # Allow some breathing room when DO readings in mmHg go above atmospheric level
 LABEL_SCALE_FACTOR_MMHG_BUFFER = 30
