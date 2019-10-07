@@ -9,9 +9,8 @@ This model is an N-branch network that combines:
 import argparse
 import sys
 
-import keras
+from tensorflow import keras
 from keras import regularizers
-from keras_drop_block import DropBlock2D
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
 from cosmobot_deep_learning.constants import ACTIVATION_LAYER_BY_NAME
@@ -38,8 +37,6 @@ DEFAULT_HYPERPARAMETERS = {
     "dense_layer_units": 64,
     "roi_branch_dense_layer_1_units": 64,
     "roi_branch_dense_layer_2_units": 4,
-    "dropblock_size": 4,
-    "dropblock_keep_prob": 0.9,
     "l2_regularization": 0.001,
     "layer_activation": "prelu",
     "output_layer_activation": "sigmoid",
@@ -50,8 +47,6 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
     # Layer names cannot have spaces
     model_branch_id = branch_id.replace(" ", "_")
 
-    block_size = hyperparameters["dropblock_size"]
-    keep_prob = hyperparameters["dropblock_keep_prob"]
     convolutional_kernel_size = hyperparameters["convolutional_kernel_size"]
     kernel_initializer = hyperparameters["kernel_initializer"]
     dense_layer_1_units = hyperparameters["roi_branch_dense_layer_1_units"]
@@ -70,19 +65,9 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
             ),
             activation_layer(),
             keras.layers.MaxPooling2D(2),
-            DropBlock2D(
-                block_size=block_size,
-                keep_prob=keep_prob,
-                name=f"{model_branch_id}-drop-block-1",
-            ),
             keras.layers.Conv2D(32, **conv_layer_kwargs),
             activation_layer(),
             keras.layers.MaxPooling2D(2),
-            DropBlock2D(
-                block_size=block_size,
-                keep_prob=keep_prob,
-                name=f"{model_branch_id}-drop-block-2",
-            ),
             keras.layers.Conv2D(32, **conv_layer_kwargs),
             activation_layer(),
             keras.layers.Flatten(name=f"{model_branch_id}-prep-for-dense"),
@@ -172,8 +157,6 @@ def get_hyperparameter_parser():
     parser.add_argument("--roi_branch-dense-layer-1-units", type=int)
     parser.add_argument("--roi_branch-dense-layer-2-units", type=int)
     parser.add_argument("--l2-regularization", type=float),
-    parser.add_argument("--dropblock-size", type=int),
-    parser.add_argument("--dropblock-keep-prob", type=float),
     parser.add_argument("--layer-activation", type=str),
     parser.add_argument("--output-layer-activation", type=str),
     return parser
