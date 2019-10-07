@@ -66,7 +66,8 @@ def create_model(hyperparameters, x_train):
 
     # END HACKS
 
-    original_model = keras.models.load_model("0oh4ovjz-model-best.h5", custom_objects)
+    model_filename = f'{hyperparameters["original_model_id"]}-model-best.h5'
+    original_model = keras.models.load_model(model_filename, custom_objects)
 
     original_last_layer_index = 18
 
@@ -107,6 +108,7 @@ def create_model(hyperparameters, x_train):
 def get_hyperparameter_parser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--image-size", type=int)
+    parser.add_argument("--original-model-id", type=str)
     return parser
 
 
