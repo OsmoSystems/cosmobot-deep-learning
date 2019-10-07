@@ -5,8 +5,8 @@ This model adds additional trainable dense layers on top of a pre-trained model
 import argparse
 import sys
 
-from tf import keras
-from tf.keras.layers import Dense
+from tensorflow import keras
+from tensorflow.keras.layers import Dense
 
 from cosmobot_deep_learning.constants import ACTIVATION_LAYER_BY_NAME
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
