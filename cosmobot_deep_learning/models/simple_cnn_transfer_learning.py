@@ -50,7 +50,7 @@ def create_model(hyperparameters, x_train):
         get_fraction_outside_error_threshold_fn,
     )
 
-    error_thresholds_mg_l = hyperparameters["error_thresholds_mg_l"]
+    error_thresholds_mg_l = [0.1, 0.3, 0.5]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
 
     fraction_outside_error_threshold_fns = [
