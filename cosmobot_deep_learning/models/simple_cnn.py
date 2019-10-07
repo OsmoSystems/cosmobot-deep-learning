@@ -9,7 +9,7 @@ This model is a 2-branch network that combines:
 import argparse
 import sys
 
-import keras
+import tensorflow.keras as keras
 
 from cosmobot_deep_learning.constants import ACTIVATION_LAYER_BY_NAME
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
@@ -97,7 +97,7 @@ def create_model(hyperparameters, x_train):
                 name="final_dense",
                 kernel_initializer=kernel_initializer,
             ),
-            keras.layers.advanced_activations.LeakyReLU(),
+            keras.layers.LeakyReLU(),
             # Final output layer with 1 neuron to regress a single value
             keras.layers.Dense(1, kernel_initializer=kernel_initializer, name="DO"),
         ]

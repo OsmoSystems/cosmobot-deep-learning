@@ -4,7 +4,7 @@ This model is a hand-made CNN with 3 convolutional layers that trains on full im
 
 import sys
 
-import keras
+import tensorflow.keras as keras
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
 from cosmobot_deep_learning.hyperparameters import (
@@ -63,7 +63,7 @@ def create_model(hyperparameters, x_train):
             keras.layers.Dense(
                 64, name="final_dense", kernel_initializer=kernel_initializer
             ),
-            keras.layers.advanced_activations.LeakyReLU(),
+            keras.layers.LeakyReLU(),
             # Final output layer with 1 neuron to regress a single value
             keras.layers.Dense(
                 1,
