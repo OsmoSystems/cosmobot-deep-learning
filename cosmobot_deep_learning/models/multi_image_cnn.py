@@ -26,7 +26,7 @@ from cosmobot_deep_learning.preprocess_image import (
 
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
-    "numeric_input_columns": ["PicoLog temperature (C)"],
+    "numeric_input_columns": ["YSI temperature (C)"],
     "image_size": 64,
     # ROI names to extract from `ROI definitions` column in the dataset.
     # WARNING: The order here is preserved through data processing and model creation / input

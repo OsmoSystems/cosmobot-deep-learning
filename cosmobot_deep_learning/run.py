@@ -10,6 +10,7 @@ from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
 from cosmobot_deep_learning.custom_metrics import (
     ThresholdValMeanAbsoluteErrorOnCustomMetric,
     ErrorAtPercentile,
+    RestoreBestWeights,
     SaveBestMetricValueAndEpochToWandb,
 )
 from cosmobot_deep_learning.gpu import (
@@ -216,6 +217,7 @@ def run(hyperparameters, prepare_dataset, create_model):
                 metric="val_adjusted_mean_absolute_error"
             ),
             WandbCallback(verbose=1, monitor="val_adjusted_mean_absolute_error"),
+            RestoreBestWeights(metric="val_adjusted_mean_absolute_error"),
         ],
     )
 
