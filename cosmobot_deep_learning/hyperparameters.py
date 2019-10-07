@@ -187,7 +187,7 @@ def get_hyperparameters_from_args(
     return hyperparameters
 
 
-def get_optimizer(hyperparameters):
+def _get_optimizer_instance(hyperparameters):
     optimizer_name = hyperparameters["optimizer_name"]
     learning_rate = hyperparameters.get("learning_rate")
 
@@ -197,6 +197,10 @@ def get_optimizer(hyperparameters):
 
     optimizer_class = OPTIMIZER_CLASSES_BY_NAME[optimizer_name.lower()]
 
-    optimizer = optimizer_class(**optimizer_kwargs)
+    return optimizer_class(**optimizer_kwargs)
+
+
+def get_optimizer(hyperparameters):
+    optimizer = _get_optimizer_instance(hyperparameters)
 
     return tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
