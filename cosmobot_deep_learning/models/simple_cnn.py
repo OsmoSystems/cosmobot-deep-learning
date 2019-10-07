@@ -9,7 +9,7 @@ This model is a 2-branch network that combines:
 import argparse
 import sys
 
-import tensorflow.keras as keras
+from tensorflow import keras
 
 from cosmobot_deep_learning.constants import ACTIVATION_LAYER_BY_NAME
 from cosmobot_deep_learning.configure import get_model_name_from_filepath

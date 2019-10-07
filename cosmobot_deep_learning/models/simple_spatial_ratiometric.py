@@ -5,7 +5,7 @@ This model is a dense-layer network that trains only on two numeric inputs:
 """
 import sys
 
-import tensorflow.keras as keras
+from tensorflow import keras
 import tensorflow as tf
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath

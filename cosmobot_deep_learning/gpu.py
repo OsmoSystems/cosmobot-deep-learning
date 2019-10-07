@@ -51,7 +51,10 @@ def set_cuda_visible_devices(gpu):
 def dont_use_all_the_gpu_memory():
     """Set up Keras/TensorFlow to allow multiple models to be trained on one GPU"""
     gpus = tf.config.experimental.list_physical_devices("GPU")
-    if gpus:
-        for gpu in gpus:
-            # Throws RuntimeError if not set before GPUs have been initialized
-            tf.config.experimental.set_memory_growth(gpu, True)
+
+    if not gpus:
+        return
+
+    for gpu in gpus:
+        # Throws RuntimeError if not set before GPUs have been initialized
+        tf.config.experimental.set_memory_growth(gpu, True)

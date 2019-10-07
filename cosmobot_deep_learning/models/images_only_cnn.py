@@ -4,7 +4,7 @@ This model is a hand-made CNN with 3 convolutional layers that trains on full im
 
 import sys
 
-import tensorflow.keras as keras
+from tensorflow import keras
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
 from cosmobot_deep_learning.hyperparameters import (
