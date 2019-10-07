@@ -22,7 +22,10 @@ from cosmobot_deep_learning.preprocess_image import (
 
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
-    "dataset_filename": "2019-10-03--10-40-27_unit_A_scum_and_calibration.csv",
+    # "dataset_filename": "2019-10-03--10-40-27_unit_A_scum_and_calibration.csv",
+    "dataset_filename": "2019-09-26--14-19-22_osmo_ml_dataset_scum_dev_at_start.csv",
+    "training_set_column": "cosmobot_a_training_resampled",
+    "dev_set_column": "cosmobot_a_dev",
     "numeric_input_columns": ["YSI temperature (C)"],
     "image_size": 128,
     "convolutional_kernel_size": 5,
