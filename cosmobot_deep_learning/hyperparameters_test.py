@@ -145,7 +145,7 @@ class TestGetOptimizer:
     def test_gets_correct_optimizer(self, mock_optimizer):
         hyperparameters = {"optimizer_name": "mock_optimizer_name"}
 
-        module.get_optimizer(hyperparameters)
+        module._get_optimizer_instance(hyperparameters)
         mock_optimizer.assert_called_with()
 
     def test_specifies_learning_rate(self, mock_optimizer):
@@ -154,5 +154,5 @@ class TestGetOptimizer:
             "learning_rate": sentinel.learning_rate,
         }
 
-        module.get_optimizer(hyperparameters)
+        module._get_optimizer_instance(hyperparameters)
         mock_optimizer.assert_called_with(lr=sentinel.learning_rate)

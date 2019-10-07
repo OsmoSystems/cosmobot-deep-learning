@@ -1,14 +1,17 @@
-import keras
-import wandb
-from keras.callbacks import Callback
+import logging
+
 import numpy as np
 import tensorflow as tf
+import wandb
+from tensorflow.keras.callbacks import Callback
 
 from cosmobot_deep_learning.constants import (
     MG_L_PER_MMHG_AT_25_C_1_ATM as MG_L_PER_MMHG,
 )
 
 ARBITRARILY_LARGE_MULTIPLIER = 10
+
+logger = logging.getLogger(__name__)
 
 
 def _function_namify(_float: float) -> str:
@@ -53,14 +56,12 @@ def get_fraction_outside_error_threshold_fn(
         )
 
         # count_nonzero counts Trues as not zero and Falses as zero
-        count_outside_error_threshold = tf.count_nonzero(is_outside_error_threshold)
+        count_outside_error_threshold = tf.math.count_nonzero(
+            is_outside_error_threshold
+        )
         count_total = tf.size(y_true)
 
-        # Cast to float so that the division calculation returns a float (tf uses Python 2 semantics)
-        fraction_outside = tf.div(
-            tf.cast(count_outside_error_threshold, tf.float32),
-            tf.cast(count_total, tf.float32),
-        )
+        fraction_outside = tf.math.divide(count_outside_error_threshold, count_total)
         return fraction_outside
 
     fn_name = _get_fraction_outside_error_threshold_fn_name(error_threshold_mg_l)
@@ -131,14 +132,6 @@ class ErrorAtPercentile(Callback):
         # fmt: on
 
 
-def magical_incantation_to_make_custom_metric_work():
-    """ This magical incantation must be called before model.fit() to make our custom metric work
-        I honestly have no idea why this makes our custom metric work... but it does.
-        https://stackoverflow.com/questions/45947351/how-to-use-tensorflow-metrics-in-keras
-    """
-    keras.backend.get_session().run(tf.local_variables_initializer())
-
-
 class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
     """ Keras model callback to add two new metrics
         "val_satisficing_mean_absolute_error" is a filtered version of val_mean_absolute_error,
@@ -203,3 +196,36 @@ class SaveBestMetricValueAndEpochToWandb(Callback):
         if not previous_best_metric or current_metric < previous_best_metric:
             wandb.run.summary[self.best_metric_key] = current_metric
             wandb.run.summary[self.best_epoch_key] = epoch
+
+
+class RestoreBestWeights(Callback):
+    """ Saves the model weights from the best epoch according to the given metric
+    and restores them onto the model at the end of training.
+
+    This assumes that lower is better for the given metric.
+
+    Attributes:
+        metric: name of the metric to read from logs dict
+        best_epoch: epoch number (int) of the best epoch seen so far
+        best_value: best value for the given metric seen so far
+        best_weights: model weights from the epoch with the best value
+    """
+
+    def __init__(self, metric: str):
+        self.metric = metric
+        self.best_epoch = None
+        self.best_value = None
+        self.best_weights = None
+
+    def on_epoch_end(self, epoch, logs):
+        current_value = logs[self.metric]
+
+        if self.best_value is None or current_value < self.best_value:
+            logger.info(f"New best epoch is {epoch}: ({self.metric} = {current_value})")
+            self.best_epoch = epoch
+            self.best_value = current_value
+            self.best_weights = self.model.get_weights()
+
+    def on_train_end(self, logs=None):
+        logger.info(f"Restoring model weights from best epoch {self.best_epoch}")
+        self.model.set_weights(self.best_weights)
