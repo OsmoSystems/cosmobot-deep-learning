@@ -9,7 +9,6 @@ from wandb.keras import WandbCallback
 from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
 from cosmobot_deep_learning.custom_metrics import (
     ThresholdValMeanAbsoluteErrorOnCustomMetric,
-    magical_incantation_to_make_custom_metric_work,
     ErrorAtPercentile,
     RestoreBestWeights,
     SaveBestMetricValueAndEpochToWandb,
@@ -196,8 +195,6 @@ def run(hyperparameters, prepare_dataset, create_model):
     wandb.config.update({"CUDA_VISIBLE_DEVICES": os.getenv("CUDA_VISIBLE_DEVICES")})
 
     model = create_model(hyperparameters, x_train)
-
-    magical_incantation_to_make_custom_metric_work()
 
     history = model.fit(
         x_train,

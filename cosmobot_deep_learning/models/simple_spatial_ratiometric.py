@@ -5,7 +5,7 @@ This model is a dense-layer network that trains only on two numeric inputs:
 """
 import sys
 
-import keras
+from tensorflow import keras
 import tensorflow as tf
 
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
@@ -41,7 +41,7 @@ def create_model(hyperparameters, x_train):
                 11, activation=tf.nn.relu, input_shape=[numeric_inputs_count]
             ),
             keras.layers.Dense(32),
-            keras.layers.advanced_activations.LeakyReLU(),
+            keras.layers.LeakyReLU(),
             keras.layers.Dense(1, name="sv_DO"),
         ]
     )

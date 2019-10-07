@@ -1,10 +1,9 @@
 import logging
 
-import keras
-from keras.callbacks import Callback
 import numpy as np
 import tensorflow as tf
 import wandb
+from tensorflow.keras.callbacks import Callback
 
 from cosmobot_deep_learning.constants import (
     MG_L_PER_MMHG_AT_25_C_1_ATM as MG_L_PER_MMHG,
@@ -57,14 +56,12 @@ def get_fraction_outside_error_threshold_fn(
         )
 
         # count_nonzero counts Trues as not zero and Falses as zero
-        count_outside_error_threshold = tf.count_nonzero(is_outside_error_threshold)
+        count_outside_error_threshold = tf.math.count_nonzero(
+            is_outside_error_threshold
+        )
         count_total = tf.size(y_true)
 
-        # Cast to float so that the division calculation returns a float (tf uses Python 2 semantics)
-        fraction_outside = tf.div(
-            tf.cast(count_outside_error_threshold, tf.float32),
-            tf.cast(count_total, tf.float32),
-        )
+        fraction_outside = tf.math.divide(count_outside_error_threshold, count_total)
         return fraction_outside
 
     fn_name = _get_fraction_outside_error_threshold_fn_name(error_threshold_mg_l)
@@ -133,14 +130,6 @@ class ErrorAtPercentile(Callback):
         logs[f"error_at_{p}_percentile_mg_l"] = error_at_percentile_mmhg / MG_L_PER_MMHG
         logs[f"val_error_at_{p}_percentile_mg_l"] = val_error_at_percentile_mmhg / MG_L_PER_MMHG
         # fmt: on
-
-
-def magical_incantation_to_make_custom_metric_work():
-    """ This magical incantation must be called before model.fit() to make our custom metric work
-        I honestly have no idea why this makes our custom metric work... but it does.
-        https://stackoverflow.com/questions/45947351/how-to-use-tensorflow-metrics-in-keras
-    """
-    keras.backend.get_session().run(tf.local_variables_initializer())
 
 
 class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):

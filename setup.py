@@ -13,8 +13,7 @@ setup(
     install_requires=[
         # dill is required by shap but not installed with it
         "dill",
-        # 2.3.0 breaks support for tf 1.12.0
-        "keras<2.3.0",
+        "keras",
         "keras_drop_block",
         "keras_resnet",
         "numpy",
@@ -31,12 +30,10 @@ setup(
     ],
     # fmt: on
     extras_require={
-        # Newer versions of tensorflow have memory issues on our graphics cards
-        # https://github.com/tensorflow/tensorflow/issues/24496#issuecomment-456243093
         # On macs/Docker/CI we have to install just `tensorflow` (no GPU support)
         # On non-macs, install just `tensorflow-gpu` to get GPU support
-        "no-gpu": ["tensorflow==1.12.0"],
-        "gpu": ["tensorflow-gpu==1.12.0"],
+        "no-gpu": ["tensorflow"],
+        "gpu": ["tensorflow-gpu"],
     },
     include_package_data=True,
 )
