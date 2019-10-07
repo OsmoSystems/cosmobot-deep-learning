@@ -1,6 +1,8 @@
 import argparse
 from typing import List, Set
 
+import tensorflow as tf
+
 from cosmobot_deep_learning.configure import parse_model_run_args
 from cosmobot_deep_learning.constants import (
     ACCEPTABLE_FRACTION_OUTSIDE_ERROR,
@@ -195,4 +197,6 @@ def get_optimizer(hyperparameters):
 
     optimizer_class = OPTIMIZER_CLASSES_BY_NAME[optimizer_name.lower()]
 
-    return optimizer_class(**optimizer_kwargs)
+    optimizer = optimizer_class(**optimizer_kwargs)
+
+    return tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
