@@ -61,7 +61,11 @@ def get_fraction_outside_error_threshold_fn(
         )
         count_total = tf.size(y_true)
 
-        fraction_outside = tf.math.divide(count_outside_error_threshold, count_total)
+        # Cast ints to floats to ensure dtypes match
+        fraction_outside = tf.math.divide(
+            tf.cast(count_outside_error_threshold, tf.float32),
+            tf.cast(count_total, tf.float32),
+        )
         return fraction_outside
 
     fn_name = _get_fraction_outside_error_threshold_fn_name(error_threshold_mg_l)
