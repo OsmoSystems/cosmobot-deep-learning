@@ -30,7 +30,7 @@ DEFAULT_HYPERPARAMETERS = {
     # so that we don't unlearn old things before we've learned new things
     "learning_rate": 0.00001,
     "freeze_until_layer": 10,  # the 10th index should be the first dense layer ("dense_1")
-    "original-model-id": "0oh4ovjz",  # The best simple_cnn model so far (which used regular logcosh)
+    "original_model_id": "0oh4ovjz",  # The best simple_cnn model so far (which used regular logcosh)
 }
 
 
