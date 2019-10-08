@@ -1,5 +1,5 @@
 """
-This model adds additional trainable dense layers on top of a pre-trained model
+This model loads a pre-trained simple_cnn model and freezes some layers and retrains the rest
 """
 
 import argparse
