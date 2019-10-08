@@ -114,7 +114,7 @@ def create_model(hyperparameters, x_train):
 def get_hyperparameter_parser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--original-model-id", type=str)
-    parser.add_argument("--freeze-until-index", type=str)
+    parser.add_argument("--freeze-until-index", type=int)
     return parser
 
 
