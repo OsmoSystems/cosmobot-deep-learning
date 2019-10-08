@@ -6,9 +6,7 @@ import argparse
 import sys
 
 from tensorflow import keras
-from tensorflow.keras.layers import Dense
 
-from cosmobot_deep_learning.constants import ACTIVATION_LAYER_BY_NAME
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
 from cosmobot_deep_learning.hyperparameters import (
     get_hyperparameters_from_args,
@@ -28,15 +26,10 @@ DEFAULT_HYPERPARAMETERS = {
     "dev_set_column": "cosmobot_a_dev",
     "numeric_input_columns": ["YSI temperature (C)"],
     "image_size": 128,
-    "convolutional_kernel_size": 5,
-    "dense_layer_units": 32,
-    "prediction_dense_layer_units": 64,
-    "optimizer_name": "adam",
     # 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
-    "learning_rate": 0.0001,
-    "dropout_rate": 0.01,
-    "output_activation_layer": "sigmoid",
-    "convolutional_activation_layer": "leakyrelu",
+    # "learning_rate": 0.0001,
+    # Use an even smaller learning rate, so that we don't unlearn old things before we've learned new things
+    "learning_rate": 0.00001,
 }
 
 
@@ -48,7 +41,7 @@ def create_model(hyperparameters, x_train):
         x_train: The input training data (used to determine input layer shape)
     """
     # HACKS HACKS HACKS HACKS
-    # Have to re-define custom metrics
+    # Have to re-define custom metrics so we can re-hydrate the model
     from cosmobot_deep_learning.custom_metrics import (
         get_fraction_outside_error_threshold_fn,
     )
@@ -66,35 +59,44 @@ def create_model(hyperparameters, x_train):
     custom_objects = {
         **{fn.__name__: fn for fn in fraction_outside_error_threshold_fns}
     }
-
     # END HACKS
 
+    # Load out best simple_cnn model that has been trained on calibration data
+    # TODO: use wandb API to download this?
     model_filename = f'{hyperparameters["original_model_id"]}-model-best.h5'
-    original_model = keras.models.load_model(model_filename, custom_objects)
+    transfer_learning_model = keras.models.load_model(model_filename, custom_objects)
 
-    original_last_layer_index = 18
+    # The 18th index should be the last dense layer before output: "leaky_re_lu_6"
+    # original_last_layer_index = 18
+    #
+    # # Start with the output of the last dense layer activation
+    # last_desired_layer_from_original_model = original_model.layers[
+    #     original_last_layer_index
+    # ].output
+    # print(last_desired_layer_from_original_model)
+    #
+    # # Define some new dense layers
+    # x = last_desired_layer_from_original_model
+    # x = Dense(512, activation="relu", name="xfer_dense_1")(x)
+    # x = Dense(256, activation="relu", name="xfer_dense_2")(x)
+    # x = Dense(128, activation="relu", name="xfer_dense_3")(x)
+    # output_layer = Dense(1, activation="sigmoid", name="xfer_output")(x)
+    #
+    # transfer_learning_model = keras.models.Model(
+    #     inputs=original_model.input, outputs=output_layer
+    # )
 
-    # Start with the output of the last dense layer actication
-    last_desired_layer_from_original_model = original_model.layers[
-        original_last_layer_index
-    ].output
-    print(last_desired_layer_from_original_model)
+    # Freeze the original model's layers up to the dense layers
+    # the 9th index should be the flattening layer: "prep-for-dense"
+    freeze_until_index = 9
 
-    # Define some new dense layers
-    x = last_desired_layer_from_original_model
-    x = Dense(512, activation="relu", name="xfer_dense_1")(x)
-    x = Dense(256, activation="relu", name="xfer_dense_2")(x)
-    x = Dense(128, activation="relu", name="xfer_dense_3")(x)
-    output_layer = Dense(1, activation="sigmoid", name="xfer_output")(x)
-
-    transfer_learning_model = keras.models.Model(
-        inputs=original_model.input, outputs=output_layer
-    )
-
-    # Freeze the original model's layers
-    for layer in transfer_learning_model.layers[:original_last_layer_index]:
+    # Freeze the original model's layers up to the dense layers
+    for layer in transfer_learning_model.layers[:freeze_until_index]:
         layer.trainable = False
-    for layer in transfer_learning_model.layers[original_last_layer_index:]:
+
+    # Allow the dense layers to be retrained (this is the default, so just adding this here to be explicit
+    # TODO: probably remove this since it should be superfluous
+    for layer in transfer_learning_model.layers[freeze_until_index:]:
         layer.trainable = True
 
     print(transfer_learning_model.summary())
