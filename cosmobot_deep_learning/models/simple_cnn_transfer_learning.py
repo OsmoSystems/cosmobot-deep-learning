@@ -88,7 +88,8 @@ def create_model(hyperparameters, x_train):
 
     # Freeze the original model's layers up to the dense layers
     # the 9th index should be the flattening layer: "prep-for-dense"
-    freeze_until_index = 9
+    freeze_until_index = hyperparameters["freeze_until_index"]
+    print("Freezing up to :", transfer_learning_model.layers[:freeze_until_index])
 
     # Freeze the original model's layers up to the dense layers
     for layer in transfer_learning_model.layers[:freeze_until_index]:
@@ -112,8 +113,8 @@ def create_model(hyperparameters, x_train):
 
 def get_hyperparameter_parser():
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--image-size", type=int)
     parser.add_argument("--original-model-id", type=str)
+    parser.add_argument("--freeze-until-index", type=str)
     return parser
 
 
