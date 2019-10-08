@@ -9,14 +9,15 @@ parameters:
 #    value: TBD bigger scum dataset
   gpu:
     value: auto
+  epochs:
+    value: 400
   original-model-id:
-    values: [0oh4ovjz, j53s5f07] #, hu0fs6u7]  # 0oh4ovjz is best with logcosh, j53s5f07 is best with mean_squared (hu0fs6u7 is what I briefly thought was best with mean_squared
+    values: [0oh4ovjz, j53s5f07, hu0fs6u7]  # 0oh4ovjz is best with logcosh, j53s5f07 is best with mean_squared, (hu0fs6u7 is what I briefly thought was best with mean_squared
   optimizer-name:
     values: [adam, adadelta]
   learning-rate:
-    values: [0.000003, 0.00001, 0.00003, 0.0001]
+    values: [0.00001, 0.0001, 0.001, 0.01]
   freeze-until-index:
     value: 10
   replicate:
-    value: 1
-#    values: [1,2,3]
+    values: [1,2,3,4,5]
