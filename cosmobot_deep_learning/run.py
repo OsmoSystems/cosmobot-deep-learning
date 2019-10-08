@@ -2,6 +2,7 @@ import os
 import logging
 import pickle
 
+import numpy as np
 import pandas as pd
 import wandb
 from wandb.keras import WandbCallback
@@ -151,6 +152,23 @@ def _prepare_dataset_with_caching(prepare_dataset, hyperparameters):
         return dataset
 
 
+def _cast_dataset_to_float16(dataset):
+    x_train, y_train, x_dev, y_dev = dataset
+    if type(x_train) == list:
+        x_train_floatx = [np.asarray(x, dtype="float16") for x in x_train]
+        x_dev_floatx = [np.asarray(x, dtype="float16") for x in x_dev]
+    else:
+        x_train_floatx = np.asarray(x_train, dtype="float16")
+        x_dev_floatx = np.asarray(x_dev, dtype="float16")
+
+    return (
+        x_train_floatx,
+        np.asarray(y_train, dtype="float16"),
+        x_dev_floatx,
+        np.asarray(y_dev, dtype="float16"),
+    )
+
+
 def run(hyperparameters, prepare_dataset, create_model):
     """ Use the provided hyperparameters to train the model in this module.
 
@@ -187,7 +205,7 @@ def run(hyperparameters, prepare_dataset, create_model):
 
     _update_wandb_with_loaded_dataset(loaded_dataset)
 
-    x_train, y_train, x_dev, y_dev = loaded_dataset
+    x_train, y_train, x_dev, y_dev = _cast_dataset_to_float16(loaded_dataset)
 
     set_cuda_visible_devices(hyperparameters["gpu"])
     dont_use_all_the_gpu_memory()
