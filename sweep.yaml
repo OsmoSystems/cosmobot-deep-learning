@@ -10,7 +10,7 @@ parameters:
   gpu:
     value: auto
   original-model-id:
-    values: [0oh4ovjz, hu0fs6u7]
+    values: [0oh4ovjz, j53s5f07] #, hu0fs6u7]  # 0oh4ovjz is best with logcosh, j53s5f07 is best with mean_squared (hu0fs6u7 is what I briefly thought was best with mean_squared
   optimizer-name:
     values: [adam, adadelta]
   learning-rate:
