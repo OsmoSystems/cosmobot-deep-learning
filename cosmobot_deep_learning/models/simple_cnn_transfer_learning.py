@@ -27,7 +27,7 @@ DEFAULT_HYPERPARAMETERS = {
     # "training_set_column": "cosmobot_a_training_resampled",
     # "dev_set_column": "cosmobot_a_dev",
     # For using the beta version of the Unit C scum + lab dataset
-    "dataset_filename": "2019-10-08--20-39-10_osmo_ml_dataset_unit_C_scum_and_calibration",
+    "dataset_filename": "2019-10-08--20-39-10_osmo_ml_dataset_unit_C_scum_and_calibration.csv",
     "training_set_column": "training",
     "dev_set_column": "dev_resampled",
     "numeric_input_columns": ["YSI temperature (C)"],
