@@ -5,8 +5,7 @@ This model loads a pre-trained simple_cnn model and freezes some layers and retr
 import argparse
 import sys
 
-from tensorflow import keras
-
+from cosmobot_deep_learning.analyze import load_model_from_h5
 from cosmobot_deep_learning.configure import get_model_name_from_filepath
 from cosmobot_deep_learning.hyperparameters import (
     get_hyperparameters_from_args,
@@ -47,31 +46,10 @@ def create_model(hyperparameters, x_train):
         hyperparameters: See definition in `run()`
         x_train: The input training data (used to determine input layer shape)
     """
-    # HACKS HACKS HACKS HACKS
-    # Have to re-define custom metrics so we can re-hydrate the model
-    from cosmobot_deep_learning.custom_metrics import (
-        get_fraction_outside_error_threshold_fn,
-    )
-
-    error_thresholds_mg_l = [0.1, 0.3, 0.5]
-    label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
-
-    fraction_outside_error_threshold_fns = [
-        get_fraction_outside_error_threshold_fn(
-            error_threshold_mg_l, label_scale_factor_mmhg
-        )
-        for error_threshold_mg_l in error_thresholds_mg_l
-    ]
-
-    custom_objects = {
-        **{fn.__name__: fn for fn in fraction_outside_error_threshold_fns}
-    }
-    # END HACKS
-
     # Load a simple_cnn model that has been trained on calibration data
     # TODO: use wandb API to download this? (Current hack: I pre-downloaded it)
     model_filename = f'{hyperparameters["original_model_id"]}-model-best.h5'
-    transfer_learning_model = keras.models.load_model(model_filename, custom_objects)
+    transfer_learning_model = load_model_from_h5(hyperparameters, model_filename)
 
     # Freeze the original model's layers up to the dense layers
     # The default is for layer.trainable=True, so all later layers will be trainable
