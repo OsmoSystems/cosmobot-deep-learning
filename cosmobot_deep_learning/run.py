@@ -108,10 +108,16 @@ def _get_prepared_dataset(prepare_dataset, hyperparameters):
 
     shuffled_dataset = _shuffle_dataframe(dataset)
 
+    # HACK: add a scum-only training set
+    raw_dataset = download_images_and_attach_filepaths_to_dataset(shuffled_dataset)
+    scum_samples = raw_dataset["scum tank"]
+    all_training_samples = raw_dataset["training"]
+    raw_dataset["scum_training"] = scum_samples & all_training_samples
+
     x_train, y_train, x_dev, y_dev = prepare_dataset(
-        raw_dataset=download_images_and_attach_filepaths_to_dataset(shuffled_dataset),
-        hyperparameters=hyperparameters,
+        raw_dataset=raw_dataset, hyperparameters=hyperparameters
     )
+    # END HACK
 
     return x_train, y_train, x_dev, y_dev
 

@@ -153,12 +153,6 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
         Returns:
             A 4-tuple containing (x_train, y_train, x_dev, y_dev) data sets.
     """
-    # HACK: add in a column for a scum-only training set
-    scum_samples = raw_dataset["scum tank"]
-    all_training_samples = raw_dataset["training"]
-    raw_dataset["scum_training"] = raw_dataset[scum_samples & all_training_samples]
-    # END HACK
-
     training_set_column = hyperparameters["training_set_column"]
     dev_set_column = hyperparameters["dev_set_column"]
 
