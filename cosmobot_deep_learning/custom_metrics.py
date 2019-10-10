@@ -61,7 +61,7 @@ def get_fraction_outside_error_threshold_fn(
         )
         count_total = tf.size(y_true)
 
-        # Temporary fix
+        # Cast ints to floats to ensure dtypes match
         fraction_outside = tf.math.divide(
             tf.cast(count_outside_error_threshold, tf.float32),
             tf.cast(count_total, tf.float32),
@@ -102,7 +102,13 @@ class ErrorAtPercentile(Callback):
     def error_at_percentile_mmhg(self, x_true, y_true):
         """ Calculate the error (in mmhg) that self.percentile of predictions fall within.
         """
-        y_pred = self.model.predict(x_true)
+
+        # Copy the model to prevent a large memory leak
+        # https://github.com/keras-team/keras/issues/13118
+        eval_model = tf.keras.models.clone_model(self.model)
+        eval_model.set_weights(self.model.get_weights())
+
+        y_pred = eval_model.predict(x_true)
         y_pred_error = np.abs(y_pred - y_true)
 
         normalized_error_at_percentile = np.percentile(y_pred_error, q=self.percentile)
