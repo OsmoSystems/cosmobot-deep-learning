@@ -86,6 +86,8 @@ def parse_model_run_args(
         ),
     )
 
+    arg_parser.add_argument("--dataset-filename", type=str)
+
     arg_parser.add_argument("--epochs", type=int)
 
     arg_parser.add_argument(
