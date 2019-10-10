@@ -21,23 +21,30 @@ DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
     # For using the Unit A scum + lab dataset
     # "dataset_filename": "2019-10-03--10-40-27_unit_A_scum_and_calibration.csv",
+    #
     # For using the original Unit A scum-only dataset
     # "dataset_filename": "2019-09-26--14-19-22_osmo_ml_dataset_scum_dev_at_start.csv",
     # "training_set_column": "cosmobot_a_training_resampled",
     # "dev_set_column": "cosmobot_a_dev",
-    # For using the beta version of the Unit C scum + lab dataset
-    "dataset_filename": "2019-10-08--20-39-10_osmo_ml_dataset_unit_C_scum_and_calibration.csv",
+    #
+    # For using the beta version of the Unit C scum + lab dataset (and hacking scum-only)
+    # "dataset_filename": "2019-10-08--20-39-10_osmo_ml_dataset_unit_C_scum_and_calibration.csv",
     # HACK: temporary hack to get a scum-only dataset
-    # "training_set_column": "training",
-    "training_set_column": "scum_training",
+    # "training_set_column": "scum_training",
+    #
+    # For using the beta version of trimmed Unit C scum-only
+    "dataset_filename": "2019-10-09--20-55-53_osmo_ml_dataset_unit_C_scum_only",
+    "training_set_column": "training",
+    #
     "dev_set_column": "dev_resampled",
     "numeric_input_columns": ["YSI temperature (C)"],
     "image_size": 128,
     # Use an even smaller learning rate than original model (default=0.0001)
     # so that we don't unlearn old things before we've learned new things
-    "learning_rate": 0.00001,
+    # note: mixed success with this. adadelta optimizer seems to do better on higher learning rates
+    "learning_rate": 0.00003,
     "freeze_until_index": 10,  # the 10th index should be the first dense layer ("dense_1")
-    "original_model_id": "0oh4ovjz",  # The best simple_cnn model so far (which used regular logcosh)
+    "original_model_id": "j53s5f07",  # The best baseline simple_cnn model so far
 }
 
 
