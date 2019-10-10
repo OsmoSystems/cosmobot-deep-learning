@@ -11,14 +11,14 @@ parameters:
   gpu:
     value: auto
   epochs:
-    value: 1000
+    value: 2000
   original-model-id:
     values: [0oh4ovjz, j53s5f07]  # 0oh4ovjz is best with logcosh, j53s5f07 is best with mean_squared, (hu0fs6u7 is what I briefly thought was best with mean_squared
   optimizer-name:
     values: [adam, adadelta]
   learning-rate:
-    values: [0.00003, 0.0001, 0.001, 0.003]
+    values: [0.00003, 0.0001, 0.0003]
   freeze-until-index:
     value: 10
   replicate:
-    values: [1,2,3,4,5]
+    values: [1,2,3]
