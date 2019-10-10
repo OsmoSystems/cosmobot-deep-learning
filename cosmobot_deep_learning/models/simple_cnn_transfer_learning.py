@@ -33,7 +33,7 @@ DEFAULT_HYPERPARAMETERS = {
     # "training_set_column": "scum_training",
     #
     # For using the beta version of trimmed Unit C scum-only
-    "dataset_filename": "2019-10-09--20-55-53_osmo_ml_dataset_unit_C_scum_only",
+    "dataset_filename": "2019-10-09--20-55-53_osmo_ml_dataset_unit_C_scum_only.csv",
     "training_set_column": "training",
     #
     "dev_set_column": "dev_resampled",
