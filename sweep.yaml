@@ -5,8 +5,8 @@ method: grid
 
 parameters:
   dataset-cache:
-    value: 2019-09-26--14-19-22_osmo_ml_dataset_scum_dev_at_start-simple_cnn
-#    value: TBD bigger scum dataset
+#    value: 2019-09-26--14-19-22_osmo_ml_dataset_scum_dev_at_start-simple_cnn
+    value: 2019-10-08--20-39-10_osmo_ml_dataset_unit_C_scum_and_calibration-scum_only_hack-simple_cnn
   gpu:
     value: auto
   epochs:
@@ -16,7 +16,7 @@ parameters:
   optimizer-name:
     values: [adam, adadelta]
   learning-rate:
-    values: [0.00001, 0.0001, 0.001, 0.01]
+    values: [0.00003, 0.0001, 0.001, 0.003]
   freeze-until-index:
     value: 10
   replicate:
