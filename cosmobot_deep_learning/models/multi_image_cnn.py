@@ -64,7 +64,7 @@ def get_convolutional_input(branch_id, x_train_sample_image, hyperparameters):
                 16, input_shape=x_train_sample_image.shape, **conv_layer_kwargs
             ),
             activation_layer(),
-            keras.layers.MaxPooling2D(2),
+            keras.layers.AveragePooling2D(2),
             keras.layers.Conv2D(32, **conv_layer_kwargs),
             activation_layer(),
             keras.layers.MaxPooling2D(2),
