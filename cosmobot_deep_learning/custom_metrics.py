@@ -1,6 +1,8 @@
+import os
 import logging
 
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 import wandb
 from tensorflow.keras.callbacks import Callback
@@ -74,72 +76,57 @@ def get_fraction_outside_error_threshold_fn(
     return fraction_outside_error_threshold
 
 
-class ErrorAtPercentile(Callback):
-    """ Keras model callback to add four new metrics:
-        "error_at_percentile_mmhg"
-        "val_error_at_percentile_mmhg"
-        "error_at_percentile_mg_l"
-        "val_error_at_percentile_mg_l"
+class SaveTrainingPredictions(Callback):
+    def __init__(self, label_scale_factor_mmhg, dataset, epoch_interval=10):
+        super(SaveTrainingPredictions, self).__init__()
 
-    Args:
-        percentile: Calculate the error threshold that percentile of predictions fall within
-        label_scale_factor_mmhg: The scaling factor to use to scale the returned error threshold by
-            (to reverse the normalization effect)
-        dataset: a tuple of (x_train, y_train, x_dev, y_dev)
-        epoch_interval: Only calculate this metric once every epoch_interval
-    """
-
-    def __init__(self, percentile, label_scale_factor_mmhg, dataset, epoch_interval=10):
-        super(Callback, self).__init__()
-
-        self.percentile = percentile
         self.label_scale_factor_mmhg = label_scale_factor_mmhg
         self.epoch_interval = epoch_interval
+
+        self.predictions_file_path = os.path.join(wandb.run.dir, "predictions.csv")
 
         # Save the training and validation datasets to use to generate predictions
         self.x_train, self.y_train, self.x_dev, self.y_dev = dataset
 
-    def error_at_percentile_mmhg(self, x_true, y_true):
-        """ Calculate the error (in mmhg) that self.percentile of predictions fall within.
-        """
-
-        # Copy the model to prevent a large memory leak
-        # https://github.com/keras-team/keras/issues/13118
+    def get_predictions(self, x_true, y_true, epoch, training):
         eval_model = tf.keras.models.clone_model(self.model)
         eval_model.set_weights(self.model.get_weights())
 
-        y_pred = eval_model.predict(x_true)
-        y_pred_error = np.abs(y_pred - y_true)
+        predictions = eval_model.predict(x_true)
 
-        normalized_error_at_percentile = np.percentile(y_pred_error, q=self.percentile)
-        return normalized_error_at_percentile * self.label_scale_factor_mmhg
+        return pd.DataFrame(
+            {
+                "epoch": [epoch] * len(y_true),
+                "true value (mmHg)": y_true.flatten() * self.label_scale_factor_mmhg,
+                "prediction (mmHg)": predictions.flatten()
+                * self.label_scale_factor_mmhg,
+                "absolute error (mmHg)": np.abs(predictions - y_true).flatten()
+                * self.label_scale_factor_mmhg,
+                "training": [training] * len(y_true),
+            }
+        )
+
+    def log_predictions(self, epoch):
+        training_dataframe = self.get_predictions(
+            self.x_train, self.y_train, epoch, training=True
+        )
+        dev_dataframe = self.get_predictions(
+            self.x_dev, self.y_dev, epoch, training=False
+        )
+
+        predictions = pd.concat([training_dataframe, dev_dataframe])
+
+        with open(self.predictions_file_path, "a") as csv_file:
+            is_file_empty = csv_file.tell() == 0
+            predictions.to_csv(csv_file, index=False, header=is_file_empty, mode="a")
 
     def on_epoch_end(self, epoch, logs=None):
-        # Metrics are compiled and averaged over batches for an entire epoch by Keras
-        # in the built-in BaseLogger callback and stored by mutating `logs`, passed on to each subsequent callback.
-        # To add our own custom metric that is computed per-epoch instead, calculate it here and add it to logs
-
-        # Only calculate once per interval of epochs, since the prediction is expensive
         skip_epoch = epoch % self.epoch_interval
 
-        if logs is None or skip_epoch:
+        if skip_epoch:
             return
 
-        error_at_percentile_mmhg = self.error_at_percentile_mmhg(
-            x_true=self.x_train, y_true=self.y_train
-        )
-        val_error_at_percentile_mmhg = self.error_at_percentile_mmhg(
-            x_true=self.x_dev, y_true=self.y_dev
-        )
-
-        p = int(self.percentile)
-
-        # fmt: off
-        logs[f"error_at_{p}_percentile_mmhg"] = error_at_percentile_mmhg
-        logs[f"val_error_at_{p}_percentile_mmhg"] = val_error_at_percentile_mmhg
-        logs[f"error_at_{p}_percentile_mg_l"] = error_at_percentile_mmhg / MG_L_PER_MMHG
-        logs[f"val_error_at_{p}_percentile_mg_l"] = val_error_at_percentile_mmhg / MG_L_PER_MMHG
-        # fmt: on
+        self.log_predictions(epoch)
 
 
 class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):

@@ -8,8 +8,8 @@ from wandb.keras import WandbCallback
 
 from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
 from cosmobot_deep_learning.custom_metrics import (
+    SaveTrainingPredictions,
     ThresholdValMeanAbsoluteErrorOnCustomMetric,
-    ErrorAtPercentile,
     RestoreBestWeights,
     SaveBestMetricValueAndEpochToWandb,
 )
@@ -204,10 +204,8 @@ def run(hyperparameters, prepare_dataset, create_model):
         verbose=2,
         validation_data=(x_dev, y_dev),
         callbacks=[
-            ErrorAtPercentile(
-                percentile=95,
-                label_scale_factor_mmhg=label_scale_factor_mmhg,
-                dataset=loaded_dataset,
+            SaveTrainingPredictions(
+                label_scale_factor_mmhg=label_scale_factor_mmhg, dataset=loaded_dataset
             ),
             ThresholdValMeanAbsoluteErrorOnCustomMetric(
                 acceptable_fraction_outside_error=acceptable_fraction_outside_error,
