@@ -44,7 +44,7 @@ def get_submodel_for_input(
             A new single-input keras Model up to the specified layer.
     """
     # If there are multiple input branches, get the one specified by input_index
-    if type(model.input) == "list":
+    if type(model.input) == list:
         input = model.input[input_index]
     else:
         input = model.input
