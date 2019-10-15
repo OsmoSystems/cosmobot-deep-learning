@@ -25,7 +25,6 @@ from cosmobot_deep_learning.preprocess_image import (
 
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
-    "dataset_filename": "2019-10-03--10-40-27_unit_A_scum_and_calibration.csv",
     "numeric_input_columns": ["YSI temperature (C)"],
     "image_size": 128,
     "convolutional_kernel_size": 5,
