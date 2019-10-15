@@ -8,9 +8,8 @@ from wandb.keras import WandbCallback
 
 from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
 from cosmobot_deep_learning.custom_metrics import (
-    SaveTrainingPredictions,
     ThresholdValMeanAbsoluteErrorOnCustomMetric,
-    RestoreBestWeights,
+    LogPredictionsAndWeights,
     SaveBestMetricValueAndEpochToWandb,
 )
 from cosmobot_deep_learning.gpu import (
@@ -175,7 +174,7 @@ def run(hyperparameters, prepare_dataset, create_model):
     ]
 
     if hyperparameters["dryrun"]:
-        epochs = 1
+        epochs = 31
         # Disable W&B syncing to the cloud since we don't care about the results
         os.environ["WANDB_MODE"] = "dryrun"
 
@@ -204,9 +203,6 @@ def run(hyperparameters, prepare_dataset, create_model):
         verbose=2,
         validation_data=(x_dev, y_dev),
         callbacks=[
-            SaveTrainingPredictions(
-                label_scale_factor_mmhg=label_scale_factor_mmhg, dataset=loaded_dataset
-            ),
             ThresholdValMeanAbsoluteErrorOnCustomMetric(
                 acceptable_fraction_outside_error=acceptable_fraction_outside_error,
                 acceptable_error_mg_l=acceptable_error_mg_l,
@@ -215,12 +211,12 @@ def run(hyperparameters, prepare_dataset, create_model):
                 metric="val_adjusted_mean_absolute_error"
             ),
             WandbCallback(verbose=1, monitor="val_adjusted_mean_absolute_error"),
-            RestoreBestWeights(metric="val_adjusted_mean_absolute_error"),
+            LogPredictionsAndWeights(
+                metric="val_adjusted_mean_absolute_error",
+                dataset=loaded_dataset,
+                label_scale_factor_mmhg=label_scale_factor_mmhg,
+            ),
         ],
-    )
-
-    _log_visualizations(
-        model, history, label_scale_factor_mmhg, x_train, y_train, x_dev, y_dev
     )
 
     return x_train, y_train, x_dev, y_dev, model, history

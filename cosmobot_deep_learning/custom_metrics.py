@@ -1,5 +1,6 @@
 import os
 import logging
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -10,6 +11,7 @@ from tensorflow.keras.callbacks import Callback
 from cosmobot_deep_learning.constants import (
     MG_L_PER_MMHG_AT_25_C_1_ATM as MG_L_PER_MMHG,
 )
+from cosmobot_deep_learning import visualizations
 
 ARBITRARILY_LARGE_MULTIPLIER = 10
 
@@ -74,59 +76,6 @@ def get_fraction_outside_error_threshold_fn(
     fraction_outside_error_threshold.__name__ = fn_name
 
     return fraction_outside_error_threshold
-
-
-class SaveTrainingPredictions(Callback):
-    def __init__(self, label_scale_factor_mmhg, dataset, epoch_interval=10):
-        super(SaveTrainingPredictions, self).__init__()
-
-        self.label_scale_factor_mmhg = label_scale_factor_mmhg
-        self.epoch_interval = epoch_interval
-
-        self.predictions_file_path = os.path.join(wandb.run.dir, "predictions.csv")
-
-        # Save the training and validation datasets to use to generate predictions
-        self.x_train, self.y_train, self.x_dev, self.y_dev = dataset
-
-    def get_predictions(self, x_true, y_true, epoch, training):
-        eval_model = tf.keras.models.clone_model(self.model)
-        eval_model.set_weights(self.model.get_weights())
-
-        predictions = eval_model.predict(x_true)
-
-        return pd.DataFrame(
-            {
-                "epoch": [epoch] * len(y_true),
-                "true value (mmHg)": y_true.flatten() * self.label_scale_factor_mmhg,
-                "prediction (mmHg)": predictions.flatten()
-                * self.label_scale_factor_mmhg,
-                "absolute error (mmHg)": np.abs(predictions - y_true).flatten()
-                * self.label_scale_factor_mmhg,
-                "training": [training] * len(y_true),
-            }
-        )
-
-    def log_predictions(self, epoch):
-        training_dataframe = self.get_predictions(
-            self.x_train, self.y_train, epoch, training=True
-        )
-        dev_dataframe = self.get_predictions(
-            self.x_dev, self.y_dev, epoch, training=False
-        )
-
-        predictions = pd.concat([training_dataframe, dev_dataframe])
-
-        with open(self.predictions_file_path, "a") as csv_file:
-            is_file_empty = csv_file.tell() == 0
-            predictions.to_csv(csv_file, index=False, header=is_file_empty, mode="a")
-
-    def on_epoch_end(self, epoch, logs=None):
-        skip_epoch = epoch % self.epoch_interval
-
-        if skip_epoch:
-            return
-
-        self.log_predictions(epoch)
 
 
 class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
@@ -195,24 +144,117 @@ class SaveBestMetricValueAndEpochToWandb(Callback):
             wandb.run.summary[self.best_epoch_key] = epoch
 
 
-class RestoreBestWeights(Callback):
-    """ Saves the model weights from the best epoch according to the given metric
-    and restores them onto the model at the end of training.
+class LogPredictionsAndWeights(Callback):
+    """ A callback to keep track of best model weights and make predictions to log
+        plotly charts to W&B.
+        - Holds on to the model weights from the best epoch according to the given metric
+          and uses them to predict when the training performance hits a local minimum.
+        - Also makes predictions with the current model every `epoch_interval` epochs.
+        - Saves all predictions as `predictions.csv` in the wandb log directory.
+        - Saves the final model weights to file (`model-final.h5`) before restoring.
 
     This assumes that lower is better for the given metric.
+
+    Constructor Args:
+        metric: name of the metric to read from logs dict
+        dataset: x_train, y_train, x_dev, y_dev dataset tuple (should match the dataset being trained on)
+        label_scale_factor_mmhg: scale factor to use when converting predictions and labels for plotly charts
+        epoch_interval: Optional. Fixed epoch interval to log predictions
 
     Attributes:
         metric: name of the metric to read from logs dict
         best_epoch: epoch number (int) of the best epoch seen so far
         best_value: best value for the given metric seen so far
         best_weights: model weights from the epoch with the best value
+        epoch_interval: fixed epoch interval to log predictions
+        latest_predictions: cached model predictions to help prevent redundant evaluation
+        predictions_file_path: file path where predictions are saved
+        label_scale_factor_mmhg: scale factor to use when converting predictions and labels for plotly charts
+        x_train, y_train, x_dev, y_dev: dataset slices to make predictions over
     """
 
-    def __init__(self, metric: str):
+    def __init__(
+        self,
+        metric: str,
+        dataset: Tuple,
+        label_scale_factor_mmhg: int,
+        epoch_interval: int = 10,
+    ):
         self.metric = metric
         self.best_epoch = None
         self.best_value = None
         self.best_weights = None
+        self.epoch_interval = epoch_interval
+
+        self.latest_predictions = None
+        self.predictions_file_path = os.path.join(wandb.run.dir, "predictions.csv")
+        self.label_scale_factor_mmhg = label_scale_factor_mmhg
+
+        # Save the training and validation datasets to use to generate predictions
+        self.x_train, self.y_train, self.x_dev, self.y_dev = dataset
+
+    def get_predictions(self, weights, x_true, y_true, epoch, training):
+        # Prevent memory leak: https://github.com/keras-team/keras/issues/13118
+        eval_model = tf.keras.models.clone_model(self.model)
+        eval_model.set_weights(weights)
+
+        predictions = eval_model.predict(x_true)
+
+        return pd.DataFrame(
+            {
+                "epoch": [epoch] * len(y_true),
+                "true value (mmHg)": y_true.flatten() * self.label_scale_factor_mmhg,
+                "prediction (mmHg)": predictions.flatten()
+                * self.label_scale_factor_mmhg,
+                "absolute error (mmHg)": np.abs(predictions - y_true).flatten()
+                * self.label_scale_factor_mmhg,
+                "training": [training] * len(y_true),
+            }
+        )
+
+    def log_predictions(self, weights, epoch):
+        training_dataframe = self.get_predictions(
+            weights, self.x_train, self.y_train, epoch, training=True
+        )
+        dev_dataframe = self.get_predictions(
+            weights, self.x_dev, self.y_dev, epoch, training=False
+        )
+
+        predictions = pd.concat([training_dataframe, dev_dataframe])
+
+        with open(self.predictions_file_path, "a") as csv_file:
+            is_file_empty = csv_file.tell() == 0
+            predictions.to_csv(csv_file, index=False, header=is_file_empty, mode="a")
+
+        return predictions
+
+    def log_predictions_chart(self, predictions, epoch, chart_title_annotation):
+        train_labels = predictions[predictions["training"]]["true value (mmHg)"]
+        train_predictions = predictions[predictions["training"]]["prediction (mmHg)"]
+
+        dev_labels = predictions[~predictions["training"]]["true value (mmHg)"]
+        dev_predictions = predictions[~predictions["training"]]["prediction (mmHg)"]
+
+        visualizations.log_do_prediction_error(
+            train_labels,
+            train_predictions,
+            dev_labels,
+            dev_predictions,
+            chart_title_annotation,
+        )
+        visualizations.log_actual_vs_predicted_do(
+            train_labels,
+            train_predictions,
+            dev_labels,
+            dev_predictions,
+            chart_title_annotation,
+        )
+
+    def rename_model_best(self, epoch: int):
+        os.rename(
+            os.path.join(wandb.run.dir, "model-best.h5"),
+            os.path.join(wandb.run.dir, f"model-best-{epoch}.h5"),
+        )
 
     def on_epoch_end(self, epoch, logs):
         current_value = logs[self.metric]
@@ -223,6 +265,38 @@ class RestoreBestWeights(Callback):
             self.best_value = current_value
             self.best_weights = self.model.get_weights()
 
+        # Model checkpointing and prediction heuristic
+        if self.best_epoch == epoch - 1:
+            # The previous epoch was the most performant so far
+            # We want to check after the current epoch has run so as to only
+            # checkpoint/ predict when performance is a local minimum
+            self.rename_model_best(epoch - 1)
+
+            # If the last best_epoch also fell on the regular prediction interval, skip re-predicting
+            if self.best_epoch % self.epoch_interval != 0:
+                self.latest_predictions = self.log_predictions(self.best_weights, epoch)
+
+            self.log_predictions_chart(
+                self.latest_predictions, epoch, chart_title_annotation=" - Best"
+            )
+
+        elif epoch % self.epoch_interval == 0:
+            # When not at a local minimum, predict on some fixed interval
+            self.latest_predictions = self.log_predictions(
+                self.model.get_weights(), epoch
+            )
+
     def on_train_end(self, logs=None):
-        logger.info(f"Restoring model weights from best epoch {self.best_epoch}")
-        self.model.set_weights(self.best_weights)
+        # Save final model weights to allow continued training
+        self.model.save(os.path.join(wandb.run.dir, "model-final.h5"))
+
+        final_epoch = self.params["epochs"] - 1
+        if final_epoch % self.epoch_interval != 0:
+            # Make final predictions and upload one last set of charts
+            self.latest_predictions = self.log_predictions(
+                self.model.get_weights(), final_epoch
+            )
+
+        self.log_predictions_chart(
+            self.latest_predictions, final_epoch, chart_title_annotation=" - Final"
+        )
