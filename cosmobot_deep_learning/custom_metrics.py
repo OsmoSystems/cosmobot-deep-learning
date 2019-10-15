@@ -187,7 +187,6 @@ class LogPredictionsAndWeights(Callback):
         self.epoch_interval = epoch_interval
 
         self.latest_predictions = None
-        self.predictions_file_path = os.path.join(wandb.run.dir, "predictions.csv")
         self.label_scale_factor_mmhg = label_scale_factor_mmhg
 
         # Save the training and validation datasets to use to generate predictions
@@ -222,7 +221,9 @@ class LogPredictionsAndWeights(Callback):
 
         predictions = pd.concat([training_dataframe, dev_dataframe])
 
-        with open(self.predictions_file_path, "a") as csv_file:
+        predictions_file_path = os.path.join(wandb.run.dir, "predictions.csv")
+
+        with open(predictions_file_path, "a") as csv_file:
             is_file_empty = csv_file.tell() == 0
             predictions.to_csv(csv_file, index=False, header=is_file_empty, mode="a")
 
@@ -266,7 +267,7 @@ class LogPredictionsAndWeights(Callback):
             self.best_weights = self.model.get_weights()
 
         # Model checkpointing and prediction heuristic
-        if self.best_epoch == epoch - 1:
+        if self.best_epoch == epoch - 1 and self.best_epoch > 0:
             # The previous epoch was the most performant so far
             # We want to check after the current epoch has run so as to only
             # checkpoint/ predict when performance is a local minimum
