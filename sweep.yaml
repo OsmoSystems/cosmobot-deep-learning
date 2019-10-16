@@ -1,24 +1,13 @@
-program: cosmobot_deep_learning/models/simple_cnn_transfer_learning.py
+program: cosmobot_deep_learning/models/simple_cnn.py
 
 method: grid
-#method: bayes
 
 parameters:
-  dataset-cache:
-#    value: 2019-09-26--14-19-22_osmo_ml_dataset_scum_dev_at_start-simple_cnn
-#    value: 2019-10-08--20-39-10_osmo_ml_dataset_unit_C_scum_and_calibration-scum_only_hack-simple_cnn
-    value: 2019-10-09--20-55-53_osmo_ml_dataset_unit_C_scum_only-simple_cnn
+#  dataset-cache:
+#    value: simple_cnn_2019-09-04_dataset
   gpu:
     value: auto
-  epochs:
-    value: 2000
-  original-model-id:
-    values: [0oh4ovjz, j53s5f07]  # 0oh4ovjz is best with logcosh, j53s5f07 is best with mean_squared, (hu0fs6u7 is what I briefly thought was best with mean_squared
-  optimizer-name:
-    values: [adam, adadelta]
-  learning-rate:
-    values: [0.00003, 0.0001, 0.0003]
-  freeze-until-index:
-    value: 10
+  output-activation-layer:
+    values: [relu, leakyrelu, prelu, linear, sigmoid]
   replicate:
     values: [1,2,3]
