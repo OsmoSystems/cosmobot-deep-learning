@@ -27,7 +27,7 @@ DEFAULT_HYPERPARAMETERS = {
     "optimizer_name": "adam",
     "learning_rate": 0.0001,
     "freeze_until_index": 10,  # the 10th index should be the first dense layer ("dense_1")
-    "original_model_id": "j53s5f07",  # The best baseline simple_cnn model so far
+    "original_model_filename": "j53s5f07-model-best.h5",  # The best baseline simple_cnn model so far
 }
 
 
@@ -40,7 +40,7 @@ def create_model(hyperparameters, x_train):
     """
     # Load a simple_cnn model that has been trained on calibration data
     # Note/Hack: the pre-trained model must already be manually downloaded
-    model_filename = f'{hyperparameters["original_model_id"]}-model-best.h5'
+    model_filename = f'{hyperparameters["original_model_filename"]}-model-best.h5'
     transfer_learning_model = load_model_from_h5(hyperparameters, model_filename)
 
     # Freeze the original model's layers up to the dense layers
@@ -60,7 +60,7 @@ def create_model(hyperparameters, x_train):
 
 def get_hyperparameter_parser():
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--original-model-id", type=str)
+    parser.add_argument("--original-model-filename", type=str)
     parser.add_argument("--freeze-until-index", type=int)
     return parser
 
