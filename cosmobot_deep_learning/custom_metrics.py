@@ -231,11 +231,11 @@ class LogPredictionsAndWeights(Callback):
         return predictions
 
     def log_predictions_chart(self, predictions, epoch, chart_title_annotation):
-        train_labels = predictions[predictions["training"]]["true value (mmHg)"]
-        train_predictions = predictions[predictions["training"]]["prediction (mmHg)"]
+        train_labels = predictions[predictions["training"]]["true DO (mmHg)"]
+        train_predictions = predictions[predictions["training"]]["predicted DO (mmHg)"]
 
-        dev_labels = predictions[~predictions["training"]]["true value (mmHg)"]
-        dev_predictions = predictions[~predictions["training"]]["prediction (mmHg)"]
+        dev_labels = predictions[~predictions["training"]]["true DO (mmHg)"]
+        dev_predictions = predictions[~predictions["training"]]["predictied DO (mmHg)"]
 
         visualizations.log_do_prediction_error(
             train_labels,
