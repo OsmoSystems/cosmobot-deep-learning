@@ -86,12 +86,16 @@ def parse_model_run_args(
         ),
     )
 
-    arg_parser.add_argument("--epochs", type=int)
+    arg_parser.add_argument("--dataset-filename", required=False, type=str)
+
+    arg_parser.add_argument("--epochs", required=False, type=int)
 
     arg_parser.add_argument(
-        "--optimizer-name", choices=list(OPTIMIZER_CLASSES_BY_NAME.keys())
+        "--optimizer-name",
+        required=False,
+        choices=list(OPTIMIZER_CLASSES_BY_NAME.keys()),
     )
-    arg_parser.add_argument("--learning-rate", type=float)
+    arg_parser.add_argument("--learning-rate", required=False, type=float)
 
     arg_parser.add_argument(
         "--replicate",

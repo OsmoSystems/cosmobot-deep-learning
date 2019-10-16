@@ -1,4 +1,4 @@
-import keras
+from tensorflow import keras
 import pytest
 
 from . import analyze as module
