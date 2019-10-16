@@ -40,8 +40,9 @@ def create_model(hyperparameters, x_train):
     """
     # Load a simple_cnn model that has been trained on calibration data
     # Note/Hack: the pre-trained model must already be manually downloaded
-    model_filename = f'{hyperparameters["original_model_filename"]}-model-best.h5'
-    transfer_learning_model = load_model_from_h5(hyperparameters, model_filename)
+    transfer_learning_model = load_model_from_h5(
+        hyperparameters, hyperparameters["original_model_filename"]
+    )
 
     # Freeze the original model's layers up to the dense layers
     # The default is for layer.trainable=True, so all later layers will be trainable
