@@ -84,13 +84,13 @@ class TestLogPredictionsAndWeights:
         [
             (
                 [0.3, 0.1, 0.15],  # Epoch 1 is best
-                [2],  # Log predictions initially and _after_ best epoch has passed
+                [1],  # Log predictions only on best epoch
                 1,
                 1,
             ),
             (
                 [0.3, 0.15, 0.1, 0.15],  # Improves until Epoch 2
-                [3],  # Log predictions initially and _after_ best epoch has passed
+                [2],  # Log predictions only at end of improvement streak
                 1,
                 1,
             ),
@@ -102,7 +102,21 @@ class TestLogPredictionsAndWeights:
             ),
             (
                 [0.3, 0.15, 0.3, 0.3, 0.1, 0.3],  # Improves at epochs 1 and 4
-                [2, 5],
+                [1, 4],
+                2,
+                2,
+            ),
+            (
+                [
+                    0.3,
+                    0.15,
+                    0.3,
+                    0.16,
+                    0.3,
+                    0.1,
+                    0.3,
+                ],  # Improves (globally) at epochs 1 and 5
+                [1, 5],  # Ignores local improvement at epoch 3
                 2,
                 2,
             ),
@@ -138,7 +152,7 @@ class TestLogPredictionsAndWeights:
 
         # fmt: off
         # Disable black to keep type ignore comments on one line
-        # disable mypy to ignore errors about missing definitiosn for mock attributes
+        # disable mypy to ignore errors about missing definitions for mock attributes
         callback.log_predictions.assert_has_calls(expected_log_prediction_calls)  # type: ignore
 
         # Plotly chart is only uploaded when the metric stops improving

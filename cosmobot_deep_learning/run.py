@@ -174,7 +174,7 @@ def run(hyperparameters, prepare_dataset, create_model):
     ]
 
     if hyperparameters["dryrun"]:
-        epochs = 31
+        epochs = 1
         # Disable W&B syncing to the cloud since we don't care about the results
         os.environ["WANDB_MODE"] = "dryrun"
 

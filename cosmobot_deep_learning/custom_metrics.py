@@ -148,7 +148,8 @@ class LogPredictionsAndWeights(Callback):
     """ A callback to keep track of best model weights and make predictions to log
         plotly charts to W&B.
         - Holds on to the model weights from the best epoch according to the given metric
-          and uses them to predict when the training performance hits a local minimum.
+          and uses them to predict when the training performance hits a new global minimum
+          at the end of an improvement streak.
         - Also makes predictions with the current model every `epoch_interval` epochs.
         - Saves all predictions as `predictions.csv` in the wandb log directory.
         - Saves the final model weights to file (`model-final.h5`) before restoring.
@@ -202,8 +203,8 @@ class LogPredictionsAndWeights(Callback):
         return pd.DataFrame(
             {
                 "epoch": [epoch] * len(y_true),
-                "true value (mmHg)": y_true.flatten() * self.label_scale_factor_mmhg,
-                "prediction (mmHg)": predictions.flatten()
+                "true DO (mmHg)": y_true.flatten() * self.label_scale_factor_mmhg,
+                "predicted DO (mmHg)": predictions.flatten()
                 * self.label_scale_factor_mmhg,
                 "absolute error (mmHg)": np.abs(predictions - y_true).flatten()
                 * self.label_scale_factor_mmhg,
@@ -273,9 +274,12 @@ class LogPredictionsAndWeights(Callback):
             # checkpoint/ predict when performance is a local minimum
             self.rename_model_best(epoch - 1)
 
-            # If the last best_epoch also fell on the regular prediction interval, skip re-predicting
+            # Use best_weights to log latest predictions (unless the last
+            # best_epoch already fell on the regular prediction interval)
             if self.best_epoch % self.epoch_interval != 0:
-                self.latest_predictions = self.log_predictions(self.best_weights, epoch)
+                self.latest_predictions = self.log_predictions(
+                    self.best_weights, self.best_epoch
+                )
 
             self.log_predictions_chart(
                 self.latest_predictions, epoch, chart_title_annotation=" - Best"
