@@ -42,9 +42,10 @@ class TestFunctionNamify:
 
 @pytest.fixture
 def mock_log_predictions_callback_methods(mocker):
-    mocker.patch.object(module.LogPredictionsAndWeights, "log_predictions")
-    mocker.patch.object(module.LogPredictionsAndWeights, "log_predictions_chart")
-    mocker.patch.object(module.LogPredictionsAndWeights, "rename_model_best")
+    mocker.patch.object(module.LogPredictionsAndWeights, "_log_predictions")
+    mocker.patch.object(module.LogPredictionsAndWeights, "_log_predictions_chart")
+    mocker.patch.object(module.LogPredictionsAndWeights, "_rename_model_best")
+    mocker.patch.object(module.LogPredictionsAndWeights, "_save_final_weights")
 
 
 @pytest.fixture
@@ -78,34 +79,21 @@ class TestLogPredictionsAndWeights:
         assert mock_model.get_weights.call_count == 3
 
     @pytest.mark.parametrize(
-        (
-            "metrics,log_prediction_epochs,log_prediction_chart_count,rename_model_best_count"
-        ),
+        ("metrics,log_prediction_epochs"),
         [
             (
                 [0.3, 0.1, 0.15],  # Epoch 1 is best
                 [1],  # Log predictions only on best epoch
-                1,
-                1,
             ),
             (
                 [0.3, 0.15, 0.1, 0.15],  # Improves until Epoch 2
                 [2],  # Log predictions only at end of improvement streak
-                1,
-                1,
             ),
             (
                 [0.3, 0.3, 0.3, 0.3, 0.3, 0.1, 0.3],  # Epoch 5 is best
                 [5],  # Only logs epoch 5 once, despite being best + on interval
-                1,
-                1,
             ),
-            (
-                [0.3, 0.15, 0.3, 0.3, 0.1, 0.3],  # Improves at epochs 1 and 4
-                [1, 4],
-                2,
-                2,
-            ),
+            ([0.3, 0.15, 0.3, 0.3, 0.1, 0.3], [1, 4]),  # Improves at epochs 1 and 4
             (
                 [
                     0.3,
@@ -117,19 +105,15 @@ class TestLogPredictionsAndWeights:
                     0.3,
                 ],  # Improves (globally) at epochs 1 and 5
                 [1, 5],  # Ignores local improvement at epoch 3
-                2,
-                2,
             ),
         ],
     )
     def test_logs_predictions_and_weights_as_expected(
         self,
-        mock_log_predictions_callback_methods,
-        mock_model,
         metrics,
         log_prediction_epochs,
-        log_prediction_chart_count,
-        rename_model_best_count,
+        mock_log_predictions_callback_methods,
+        mock_model,
     ):
         metric = "some_metric"
 
@@ -141,9 +125,12 @@ class TestLogPredictionsAndWeights:
         )
 
         callback.set_model(mock_model)
+        callback.params = {"epochs": len(metrics)}
 
         for i, value in enumerate(metrics):
             callback.on_epoch_end(i, {metric: value})
+
+        callback.on_train_end({metric: value})
 
         # Assert log_predictions was called during all of the expected epochs
         expected_log_prediction_calls = [
@@ -153,9 +140,11 @@ class TestLogPredictionsAndWeights:
         # fmt: off
         # Disable black to keep type ignore comments on one line
         # disable mypy to ignore errors about missing definitions for mock attributes
-        callback.log_predictions.assert_has_calls(expected_log_prediction_calls)  # type: ignore
+        callback._log_predictions.assert_has_calls(expected_log_prediction_calls)  # type: ignore
 
-        # Plotly chart is only uploaded when the metric stops improving
-        assert callback.log_predictions_chart.call_count == log_prediction_chart_count  # type: ignore
-        assert callback.rename_model_best.call_count == rename_model_best_count  # type: ignore
+        expected_improvement_streak_count = len(log_prediction_epochs)
+        # Model is renamed and charts are uploaded at the end of every improvement streak
+        # An additional chart is uploaded at the end of training
+        assert callback._log_predictions_chart.call_count == expected_improvement_streak_count + 1  # type: ignore
+        assert callback._rename_model_best.call_count == expected_improvement_streak_count  # type: ignore
         # fmt: on

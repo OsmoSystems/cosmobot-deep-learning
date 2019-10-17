@@ -160,7 +160,7 @@ class LogPredictionsAndWeights(Callback):
         metric: name of the metric to read from logs dict
         dataset: x_train, y_train, x_dev, y_dev dataset tuple (should match the dataset being trained on)
         label_scale_factor_mmhg: scale factor to use when converting predictions and labels for plotly charts
-        epoch_interval: Optional. Fixed epoch interval to log predictions
+        epoch_interval: Fixed epoch interval to log predictions (default 10)
 
     Attributes:
         metric: name of the metric to read from logs dict
@@ -182,7 +182,7 @@ class LogPredictionsAndWeights(Callback):
         epoch_interval: int = 10,
     ):
         self.metric = metric
-        self.best_epoch = None
+        self.best_epoch = 0
         self.best_value = None
         self.best_weights = None
         self.epoch_interval = epoch_interval
@@ -193,30 +193,33 @@ class LogPredictionsAndWeights(Callback):
         # Save the training and validation datasets to use to generate predictions
         self.x_train, self.y_train, self.x_dev, self.y_dev = dataset
 
-    def get_predictions(self, weights, x_true, y_true, epoch, training):
+    def _get_predictions(self, weights, x_true, y_true, epoch, training):
         # Prevent memory leak: https://github.com/keras-team/keras/issues/13118
         eval_model = tf.keras.models.clone_model(self.model)
         eval_model.set_weights(weights)
 
         predictions = eval_model.predict(x_true)
 
+        prediction_count = len(predictions)
+
         return pd.DataFrame(
             {
-                "epoch": [epoch] * len(y_true),
+                "epoch": [epoch] * prediction_count,
+                "current best epoch": [epoch == self.best_epoch] * prediction_count,
                 "true DO (mmHg)": y_true.flatten() * self.label_scale_factor_mmhg,
                 "predicted DO (mmHg)": predictions.flatten()
                 * self.label_scale_factor_mmhg,
                 "absolute error (mmHg)": np.abs(predictions - y_true).flatten()
                 * self.label_scale_factor_mmhg,
-                "training": [training] * len(y_true),
+                "training": [training] * prediction_count,
             }
         )
 
-    def log_predictions(self, weights, epoch):
-        training_dataframe = self.get_predictions(
+    def _log_predictions(self, weights, epoch):
+        training_dataframe = self._get_predictions(
             weights, self.x_train, self.y_train, epoch, training=True
         )
-        dev_dataframe = self.get_predictions(
+        dev_dataframe = self._get_predictions(
             weights, self.x_dev, self.y_dev, epoch, training=False
         )
 
@@ -230,7 +233,7 @@ class LogPredictionsAndWeights(Callback):
 
         return predictions
 
-    def log_predictions_chart(self, predictions, epoch, chart_title_annotation):
+    def _log_predictions_chart(self, predictions, epoch, chart_title_annotation):
         train_labels = predictions[predictions["training"]]["true DO (mmHg)"]
         train_predictions = predictions[predictions["training"]]["predicted DO (mmHg)"]
 
@@ -252,11 +255,18 @@ class LogPredictionsAndWeights(Callback):
             chart_title_annotation,
         )
 
-    def rename_model_best(self, epoch: int):
+    def _rename_model_best(self, epoch: int):
         os.rename(
             os.path.join(wandb.run.dir, "model-best.h5"),
             os.path.join(wandb.run.dir, f"model-best-{epoch}.h5"),
         )
+
+    def _save_final_weights(self):
+        # Save final model weights to allow continued training
+        self.model.save(os.path.join(wandb.run.dir, "model-final.h5"))
+
+    def _is_periodic_logging_epoch(self, epoch):
+        return epoch % self.epoch_interval == 0
 
     def on_epoch_end(self, epoch, logs):
         current_value = logs[self.metric]
@@ -271,37 +281,39 @@ class LogPredictionsAndWeights(Callback):
         if self.best_epoch == epoch - 1 and self.best_epoch > 0:
             # The previous epoch was the most performant so far
             # We want to check after the current epoch has run so as to only
-            # checkpoint/ predict when performance is a local minimum
-            self.rename_model_best(epoch - 1)
+            # checkpoint/ predict when performance has hit the
+            # end of a global improvement streak
+            self._rename_model_best(epoch - 1)
 
             # Use best_weights to log latest predictions (unless the last
             # best_epoch already fell on the regular prediction interval)
-            if self.best_epoch % self.epoch_interval != 0:
-                self.latest_predictions = self.log_predictions(
+            if not self._is_periodic_logging_epoch(self.best_epoch):
+                self.latest_predictions = self._log_predictions(
                     self.best_weights, self.best_epoch
                 )
 
-            self.log_predictions_chart(
+            self._log_predictions_chart(
                 self.latest_predictions, epoch, chart_title_annotation=" - Best"
             )
 
-        elif epoch % self.epoch_interval == 0:
-            # When not at a local minimum, predict on some fixed interval
-            self.latest_predictions = self.log_predictions(
+        elif self._is_periodic_logging_epoch(epoch):
+            # When not at a global minimum, predict on some fixed interval
+            self.latest_predictions = self._log_predictions(
                 self.model.get_weights(), epoch
             )
 
     def on_train_end(self, logs=None):
-        # Save final model weights to allow continued training
-        self.model.save(os.path.join(wandb.run.dir, "model-final.h5"))
+        self._save_final_weights()
 
+        # epochs in params is the total number of epochs, but the epochs themselves are 0-indexed
         final_epoch = self.params["epochs"] - 1
-        if final_epoch % self.epoch_interval != 0:
+
+        if not self._is_periodic_logging_epoch(final_epoch):
             # Make final predictions and upload one last set of charts
-            self.latest_predictions = self.log_predictions(
+            self.latest_predictions = self._log_predictions(
                 self.model.get_weights(), final_epoch
             )
 
-        self.log_predictions_chart(
+        self._log_predictions_chart(
             self.latest_predictions, final_epoch, chart_title_annotation=" - Final"
         )
