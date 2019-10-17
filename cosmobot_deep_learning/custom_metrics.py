@@ -235,7 +235,7 @@ class LogPredictionsAndWeights(Callback):
         train_predictions = predictions[predictions["training"]]["predicted DO (mmHg)"]
 
         dev_labels = predictions[~predictions["training"]]["true DO (mmHg)"]
-        dev_predictions = predictions[~predictions["training"]]["predictied DO (mmHg)"]
+        dev_predictions = predictions[~predictions["training"]]["predicted DO (mmHg)"]
 
         visualizations.log_do_prediction_error(
             train_labels,
