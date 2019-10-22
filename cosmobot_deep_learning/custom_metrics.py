@@ -1,6 +1,9 @@
+import os
 import logging
+from typing import Tuple
 
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 import wandb
 from tensorflow.keras.callbacks import Callback
@@ -8,6 +11,7 @@ from tensorflow.keras.callbacks import Callback
 from cosmobot_deep_learning.constants import (
     MG_L_PER_MMHG_AT_25_C_1_ATM as MG_L_PER_MMHG,
 )
+from cosmobot_deep_learning import visualizations
 
 ARBITRARILY_LARGE_MULTIPLIER = 10
 
@@ -72,74 +76,6 @@ def get_fraction_outside_error_threshold_fn(
     fraction_outside_error_threshold.__name__ = fn_name
 
     return fraction_outside_error_threshold
-
-
-class ErrorAtPercentile(Callback):
-    """ Keras model callback to add four new metrics:
-        "error_at_percentile_mmhg"
-        "val_error_at_percentile_mmhg"
-        "error_at_percentile_mg_l"
-        "val_error_at_percentile_mg_l"
-
-    Args:
-        percentile: Calculate the error threshold that percentile of predictions fall within
-        label_scale_factor_mmhg: The scaling factor to use to scale the returned error threshold by
-            (to reverse the normalization effect)
-        dataset: a tuple of (x_train, y_train, x_dev, y_dev)
-        epoch_interval: Only calculate this metric once every epoch_interval
-    """
-
-    def __init__(self, percentile, label_scale_factor_mmhg, dataset, epoch_interval=10):
-        super(Callback, self).__init__()
-
-        self.percentile = percentile
-        self.label_scale_factor_mmhg = label_scale_factor_mmhg
-        self.epoch_interval = epoch_interval
-
-        # Save the training and validation datasets to use to generate predictions
-        self.x_train, self.y_train, self.x_dev, self.y_dev = dataset
-
-    def error_at_percentile_mmhg(self, x_true, y_true):
-        """ Calculate the error (in mmhg) that self.percentile of predictions fall within.
-        """
-
-        # Copy the model to prevent a large memory leak
-        # https://github.com/keras-team/keras/issues/13118
-        eval_model = tf.keras.models.clone_model(self.model)
-        eval_model.set_weights(self.model.get_weights())
-
-        y_pred = eval_model.predict(x_true)
-        y_pred_error = np.abs(y_pred - y_true)
-
-        normalized_error_at_percentile = np.percentile(y_pred_error, q=self.percentile)
-        return normalized_error_at_percentile * self.label_scale_factor_mmhg
-
-    def on_epoch_end(self, epoch, logs=None):
-        # Metrics are compiled and averaged over batches for an entire epoch by Keras
-        # in the built-in BaseLogger callback and stored by mutating `logs`, passed on to each subsequent callback.
-        # To add our own custom metric that is computed per-epoch instead, calculate it here and add it to logs
-
-        # Only calculate once per interval of epochs, since the prediction is expensive
-        skip_epoch = epoch % self.epoch_interval
-
-        if logs is None or skip_epoch:
-            return
-
-        error_at_percentile_mmhg = self.error_at_percentile_mmhg(
-            x_true=self.x_train, y_true=self.y_train
-        )
-        val_error_at_percentile_mmhg = self.error_at_percentile_mmhg(
-            x_true=self.x_dev, y_true=self.y_dev
-        )
-
-        p = int(self.percentile)
-
-        # fmt: off
-        logs[f"error_at_{p}_percentile_mmhg"] = error_at_percentile_mmhg
-        logs[f"val_error_at_{p}_percentile_mmhg"] = val_error_at_percentile_mmhg
-        logs[f"error_at_{p}_percentile_mg_l"] = error_at_percentile_mmhg / MG_L_PER_MMHG
-        logs[f"val_error_at_{p}_percentile_mg_l"] = val_error_at_percentile_mmhg / MG_L_PER_MMHG
-        # fmt: on
 
 
 class ThresholdValMeanAbsoluteErrorOnCustomMetric(Callback):
@@ -208,24 +144,129 @@ class SaveBestMetricValueAndEpochToWandb(Callback):
             wandb.run.summary[self.best_epoch_key] = epoch
 
 
-class RestoreBestWeights(Callback):
-    """ Saves the model weights from the best epoch according to the given metric
-    and restores them onto the model at the end of training.
+class LogPredictionsAndWeights(Callback):
+    """ A callback to keep track of best model weights and make predictions to log
+        plotly charts to W&B.
+        - Holds on to the model weights from the best epoch according to the given metric
+          and uses them to predict when the training performance hits a new global minimum
+          at the end of an improvement streak.
+        - Also makes predictions with the current model every `epoch_interval` epochs.
+        - Saves all predictions as `predictions.csv` in the wandb log directory.
+        - Saves the final model weights to file (`model-final.h5`) before restoring.
 
     This assumes that lower is better for the given metric.
+
+    Constructor Args:
+        metric: name of the metric to read from logs dict
+        dataset: x_train, y_train, x_dev, y_dev dataset tuple (should match the dataset being trained on)
+        label_scale_factor_mmhg: scale factor to use when converting predictions and labels for plotly charts
+        epoch_interval: Fixed epoch interval to log predictions (default 10)
 
     Attributes:
         metric: name of the metric to read from logs dict
         best_epoch: epoch number (int) of the best epoch seen so far
         best_value: best value for the given metric seen so far
         best_weights: model weights from the epoch with the best value
+        epoch_interval: fixed epoch interval to log predictions
+        latest_predictions: cached model predictions to help prevent redundant evaluation
+        predictions_file_path: file path where predictions are saved
+        label_scale_factor_mmhg: scale factor to use when converting predictions and labels for plotly charts
+        x_train, y_train, x_dev, y_dev: dataset slices to make predictions over
     """
 
-    def __init__(self, metric: str):
+    def __init__(
+        self,
+        metric: str,
+        dataset: Tuple,
+        label_scale_factor_mmhg: int,
+        epoch_interval: int = 10,
+    ):
         self.metric = metric
-        self.best_epoch = None
+        self.best_epoch = 0
         self.best_value = None
         self.best_weights = None
+        self.epoch_interval = epoch_interval
+
+        self.latest_predictions = None
+        self.label_scale_factor_mmhg = label_scale_factor_mmhg
+
+        # Save the training and validation datasets to use to generate predictions
+        self.x_train, self.y_train, self.x_dev, self.y_dev = dataset
+
+    def _get_predictions(self, weights, x_true, y_true, epoch, training):
+        # Prevent memory leak: https://github.com/keras-team/keras/issues/13118
+        eval_model = tf.keras.models.clone_model(self.model)
+        eval_model.set_weights(weights)
+
+        predictions = eval_model.predict(x_true)
+
+        prediction_count = len(predictions)
+
+        return pd.DataFrame(
+            {
+                "epoch": [epoch] * prediction_count,
+                "current best epoch": [epoch == self.best_epoch] * prediction_count,
+                "true DO (mmHg)": y_true.flatten() * self.label_scale_factor_mmhg,
+                "predicted DO (mmHg)": predictions.flatten()
+                * self.label_scale_factor_mmhg,
+                "absolute error (mmHg)": np.abs(predictions - y_true).flatten()
+                * self.label_scale_factor_mmhg,
+                "training": [training] * prediction_count,
+            }
+        )
+
+    def _log_predictions(self, weights, epoch):
+        training_dataframe = self._get_predictions(
+            weights, self.x_train, self.y_train, epoch, training=True
+        )
+        dev_dataframe = self._get_predictions(
+            weights, self.x_dev, self.y_dev, epoch, training=False
+        )
+
+        predictions = pd.concat([training_dataframe, dev_dataframe])
+
+        predictions_file_path = os.path.join(wandb.run.dir, "predictions.csv")
+
+        with open(predictions_file_path, "a") as csv_file:
+            is_file_empty = csv_file.tell() == 0
+            predictions.to_csv(csv_file, index=False, header=is_file_empty, mode="a")
+
+        return predictions
+
+    def _log_predictions_chart(self, predictions, epoch, chart_title_annotation):
+        train_labels = predictions[predictions["training"]]["true DO (mmHg)"]
+        train_predictions = predictions[predictions["training"]]["predicted DO (mmHg)"]
+
+        dev_labels = predictions[~predictions["training"]]["true DO (mmHg)"]
+        dev_predictions = predictions[~predictions["training"]]["predicted DO (mmHg)"]
+
+        visualizations.log_do_prediction_error(
+            train_labels,
+            train_predictions,
+            dev_labels,
+            dev_predictions,
+            chart_title_annotation,
+        )
+        visualizations.log_actual_vs_predicted_do(
+            train_labels,
+            train_predictions,
+            dev_labels,
+            dev_predictions,
+            chart_title_annotation,
+        )
+
+    def _rename_model_best(self, epoch: int):
+        os.rename(
+            os.path.join(wandb.run.dir, "model-best.h5"),
+            os.path.join(wandb.run.dir, f"model-best-{epoch}.h5"),
+        )
+
+    def _save_final_weights(self):
+        # Save final model weights to allow continued training
+        self.model.save(os.path.join(wandb.run.dir, "model-final.h5"))
+
+    def _is_periodic_logging_epoch(self, epoch):
+        return epoch % self.epoch_interval == 0
 
     def on_epoch_end(self, epoch, logs):
         current_value = logs[self.metric]
@@ -236,6 +277,43 @@ class RestoreBestWeights(Callback):
             self.best_value = current_value
             self.best_weights = self.model.get_weights()
 
+        # Model checkpointing and prediction heuristic
+        if self.best_epoch == epoch - 1 and self.best_epoch > 0:
+            # The previous epoch was the most performant so far
+            # We want to check after the current epoch has run so as to only
+            # checkpoint/ predict when performance has hit the
+            # end of a global improvement streak
+            self._rename_model_best(epoch - 1)
+
+            # Use best_weights to log latest predictions (unless the last
+            # best_epoch already fell on the regular prediction interval)
+            if not self._is_periodic_logging_epoch(self.best_epoch):
+                self.latest_predictions = self._log_predictions(
+                    self.best_weights, self.best_epoch
+                )
+
+            self._log_predictions_chart(
+                self.latest_predictions, epoch, chart_title_annotation=" - Best"
+            )
+
+        elif self._is_periodic_logging_epoch(epoch):
+            # When not at a global minimum, predict on some fixed interval
+            self.latest_predictions = self._log_predictions(
+                self.model.get_weights(), epoch
+            )
+
     def on_train_end(self, logs=None):
-        logger.info(f"Restoring model weights from best epoch {self.best_epoch}")
-        self.model.set_weights(self.best_weights)
+        self._save_final_weights()
+
+        # epochs in params is the total number of epochs, but the epochs themselves are 0-indexed
+        final_epoch = self.params["epochs"] - 1
+
+        if not self._is_periodic_logging_epoch(final_epoch):
+            # Make final predictions and upload one last set of charts
+            self.latest_predictions = self._log_predictions(
+                self.model.get_weights(), final_epoch
+            )
+
+        self._log_predictions_chart(
+            self.latest_predictions, final_epoch, chart_title_annotation=" - Final"
+        )
