@@ -20,17 +20,13 @@ from cosmobot_deep_learning.preprocess_image import (
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
     "dataset_filename": "2019-10-09--20-55-53_osmo_ml_dataset_unit_C_scum_only.csv",
-    # Do a funky thing - "train" on dev and "dev" on test to get them both on the graph
-    # Don't worry, we won't be doing any real training though
-    "training_set_column": "dev_resampled",
-    "dev_set_column": "test_resampled",
+    "training_set_column": "training",
+    "dev_set_column": "dev_resampled",
     "numeric_input_columns": ["YSI temperature (C)"],
     "image_size": 128,
     "optimizer_name": "adam",
-    # zero out the learning rate and freeze all the layers to make sure we're getting the freshly hydrated model
-    # note: it seemed learning rate=0 alone was sufficient here - multiple runs looked exactly the same.
-    "learning_rate": 0,
-    "freeze_until_index": 21,  # freeze the whole dang thing
+    "learning_rate": 0.0001,
+    "freeze_until_index": 10,  # the 10th index should be the first dense layer ("dense_1")
     "original_model_filename": "j53s5f07-model-best.h5",  # The best baseline simple_cnn model so far
 }
 
