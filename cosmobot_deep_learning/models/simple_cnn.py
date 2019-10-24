@@ -28,7 +28,6 @@ DEFAULT_HYPERPARAMETERS = {
     "numeric_input_columns": ["YSI temperature (C)"],
     "image_size": 128,
     "convolutional_kernel_size": 5,
-    "dense_layer_units": 32,
     "prediction_dense_layer_units": 64,
     "optimizer_name": "adam",
     # 0.0001 learns faster than 0.00001, but 0.0003 and higher causes issues (2019-08-27)
@@ -55,7 +54,6 @@ def create_model(hyperparameters, x_train):
     image_size = hyperparameters["image_size"]
     convolutional_kernel_size = hyperparameters["convolutional_kernel_size"]
     convolutional_kernel_shape = (convolutional_kernel_size, convolutional_kernel_size)
-    dense_layer_units = hyperparameters["dense_layer_units"]
     prediction_dense_layer_units = hyperparameters["prediction_dense_layer_units"]
     dropout_rate = hyperparameters["dropout_rate"]
     output_activation_layer = ACTIVATION_LAYER_BY_NAME[
@@ -149,7 +147,6 @@ def get_hyperparameter_parser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--image-size", type=int)
     parser.add_argument("--convolutional-kernel-size", type=int)
-    parser.add_argument("--dense-layer-units", type=int)
     parser.add_argument("--prediction-dense-layer-units", type=int)
     parser.add_argument("--dropout-rate", type=float)
     parser.add_argument(
