@@ -78,6 +78,11 @@ def create_model(hyperparameters, x_train):
             convolutional_activation_layer(),
             keras.layers.MaxPooling2D(2),
             keras.layers.Conv2D(
+                16, convolutional_kernel_shape, kernel_initializer=kernel_initializer
+            ),
+            convolutional_activation_layer(),
+            keras.layers.MaxPooling2D(2),
+            keras.layers.Conv2D(
                 32, convolutional_kernel_shape, kernel_initializer=kernel_initializer
             ),
             convolutional_activation_layer(),
@@ -88,14 +93,10 @@ def create_model(hyperparameters, x_train):
             convolutional_activation_layer(),
             keras.layers.Flatten(name="prep-for-dense"),
             keras.layers.Dense(
-                dense_layer_units,
-                activation="relu",
-                kernel_initializer=kernel_initializer,
+                16, activation="relu", kernel_initializer=kernel_initializer
             ),
             keras.layers.Dense(
-                dense_layer_units,
-                name="final_dense",
-                kernel_initializer=kernel_initializer,
+                4, name="final_dense", kernel_initializer=kernel_initializer
             ),
             keras.layers.LeakyReLU(),
             # Final output layer with 1 neuron to regress a single value
