@@ -98,7 +98,8 @@ def _get_do_prediction_error_figure(
 
 
 def _log_figure_to_wandb(name, figure):
-    wandb.log({name: figure})
+    # Set commit to False to prevent wandb from creating an intermediate step
+    wandb.log({name: figure}, commit=False)
 
 
 def log_do_prediction_error(
