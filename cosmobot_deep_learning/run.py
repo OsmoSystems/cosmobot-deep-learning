@@ -101,6 +101,7 @@ def _shuffle_dataframe(dataframe):
 
 def _cast_dataset_to_float16(dataset):
     x_train, y_train, x_dev, y_dev = dataset
+    # When there are multiple model inputs, x is a list of arrays
     if type(x_train) == list:
         x_train_floatx = [np.asarray(x, dtype="float16") for x in x_train]
         x_dev_floatx = [np.asarray(x, dtype="float16") for x in x_dev]
