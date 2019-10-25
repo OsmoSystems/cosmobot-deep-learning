@@ -2,6 +2,7 @@ import os
 import logging
 import pickle
 
+import numpy as np
 import pandas as pd
 import wandb
 from wandb.keras import WandbCallback
@@ -54,7 +55,7 @@ def _update_wandb_with_loaded_dataset(loaded_dataset):
     """
     loaded_dataset_hash = get_loaded_dataset_hash(loaded_dataset)
 
-    x_train, y_train, x_dev, y_dev = loaded_dataset
+    _, y_train, _, y_dev = loaded_dataset
     wandb.config.update(
         {
             "loaded_dataset_hash": loaded_dataset_hash,
@@ -98,6 +99,24 @@ def _shuffle_dataframe(dataframe):
     )  # reset index to match new order, and drop the old index values
 
 
+def _cast_dataset_to_float16(dataset):
+    x_train, y_train, x_dev, y_dev = dataset
+    # When there are multiple model inputs, x is a list of arrays
+    if type(x_train) == list:
+        x_train_floatx = [np.asarray(x, dtype="float16") for x in x_train]
+        x_dev_floatx = [np.asarray(x, dtype="float16") for x in x_dev]
+    else:
+        x_train_floatx = np.asarray(x_train, dtype="float16")
+        x_dev_floatx = np.asarray(x_dev, dtype="float16")
+
+    return (
+        x_train_floatx,
+        np.asarray(y_train, dtype="float16"),
+        x_dev_floatx,
+        np.asarray(y_dev, dtype="float16"),
+    )
+
+
 def _get_prepared_dataset(prepare_dataset, hyperparameters):
     dataset_filepath = hyperparameters["dataset_filepath"]
     dataset = pd.read_csv(dataset_filepath)
@@ -107,12 +126,12 @@ def _get_prepared_dataset(prepare_dataset, hyperparameters):
 
     shuffled_dataset = _shuffle_dataframe(dataset)
 
-    x_train, y_train, x_dev, y_dev = prepare_dataset(
+    prepared_dataset = prepare_dataset(
         raw_dataset=download_images_and_attach_filepaths_to_dataset(shuffled_dataset),
         hyperparameters=hyperparameters,
     )
 
-    return x_train, y_train, x_dev, y_dev
+    return _cast_dataset_to_float16(prepared_dataset)
 
 
 def _load_dataset_cache(dataset_cache_filepath):
