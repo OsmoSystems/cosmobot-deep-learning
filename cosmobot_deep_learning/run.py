@@ -126,10 +126,23 @@ def _get_prepared_dataset(prepare_dataset, hyperparameters):
 
     shuffled_dataset = _shuffle_dataframe(dataset)
 
+    training_set_column = hyperparameters["training_set_column"]
+    dev_set_column = hyperparameters["dev_set_column"]
+
+    train_samples = raw_dataset[raw_dataset[training_set_column]]
+    dev_samples = raw_dataset[raw_dataset[dev_set_column]]
+
+    """
     prepared_dataset = prepare_dataset(
         raw_dataset=download_images_and_attach_filepaths_to_dataset(shuffled_dataset),
         hyperparameters=hyperparameters,
     )
+    """
+
+    x_train, y_train = prepare_dataset(train_samples, hyperparameters)
+    x_dev, y_dev = prepare_dataset(dev_samples, hyperparameters)
+
+    prepared_dataset = (x_train, y_train, x_dev, y_dev)
 
     return _cast_dataset_to_float16(prepared_dataset)
 

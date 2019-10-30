@@ -126,6 +126,7 @@ def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters: Dict)
     return (x_train, y_train, x_dev, y_dev)
 
 
+"""
 def _extract_image_and_numeric_features_and_labels(samples, hyperparameters):
     numeric_input_columns = hyperparameters["numeric_input_columns"]
     label_column = hyperparameters["label_column"]
@@ -137,6 +138,7 @@ def _extract_image_and_numeric_features_and_labels(samples, hyperparameters):
     y = extract_labels(samples, label_column, label_scale_factor_mmhg)
 
     return ([x_numeric, x_images], y)
+"""
 
 
 def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters):
@@ -151,23 +153,21 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
                 label_scale_factor_mmhg: The scaling factor to use to scale labels into the [0,1] range
                 image_size: The desired side length of the scaled (square) images
         Returns:
-            A 4-tuple containing (x_train, y_train, x_dev, y_dev) data sets.
+            A 2-tuple containing (x, y) data sets.
     """
-    training_set_column = hyperparameters["training_set_column"]
-    dev_set_column = hyperparameters["dev_set_column"]
+    numeric_input_columns = hyperparameters["numeric_input_columns"]
+    label_column = hyperparameters["label_column"]
+    image_size = hyperparameters["image_size"]
+    label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
 
-    train_samples = raw_dataset[raw_dataset[training_set_column]]
-    dev_samples = raw_dataset[raw_dataset[dev_set_column]]
+    x_numeric = extract_inputs(raw_dataset, numeric_input_columns)
 
-    x_train, y_train = _extract_image_and_numeric_features_and_labels(
-        train_samples, hyperparameters
+    x_images = open_and_preprocess_images(
+        raw_dataset["local_filepath"].values, image_size
     )
+    y = extract_labels(raw_dataset, label_column, label_scale_factor_mmhg)
 
-    x_dev, y_dev = _extract_image_and_numeric_features_and_labels(
-        dev_samples, hyperparameters
-    )
-
-    return (x_train, y_train, x_dev, y_dev)
+    return ([x_numeric, x_images], y)
 
 
 def _extract_ROI_and_numeric_features_and_labels(samples, hyperparameters):

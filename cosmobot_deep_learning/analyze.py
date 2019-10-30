@@ -28,6 +28,7 @@ def load_model_from_h5(run_hyperparameters: Dict, model_filepath: str) -> keras.
             A keras Model
     """
     custom_objects = _get_custom_objects(run_hyperparameters["metrics"])
+    print(f"custom objects: {custom_objects}")
     return keras.models.load_model(model_filepath, custom_objects=custom_objects)
 
 
