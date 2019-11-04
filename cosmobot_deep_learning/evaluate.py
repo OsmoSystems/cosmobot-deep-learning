@@ -149,6 +149,10 @@ def _get_run(run_id):
     return api.run(run_path)
 
 
+class ModuleMissingPrepareDatsetFunction(Exception):
+    pass
+
+
 def _get_prepare_dataset_fn_for_model(model_name):
     """Returns the PREPARE_DATASET_FUNCTION value from the model module for the
     given module_name.
@@ -156,8 +160,13 @@ def _get_prepare_dataset_fn_for_model(model_name):
     model_module = importlib.import_module(
         f"cosmobot_deep_learning.models.{model_name}"
     )
-    # TODO nice error if module doesn't have PREPARE_DATASET_FUNCTION defined
-    return model_module.PREPARE_DATASET_FUNCTION
+
+    try:
+        return model_module.PREPARE_DATASET_FUNCTIONS
+    except AttributeError:
+        raise ModuleMissingPrepareDatsetFunction(
+            f"cosmobot_deep_learning.models.{model_name}.PREPARE_DATASET_FUNCTION not defined"
+        )
 
 
 def _evaluate_model(run_id, dataset_filename, dataset_sampling_column=None):
@@ -166,13 +175,12 @@ def _evaluate_model(run_id, dataset_filename, dataset_sampling_column=None):
     run = _get_run(run_id)
     hyperparameters = run.config
 
-    # no need to run this on gpu
+    # no need to run this on a gpu since it's 1 epoch
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
     with ModelBestH5File(run) as model_h5_filepath:
         model = _load_untrainable_model(hyperparameters, model_h5_filepath)
 
-    # TODO support cached datasets?
     model_name = run.config["model_name"]
     x, y = _get_prepared_dataset(
         model_name, hyperparameters, dataset_filename, dataset_sampling_column
@@ -194,7 +202,6 @@ def _evaluate_model(run_id, dataset_filename, dataset_sampling_column=None):
         "acceptable_fraction_outside_error"
     ]
 
-    # TODO return model and prepared dataset? think about how this could be used in a jupyter notebook
     model.fit(
         x,
         y,
@@ -210,11 +217,14 @@ def _evaluate_model(run_id, dataset_filename, dataset_sampling_column=None):
             WandbCallback(verbose=1, monitor="val_adjusted_mean_absolute_error"),
             LogPredictionsAndWeights(
                 metric="val_adjusted_mean_absolute_error",
-                dataset=(x, y, x, y),  # TODO is this ok?
+                dataset=(x, y, x, y),
                 label_scale_factor_mmhg=label_scale_factor_mmhg,
             ),
         ],
     )
+
+    # returning model and dataset for use in jupyter notebooks
+    return model, dataset
 
 
 def _parse_args(args):
@@ -235,7 +245,6 @@ def _parse_args(args):
     return parser.parse_args(args)
 
 
-# TODO move this somewhere so that it's shared with run.py?
 def _initialize_logging():
     logging_format = "%(asctime)s [%(levelname)s]--- %(message)s"
     logging.basicConfig(
