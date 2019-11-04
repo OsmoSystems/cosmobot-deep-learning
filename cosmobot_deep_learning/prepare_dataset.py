@@ -57,34 +57,24 @@ def prepare_dataset_numeric(raw_dataset: pd.DataFrame, hyperparameters):
                 label_column: The column to use as the label (y) data values for a given dataset (x)
                 label_scale_factor_mmhg: The scaling factor to use to scale labels into the [0,1] range
         Returns:
-            A 4-tuple containing (x_train, y_train, x_dev, y_dev) data sets.
+            A 2-tuple containing (x, y) data sets.
     """
     numeric_input_columns = hyperparameters["numeric_input_columns"]
     label_column = hyperparameters["label_column"]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
-    training_set_column = hyperparameters["training_set_column"]
-    dev_set_column = hyperparameters["dev_set_column"]
 
-    train_samples = raw_dataset[raw_dataset[training_set_column]]
-    dev_samples = raw_dataset[raw_dataset[dev_set_column]]
+    x = extract_inputs(raw_dataset, numeric_input_columns)
+    y = extract_labels(raw_dataset, label_column, label_scale_factor_mmhg)
 
-    x_train = extract_inputs(train_samples, numeric_input_columns)
-    y_train = extract_labels(train_samples, label_column, label_scale_factor_mmhg)
-
-    x_dev = extract_inputs(dev_samples, numeric_input_columns)
-    y_dev = extract_labels(dev_samples, label_column, label_scale_factor_mmhg)
-
-    return (x_train, y_train, x_dev, y_dev)
+    return (x, y)
 
 
 def _get_images_and_labels(
-    raw_dataset: pd.DataFrame,
-    sample_selector_column: str,
+    samples: pd.DataFrame,
     image_size: int,
     label_column: str,
     label_scale_factor_mmhg: str,
 ):
-    samples = raw_dataset[raw_dataset[sample_selector_column]]
     images = open_and_preprocess_images(samples["local_filepath"].values, image_size)
     labels = extract_labels(samples, label_column, label_scale_factor_mmhg)
 
@@ -102,28 +92,20 @@ def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters: Dict)
                 label_scale_factor_mmhg: The scaling factor to use to scale labels into the [0,1] range
                 image_size: The desired side length of the scaled (square) images
         Returns:
-            A 4-tuple containing (x_train, y_train, x_dev, y_dev) data sets.
+            A 2-tuple containing (x, y) data sets.
     """
     image_size = hyperparameters["image_size"]
     label_column = hyperparameters["label_column"]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
 
-    x_train, y_train = _get_images_and_labels(
+    x, y = _get_images_and_labels(
         raw_dataset,
-        sample_selector_column=hyperparameters["training_set_column"],
-        image_size=image_size,
-        label_column=label_column,
-        label_scale_factor_mmhg=label_scale_factor_mmhg,
-    )
-    x_dev, y_dev = _get_images_and_labels(
-        raw_dataset,
-        sample_selector_column=hyperparameters["dev_set_column"],
         image_size=image_size,
         label_column=label_column,
         label_scale_factor_mmhg=label_scale_factor_mmhg,
     )
 
-    return (x_train, y_train, x_dev, y_dev)
+    return (x, y)
 
 
 """
@@ -177,6 +159,10 @@ def _extract_ROI_and_numeric_features_and_labels(samples, hyperparameters):
     image_size = hyperparameters["image_size"]
     input_ROI_names = hyperparameters["input_ROI_names"]
 
+    import pdb
+
+    pdb.set_trace()
+
     # Use ast to safely eval ROI definitions to dict
     ROI_definitions = samples["ROI definitions"].apply(ast.literal_eval)
 
@@ -204,19 +190,8 @@ def prepare_dataset_ROIs_and_numeric(raw_dataset: pd.DataFrame, hyperparameters)
                 image_size: The desired side length of the scaled (square) images
                 input_ROI_names: The names of ROIs to extract from images as model inputs
         Returns:
-            A 4-tuple containing (x_train, y_train, x_dev, y_dev) data sets.
+            A 2-tuple containing (x, y) data sets.
     """
-    training_set_column = hyperparameters["training_set_column"]
-    dev_set_column = hyperparameters["dev_set_column"]
+    x, y = _extract_ROI_and_numeric_features_and_labels(raw_dataset, hyperparameters)
 
-    train_samples = raw_dataset[raw_dataset[training_set_column]]
-    dev_samples = raw_dataset[raw_dataset[dev_set_column]]
-
-    x_train, y_train = _extract_ROI_and_numeric_features_and_labels(
-        train_samples, hyperparameters
-    )
-    x_dev, y_dev = _extract_ROI_and_numeric_features_and_labels(
-        dev_samples, hyperparameters
-    )
-
-    return (x_train, y_train, x_dev, y_dev)
+    return (x, y)

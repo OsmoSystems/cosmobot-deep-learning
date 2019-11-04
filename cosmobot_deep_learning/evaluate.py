@@ -169,7 +169,21 @@ def _get_prepare_dataset_fn_for_model(model_name):
         )
 
 
-def _evaluate_model(run_id, dataset_filename, dataset_sampling_column=None):
+def _evaluate_model(
+    run_id: str, dataset_filename: str, dataset_sampling_column: str = None
+):
+    """Evaluate a model's performance with the given dataset.
+
+    Args:
+        run_id: W&B run id for a run in osmo/comobot-do-measurement.
+        dataset_filename: Name of dataset to test against.
+        dataset_sampling_column: Optional name of boolean column in the dataset.
+            Dataset will be filtered down to rows where it is True.
+
+    Returns: tuple of (model, dataset)
+        model: The keras model object
+        dataset: The processed dataset that was evaluated
+    """
     fix_multiprocessing_with_keras_on_macos()
 
     run = _get_run(run_id)

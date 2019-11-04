@@ -169,12 +169,7 @@ def main(command_line_args):
         command_line_args, DEFAULT_HYPERPARAMETERS, simple_cnn_hyperparameter_parser
     )
 
-    run(
-        hyperparameters,
-        PREPARE_DATASET_FUNCTION,
-        prepare_dataset_image_and_numeric,
-        create_model,
-    )
+    run(hyperparameters, PREPARE_DATASET_FUNCTION, create_model)
 
 
 if __name__ == "__main__":

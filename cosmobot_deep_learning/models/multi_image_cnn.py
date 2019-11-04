@@ -32,7 +32,7 @@ DEFAULT_HYPERPARAMETERS = {
     # ROI names to extract from `ROI definitions` column in the dataset.
     # WARNING: The order here is preserved through data processing and model creation / input
     # If you are using a cached dataset, make sure you have the correct order.
-    "input_ROI_names": ["DO patch", "reference patch", "reflectance standard"],
+    "input_ROI_names": ["DO Patch", "Reference Patch", "Reflectance Standard"],
     "kernel_initializer": keras.initializers.he_normal(),
     "convolutional_kernel_size": 3,
     "dense_layer_units": 64,
