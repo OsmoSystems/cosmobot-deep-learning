@@ -108,6 +108,7 @@ def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters: Dict)
     return (x, y)
 
 
+# TODO delete this
 """
 def _extract_image_and_numeric_features_and_labels(samples, hyperparameters):
     numeric_input_columns = hyperparameters["numeric_input_columns"]

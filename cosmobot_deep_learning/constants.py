@@ -1,5 +1,8 @@
 from tensorflow import keras
 
+
+PACKAGE_NAME = "cosmobot_deep_learning"
+
 # OXYGEN_FRACTION_IN_ATMOSPHERE = 0.2096
 # ATMOSPHERIC_PRESSURE_MMHG = 760
 # ATMOSPHERIC_OXYGEN_PRESSURE_MMHG = (

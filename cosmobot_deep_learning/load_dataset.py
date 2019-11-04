@@ -6,11 +6,10 @@ import pkg_resources
 import pandas as pd
 from tqdm.auto import tqdm
 
-from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
+from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL, PACKAGE_NAME
 from .s3 import naive_sync_from_s3
 
 
-PACKAGE_NAME = "cosmobot_deep_learning"
 LOCAL_DATA_DIRECTORY = os.path.expanduser("~/osmo/cosmobot-data-sets/")
 LOCAL_CACHE_DIRECTORY = os.path.expanduser("~/osmo/cosmobot-dataset-cache/")
 

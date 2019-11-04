@@ -1,9 +1,11 @@
 # TODO tests
 
 import argparse
+import configparser
 import importlib
 import logging
 import os
+import pkg_resources
 import sys
 import tempfile
 
@@ -12,6 +14,7 @@ from tensorflow import keras
 import wandb
 from wandb.keras import WandbCallback
 
+from cosmobot_deep_learning.constants import PACKAGE_NAME
 from cosmobot_deep_learning.custom_metrics import (
     get_fraction_outside_error_threshold_fn,
     LogPredictionsAndWeights,
@@ -24,6 +27,15 @@ from cosmobot_deep_learning.load_dataset import (
 from cosmobot_deep_learning.preprocess_image import (
     fix_multiprocessing_with_keras_on_macos,
 )
+
+
+def _load_wandb_settings():
+    settings_filepath = pkg_resources.resource_filename(
+        PACKAGE_NAME, f"../wandb/settings"
+    )
+    config = configparser.ConfigParser()
+    config.read(settings_filepath)
+    return config["default"]
 
 
 class RunFileDoesNotExist(Exception):
@@ -141,8 +153,10 @@ def _get_prepared_dataset(
 
 
 def _get_run(run_id):
-    entity = "osmo"
-    project = "cosmobot-do-measurement"
+    wandb_settings = _load_wandb_settings()
+
+    entity = wandb_settings["entity"]
+    project = wandb_settings["project"]
     run_path = f"{entity}/{project}/{run_id}"
 
     api = wandb.Api()
@@ -162,7 +176,7 @@ def _get_prepare_dataset_fn_for_model(model_name):
     )
 
     try:
-        return model_module.PREPARE_DATASET_FUNCTIONS
+        return model_module.PREPARE_DATASET_FUNCTION
     except AttributeError:
         raise ModuleMissingPrepareDatsetFunction(
             f"cosmobot_deep_learning.models.{model_name}.PREPARE_DATASET_FUNCTION not defined"
@@ -238,14 +252,14 @@ def _evaluate_model(
     )
 
     # returning model and dataset for use in jupyter notebooks
-    return model, dataset
+    return model, (x, y)
 
 
 def _parse_args(args):
     parser = argparse.ArgumentParser(description="Evaluate model performance.")
     parser.add_argument(
         "wandb_run_id",
-        help="W&B id of a run in the osmo/cosmobot-do-measurement project",
+        help="W&B id of a run to download the model from. Run must be in the osmo/cosmobot-do-measurement project",
     )
     parser.add_argument(
         "dataset_filename",
