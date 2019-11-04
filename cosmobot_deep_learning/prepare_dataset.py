@@ -160,10 +160,6 @@ def _extract_ROI_and_numeric_features_and_labels(samples, hyperparameters):
     image_size = hyperparameters["image_size"]
     input_ROI_names = hyperparameters["input_ROI_names"]
 
-    import pdb
-
-    pdb.set_trace()
-
     # Use ast to safely eval ROI definitions to dict
     ROI_definitions = samples["ROI definitions"].apply(ast.literal_eval)
 
