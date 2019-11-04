@@ -1,7 +1,7 @@
-# TODO I wonder if we should start logging pip.freeze or a requirements file to w&b so we know, for example, what version of TensorFlow was used
-# TODO underscore private functions
 # TODO tests
 
+import argparse
+import importlib
 import logging
 import os
 import sys
@@ -21,7 +21,6 @@ from cosmobot_deep_learning.load_dataset import (
     download_images_and_attach_filepaths_to_dataset,
     get_pkg_dataset_filepath,
 )
-from cosmobot_deep_learning.prepare_dataset import prepare_dataset_image_and_numeric
 from cosmobot_deep_learning.preprocess_image import (
     fix_multiprocessing_with_keras_on_macos,
 )
@@ -35,7 +34,7 @@ class FileAlreadyExists(Exception):
     pass
 
 
-def download_run_file(run, filename, destination_directory="."):
+def _download_run_file(run, filename, destination_directory="."):
     try:
         run_file = run.file(filename)
     except wandb.apis.CommError as e:
@@ -70,7 +69,7 @@ class ModelBestH5File:
             prefix="cosmobot_deep_learning_rehydrate_"
         )
 
-        download_run_file(
+        _download_run_file(
             run, self.best_model_filename, destination_directory=self.temp_dir.name
         )
 
@@ -133,8 +132,8 @@ def _get_prepared_dataset(
     if dataset_sampling_column:
         raw_dataset = raw_dataset[raw_dataset[dataset_sampling_column]]
 
-    # TODO remove this (trimming for testing)
-    raw_dataset = raw_dataset.iloc[0:10]
+    # TODO remove
+    raw_dataset = raw_dataset[0:10]
 
     downloaded_dataset = download_images_and_attach_filepaths_to_dataset(raw_dataset)
     x, y = prepare_dataset_for_model(downloaded_dataset, hyperparameters)
@@ -151,8 +150,14 @@ def _get_run(run_id):
 
 
 def _get_prepare_dataset_fn_for_model(model_name):
-    # TODO implement this function (actually, it might be out of scope? see ticket). for now return simple_cnn's prepare fn
-    return prepare_dataset_image_and_numeric
+    """Returns the PREPARE_DATASET_FUNCTION value from the model module for the
+    given module_name.
+    """
+    model_module = importlib.import_module(
+        f"cosmobot_deep_learning.models.{model_name}"
+    )
+    # TODO nice error if module doesn't have PREPARE_DATASET_FUNCTION defined
+    return model_module.PREPARE_DATASET_FUNCTION
 
 
 def _evaluate_model(run_id, dataset_filename, dataset_sampling_column=None):
@@ -173,13 +178,13 @@ def _evaluate_model(run_id, dataset_filename, dataset_sampling_column=None):
         model_name, hyperparameters, dataset_filename, dataset_sampling_column
     )
 
-    # TODO maybe tag these runs or add a config value that makes it easy to exclude them in filters
     wandb.init(
         config={
             "run_id": run_id,
             "dataset_filename": dataset_filename,
             "dataset_sampling_column": dataset_sampling_column,
-        }
+        },
+        tags=["model-evaluation"],
     )
 
     batch_size = hyperparameters["batch_size"]
@@ -189,6 +194,7 @@ def _evaluate_model(run_id, dataset_filename, dataset_sampling_column=None):
         "acceptable_fraction_outside_error"
     ]
 
+    # TODO return model and prepared dataset? think about how this could be used in a jupyter notebook
     model.fit(
         x,
         y,
@@ -211,16 +217,41 @@ def _evaluate_model(run_id, dataset_filename, dataset_sampling_column=None):
     )
 
 
-if __name__ == "__main__":
-    # TODO move this somewhere so that it's shared with run.py?
+def _parse_args(args):
+    parser = argparse.ArgumentParser(description="Evaluate model performance.")
+    parser.add_argument(
+        "wandb_run_id",
+        help="W&B id of a run in the osmo/cosmobot-do-measurement project",
+    )
+    parser.add_argument(
+        "dataset_filename",
+        help="Name of dataset file in cosmobot_deep_learning/datasets directory",
+    )
+    parser.add_argument(
+        "--sampling-column-name",
+        "-c",
+        help="Boolean column in the dataset that identifies samples to use.",
+    )
+    return parser.parse_args(args)
+
+
+# TODO move this somewhere so that it's shared with run.py?
+def _initialize_logging():
     logging_format = "%(asctime)s [%(levelname)s]--- %(message)s"
     logging.basicConfig(
         level=logging.INFO, format=logging_format, handlers=[logging.StreamHandler()]
     )
 
-    # TODO proper argparser
-    run_id = sys.argv[1]
-    dataset_filename = sys.argv[2]
-    column_name = sys.argv[3] if len(sys.argv) >= 4 else None
 
-    _evaluate_model(run_id, dataset_filename, column_name)
+def main(args):
+    _initialize_logging()
+    parsed_args = _parse_args(args)
+    _evaluate_model(
+        parsed_args.wandb_run_id,
+        parsed_args.dataset_filename,
+        parsed_args.sampling_column_name,
+    )
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

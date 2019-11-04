@@ -24,6 +24,7 @@ from cosmobot_deep_learning.preprocess_image import (
 )
 
 
+PREPARE_DATASET_FUNCTION = prepare_dataset_image_and_numeric
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
     "numeric_input_columns": ["sr", "PicoLog temperature (C)"],
@@ -103,7 +104,7 @@ def main(command_line_args):
         command_line_args, DEFAULT_HYPERPARAMETERS
     )
 
-    run(hyperparameters, prepare_dataset_image_and_numeric, create_model)
+    run(hyperparameters, PREPARE_DATASET_FUNCTION, create_model)
 
 
 if __name__ == "__main__":
