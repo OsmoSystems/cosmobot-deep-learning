@@ -27,7 +27,7 @@ class TestExtractInputs:
     def test_returns_dataset_slimmed_to_columns(self):
         expected = np.array([[1, 2, 3]]).T
 
-        actual = module.extract_inputs(
+        actual = module.extract_numeric_inputs(
             MOCK_DATASET, input_column_names=["numeric_input_column"]
         )
 
@@ -43,7 +43,7 @@ class TestExtractInputs:
             ]
         ).T
 
-        actual = module.extract_inputs(
+        actual = module.extract_numeric_inputs(
             MOCK_DATASET, input_column_names=["numeric_input_column", "sr"]
         )
 

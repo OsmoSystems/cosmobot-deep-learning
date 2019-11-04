@@ -11,7 +11,7 @@ from cosmobot_deep_learning.preprocess_image import (
 )
 
 
-def extract_inputs(df, input_column_names):
+def extract_numeric_inputs(df, input_column_names):
     """ Extract non-image input data values
 
         Args:
@@ -63,7 +63,7 @@ def prepare_dataset_numeric(raw_dataset: pd.DataFrame, hyperparameters):
     label_column = hyperparameters["label_column"]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
 
-    x = extract_inputs(raw_dataset, numeric_input_columns)
+    x = extract_numeric_inputs(raw_dataset, numeric_input_columns)
     y = extract_labels(raw_dataset, label_column, label_scale_factor_mmhg)
 
     return (x, y)
@@ -108,22 +108,6 @@ def prepare_dataset_image_only(raw_dataset: pd.DataFrame, hyperparameters: Dict)
     return (x, y)
 
 
-# TODO delete this
-"""
-def _extract_image_and_numeric_features_and_labels(samples, hyperparameters):
-    numeric_input_columns = hyperparameters["numeric_input_columns"]
-    label_column = hyperparameters["label_column"]
-    image_size = hyperparameters["image_size"]
-    label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
-
-    x_numeric = extract_inputs(samples, numeric_input_columns)
-    x_images = open_and_preprocess_images(samples["local_filepath"].values, image_size)
-    y = extract_labels(samples, label_column, label_scale_factor_mmhg)
-
-    return ([x_numeric, x_images], y)
-"""
-
-
 def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters):
     """ Transform a dataset CSV into the appropriate inputs and labels for training and
     validating a model, for a model that uses separate image and numeric inputs
@@ -143,7 +127,7 @@ def prepare_dataset_image_and_numeric(raw_dataset: pd.DataFrame, hyperparameters
     image_size = hyperparameters["image_size"]
     label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
 
-    x_numeric = extract_inputs(raw_dataset, numeric_input_columns)
+    x_numeric = extract_numeric_inputs(raw_dataset, numeric_input_columns)
 
     x_images = open_and_preprocess_images(
         raw_dataset["local_filepath"].values, image_size
@@ -163,7 +147,7 @@ def _extract_ROI_and_numeric_features_and_labels(samples, hyperparameters):
     # Use ast to safely eval ROI definitions to dict
     ROI_definitions = samples["ROI definitions"].apply(ast.literal_eval)
 
-    x_numeric = extract_inputs(samples, numeric_input_columns)
+    x_numeric = extract_numeric_inputs(samples, numeric_input_columns)
     x_crops = open_and_preprocess_image_ROIs(
         list(zip(samples["local_filepath"], ROI_definitions)),
         input_ROI_names,
