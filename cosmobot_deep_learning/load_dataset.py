@@ -33,7 +33,7 @@ def _get_files_for_experiment_df(experiment_df_group):
 
 
 def download_images_and_attach_filepaths_to_dataset(
-    dataset: pd.DataFrame
+    dataset: pd.DataFrame,
 ) -> pd.DataFrame:
     """For a pre-prepared ML dataset, ensure images are downloaded and add local image paths to the DataFrame
     Note that syncing tends to take a long time, though syncing for individual experiments will be skipped if all files
