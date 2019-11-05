@@ -32,7 +32,7 @@ def test_argument_parser(args, expected_parsed_args):
     assert vars(parsed_args) == expected_parsed_args
 
 
-def test_get_run_run_path(mocker):
+def test_get_run_path(mocker):
     run_id = "run_123"
     wandb_settings = {
         "entity": "ozmoh",
