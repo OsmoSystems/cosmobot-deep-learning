@@ -142,9 +142,6 @@ def _get_prepared_dataset(
     if dataset_sampling_column:
         raw_dataset = raw_dataset[raw_dataset[dataset_sampling_column]]
 
-    # TODO remove
-    raw_dataset = raw_dataset[0:10]
-
     downloaded_dataset = download_images_and_attach_filepaths_to_dataset(raw_dataset)
     x, y = prepare_dataset_for_model(downloaded_dataset, hyperparameters)
     return (x, y)
@@ -228,6 +225,9 @@ def _evaluate_model(
         "acceptable_fraction_outside_error"
     ]
 
+    # we're using fit() instead of evaluate() to get the functionality of these callbacks
+    # training performance in the results should be ignored, as it can be affected by some
+    # training-only layers such as dropout
     model.fit(
         x,
         y,
@@ -243,7 +243,7 @@ def _evaluate_model(
             WandbCallback(verbose=1, monitor="val_adjusted_mean_absolute_error"),
             LogPredictionsAndWeights(
                 metric="val_adjusted_mean_absolute_error",
-                dataset=(x, y, x, y),
+                dataset=(None, None, x, y),
                 label_scale_factor_mmhg=label_scale_factor_mmhg,
             ),
         ],

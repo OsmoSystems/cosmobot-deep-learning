@@ -216,8 +216,12 @@ class LogPredictionsAndWeights(Callback):
         )
 
     def _log_predictions(self, weights, epoch):
-        training_dataframe = self._get_predictions(
-            weights, self.x_train, self.y_train, epoch, training=True
+        training_dataframe = (
+            self._get_predictions(
+                weights, self.x_train, self.y_train, epoch, training=True
+            )
+            if self.x_train
+            else None
         )
         dev_dataframe = self._get_predictions(
             weights, self.x_dev, self.y_dev, epoch, training=False
