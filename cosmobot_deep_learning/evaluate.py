@@ -1,5 +1,3 @@
-# TODO tests
-
 import argparse
 import configparser
 import importlib
@@ -176,7 +174,7 @@ def _get_prepare_dataset_fn_for_model(model_name):
     )
 
     try:
-        return model_module.PREPARE_DATASET_FUNCTION
+        return model_module.PREPARE_DATASET_FUNCTION  # type: ignore
     except AttributeError:
         raise ModuleMissingPrepareDatsetFunction(
             f"cosmobot_deep_learning.models.{model_name}.PREPARE_DATASET_FUNCTION not defined"
