@@ -158,7 +158,7 @@ def _prepare_dataset_with_caching(prepare_dataset, hyperparameters):
     dataset_cache_name = hyperparameters["dataset_cache_name"]
     dataset_cache_filepath = get_dataset_cache_filepath(dataset_cache_name)
 
-    # Early exit with the cached datatset if it exists
+    # Early exit with the cached dataset if it exists
     if dataset_cache_name is not None and os.path.isfile(dataset_cache_filepath):
         logging.info(f"Using dataset cache file {dataset_cache_filepath}")
 
