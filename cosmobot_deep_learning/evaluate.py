@@ -1,9 +1,7 @@
 import argparse
-import configparser
 import importlib
 import logging
 import os
-import pkg_resources
 import sys
 import tempfile
 
@@ -12,7 +10,6 @@ from tensorflow import keras
 import wandb
 from wandb.keras import WandbCallback
 
-from cosmobot_deep_learning.constants import PACKAGE_NAME
 from cosmobot_deep_learning.custom_metrics import (
     get_fraction_outside_error_threshold_fn,
     LogPredictionsAndWeights,
@@ -27,13 +24,8 @@ from cosmobot_deep_learning.preprocess_image import (
 )
 
 
-def _load_wandb_settings():
-    settings_filepath = pkg_resources.resource_filename(
-        PACKAGE_NAME, f"../wandb/settings"
-    )
-    config = configparser.ConfigParser()
-    config.read(settings_filepath)
-    return config["default"]
+WANDB_ENTITY = "osmo"
+WANDB_PROJECT = "cosmobot-do-measurement"
 
 
 class RunFileDoesNotExist(Exception):
@@ -131,33 +123,6 @@ def _load_untrainable_model(hyperparameters, model_h5_filepath):
     return model
 
 
-def _get_prepared_dataset(
-    model_name, hyperparameters, dataset_filename, dataset_sampling_column=None
-):
-    prepare_dataset_for_model = _get_prepare_dataset_fn_for_model(model_name)
-
-    dataset_path = get_pkg_dataset_filepath(dataset_filename)
-    raw_dataset = pd.read_csv(dataset_path)
-
-    if dataset_sampling_column:
-        raw_dataset = raw_dataset[raw_dataset[dataset_sampling_column]]
-
-    downloaded_dataset = download_images_and_attach_filepaths_to_dataset(raw_dataset)
-    x, y = prepare_dataset_for_model(downloaded_dataset, hyperparameters)
-    return (x, y)
-
-
-def _get_run(run_id):
-    wandb_settings = _load_wandb_settings()
-
-    entity = wandb_settings["entity"]
-    project = wandb_settings["project"]
-    run_path = f"{entity}/{project}/{run_id}"
-
-    api = wandb.Api()
-    return api.run(run_path)
-
-
 class ModuleMissingPrepareDatsetFunction(Exception):
     pass
 
@@ -176,6 +141,28 @@ def _get_prepare_dataset_fn_for_model(model_name):
         raise ModuleMissingPrepareDatsetFunction(
             f"cosmobot_deep_learning.models.{model_name}.PREPARE_DATASET_FUNCTION not defined"
         )
+
+
+def _get_prepared_dataset(
+    model_name, hyperparameters, dataset_filename, dataset_sampling_column=None
+):
+    prepare_dataset_for_model = _get_prepare_dataset_fn_for_model(model_name)
+
+    dataset_path = get_pkg_dataset_filepath(dataset_filename)
+    raw_dataset = pd.read_csv(dataset_path)
+
+    if dataset_sampling_column:
+        raw_dataset = raw_dataset[raw_dataset[dataset_sampling_column]]
+
+    downloaded_dataset = download_images_and_attach_filepaths_to_dataset(raw_dataset)
+    x, y = prepare_dataset_for_model(downloaded_dataset, hyperparameters)
+    return (x, y)
+
+
+def _get_run(run_id):
+    run_path = f"{WANDB_ENTITY}/{WANDB_PROJECT}/{run_id}"
+    api = wandb.Api()
+    return api.run(run_path)
 
 
 def _evaluate_model(
