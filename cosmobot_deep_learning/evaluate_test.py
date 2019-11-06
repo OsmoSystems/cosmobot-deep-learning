@@ -58,3 +58,19 @@ def test_model_best_h5_file(mocker):
 
     # make sure it cleaned up the temporary directory
     assert mock_temp_dir.cleanup.was_called_once()
+
+
+@pytest.mark.parametrize(
+    "model_name",
+    (
+        "images_only_cnn",
+        "multi_image_cnn",
+        "resnet50_with_spatial_ratiometric",
+        "simple_cnn",
+        "simple_cnn_transfer_learning",
+        "simple_spatial_ratiometric",
+    ),
+)
+def test_get_prepare_dataset_fn_for_model_returns_callable(model_name):
+    prepare_dataset_fn = module._get_prepare_dataset_fn_for_model(model_name)
+    assert callable(prepare_dataset_fn)
