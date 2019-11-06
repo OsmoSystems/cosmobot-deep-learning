@@ -34,13 +34,7 @@ def test_argument_parser(args, expected_parsed_args):
 
 def test_get_run_path(mocker):
     run_id = "run_123"
-    wandb_settings = {
-        "entity": "ozmoh",
-        "project": "measure-the-do",
-    }
-    expected_run_path = "ozmoh/measure-the-do/run_123"
-
-    mocker.patch.object(module, "_load_wandb_settings", return_value=wandb_settings)
+    expected_run_path = "osmo/cosmobot-do-measurement/run_123"
 
     mock_api = Mock()
     mock_wandb = mocker.patch.object(module, "wandb")
