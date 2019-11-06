@@ -243,7 +243,7 @@ def _evaluate_model(
             WandbCallback(verbose=1, monitor="val_adjusted_mean_absolute_error"),
             LogPredictionsAndWeights(
                 metric="val_adjusted_mean_absolute_error",
-                dataset=(None, None, x, y),
+                dataset=([], [], x, y),
                 label_scale_factor_mmhg=label_scale_factor_mmhg,
             ),
         ],
