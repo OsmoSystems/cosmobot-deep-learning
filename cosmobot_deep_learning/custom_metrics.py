@@ -194,6 +194,9 @@ class LogPredictionsAndWeights(Callback):
         self.x_train, self.y_train, self.x_dev, self.y_dev = dataset
 
     def _get_predictions(self, weights, x_true, y_true, epoch, training):
+        if len(x_true) == 0:
+            return pd.DataFrame()
+
         # Prevent memory leak: https://github.com/keras-team/keras/issues/13118
         eval_model = tf.keras.models.clone_model(self.model)
         eval_model.set_weights(weights)

@@ -126,10 +126,20 @@ def _get_prepared_dataset(prepare_dataset, hyperparameters):
 
     shuffled_dataset = _shuffle_dataframe(dataset)
 
-    prepared_dataset = prepare_dataset(
-        raw_dataset=download_images_and_attach_filepaths_to_dataset(shuffled_dataset),
-        hyperparameters=hyperparameters,
+    training_set_column = hyperparameters["training_set_column"]
+    dev_set_column = hyperparameters["dev_set_column"]
+
+    train_samples = shuffled_dataset[shuffled_dataset[training_set_column]]
+    dev_samples = shuffled_dataset[shuffled_dataset[dev_set_column]]
+
+    x_train, y_train = prepare_dataset(
+        download_images_and_attach_filepaths_to_dataset(train_samples), hyperparameters
     )
+    x_dev, y_dev = prepare_dataset(
+        download_images_and_attach_filepaths_to_dataset(dev_samples), hyperparameters
+    )
+
+    prepared_dataset = (x_train, y_train, x_dev, y_dev)
 
     return _cast_dataset_to_float16(prepared_dataset)
 
@@ -148,7 +158,7 @@ def _prepare_dataset_with_caching(prepare_dataset, hyperparameters):
     dataset_cache_name = hyperparameters["dataset_cache_name"]
     dataset_cache_filepath = get_dataset_cache_filepath(dataset_cache_name)
 
-    # Early exit with the cached datatset if it exists
+    # Early exit with the cached dataset if it exists
     if dataset_cache_name is not None and os.path.isfile(dataset_cache_filepath):
         logging.info(f"Using dataset cache file {dataset_cache_filepath}")
 

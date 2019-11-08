@@ -6,11 +6,10 @@ import pkg_resources
 import pandas as pd
 from tqdm.auto import tqdm
 
-from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL
+from cosmobot_deep_learning.constants import LARGE_FILE_PICKLE_PROTOCOL, PACKAGE_NAME
 from .s3 import naive_sync_from_s3
 
 
-PACKAGE_NAME = "cosmobot_deep_learning"
 LOCAL_DATA_DIRECTORY = os.path.expanduser("~/osmo/cosmobot-data-sets/")
 LOCAL_CACHE_DIRECTORY = os.path.expanduser("~/osmo/cosmobot-dataset-cache/")
 
@@ -34,7 +33,7 @@ def _get_files_for_experiment_df(experiment_df_group):
 
 
 def download_images_and_attach_filepaths_to_dataset(
-    dataset: pd.DataFrame
+    dataset: pd.DataFrame,
 ) -> pd.DataFrame:
     """For a pre-prepared ML dataset, ensure images are downloaded and add local image paths to the DataFrame
     Note that syncing tends to take a long time, though syncing for individual experiments will be skipped if all files

@@ -24,6 +24,7 @@ from cosmobot_deep_learning.preprocess_image import (
     fix_multiprocessing_with_keras_on_macos,
 )
 
+PREPARE_DATASET_FUNCTION = prepare_dataset_ROIs_and_numeric
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
     "numeric_input_columns": ["YSI temperature (C)"],
@@ -171,7 +172,7 @@ def main(command_line_args):
         model_hyperparameter_parser=get_hyperparameter_parser(),
     )
 
-    run(hyperparameters, prepare_dataset_ROIs_and_numeric, create_model)
+    run(hyperparameters, PREPARE_DATASET_FUNCTION, create_model)
 
 
 if __name__ == "__main__":

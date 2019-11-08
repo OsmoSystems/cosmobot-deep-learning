@@ -17,6 +17,7 @@ from cosmobot_deep_learning.prepare_dataset import prepare_dataset_numeric
 from cosmobot_deep_learning.run import run
 
 
+PREPARE_DATASET_FUNCTION = prepare_dataset_numeric
 DEFAULT_HYPERPARAMETERS = {
     "model_name": get_model_name_from_filepath(__file__),
     "batch_size": 3000,
@@ -60,7 +61,7 @@ def main(command_line_args):
         command_line_args, DEFAULT_HYPERPARAMETERS
     )
 
-    run(hyperparameters, prepare_dataset_numeric, create_model)
+    run(hyperparameters, PREPARE_DATASET_FUNCTION, create_model)
 
 
 if __name__ == "__main__":
