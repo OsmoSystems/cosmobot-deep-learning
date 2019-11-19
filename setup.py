@@ -15,7 +15,6 @@ setup(
         "dill",
         "keras",
         "keras_drop_block",
-        "keras_resnet",
         "numpy",
         "opencv-python",
         "pandas",

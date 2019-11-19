@@ -92,7 +92,7 @@ class TestGetDatasetCsvHash:
             "cosmobot_deep_learning", "datasets/test_dataset.csv"
         )
         actual = module.get_dataset_csv_hash(dataset_filepath)
-        assert actual == "3af53004962e90b42e2bcfa82f6a345c"
+        assert actual == "39b4fa32f1881f75c52ed8a8d01e17aa"
 
 
 class TestGetDatasetHash:
