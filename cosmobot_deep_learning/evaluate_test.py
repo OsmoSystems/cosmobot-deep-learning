@@ -65,10 +65,8 @@ def test_model_best_h5_file(mocker):
     (
         "images_only_cnn",
         "multi_image_cnn",
-        "resnet50_with_spatial_ratiometric",
         "simple_cnn",
         "simple_cnn_transfer_learning",
-        "simple_spatial_ratiometric",
     ),
 )
 def test_get_prepare_dataset_fn_for_model_returns_callable(model_name):
