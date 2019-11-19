@@ -57,30 +57,6 @@ class TestExtractLabels:
         np.testing.assert_array_equal(actual, expected)
 
 
-class TestPrepareDatasetnumeric:
-    def test_returns_expected_x_y(self):
-        scale_factor = 100
-
-        expected_x = np.array([[1, 2, 3]]).T
-        expected_y = np.array(
-            [[10 / scale_factor, 20 / scale_factor, 30 / scale_factor]]
-        ).T
-
-        actual = module.prepare_dataset_numeric(
-            MOCK_DATASET,
-            {
-                "numeric_input_columns": ["numeric_input_column"],
-                "label_column": "DO_label_column",
-                "label_scale_factor_mmhg": scale_factor,
-            },
-        )
-
-        expected = (expected_x, expected_y)
-
-        for i, _ in enumerate(actual):
-            np.testing.assert_array_equal(actual[i], expected[i])
-
-
 @pytest.fixture
 def mock_open_and_preprocess_images(mocker):
     def _mock_open_and_preprocess_images(filepaths, image_size):

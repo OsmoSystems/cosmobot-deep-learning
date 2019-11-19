@@ -40,29 +40,6 @@ def extract_labels(df, label_column, label_scale_factor_mmhg):
     return np.reshape(scaled_labels.values, (-1, 1))
 
 
-def prepare_dataset_numeric(raw_dataset: pd.DataFrame, hyperparameters):
-    """ Transform a dataset CSV into the appropriate inputs and labels for training and
-    validating a model.
-
-        Args:
-            raw_dataset: A DataFrame corresponding to a standard cosmobot dataset csv
-            hyperparameters: A dictionary that includes at least:
-                numeric_input_columns: A list of column names to be included as inputs.
-                label_column: The column to use as the label (y) data values for a given dataset (x)
-                label_scale_factor_mmhg: The scaling factor to use to scale labels into the [0,1] range
-        Returns:
-            A 2-tuple containing (x, y) data sets.
-    """
-    numeric_input_columns = hyperparameters["numeric_input_columns"]
-    label_column = hyperparameters["label_column"]
-    label_scale_factor_mmhg = hyperparameters["label_scale_factor_mmhg"]
-
-    x = extract_numeric_inputs(raw_dataset, numeric_input_columns)
-    y = extract_labels(raw_dataset, label_column, label_scale_factor_mmhg)
-
-    return (x, y)
-
-
 def _get_images_and_labels(
     samples: pd.DataFrame,
     image_size: int,
